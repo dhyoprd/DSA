@@ -30,3 +30,10 @@ Thumbs.db
 # Local tooling
 .scratch/
 *.local
+
+# Research dumps — vendor doc snapshots and scraped specs must not land in the
+# repo. Research findings belong in docs/adr/ with source URLs, not as raw dumps.
+llms.txt
+spec.json
+**/llms.txt
+**/spec.json

@@ -15,6 +15,12 @@ Rencana lengkap, seluruh keputusan, dan risiko yang sudah ditandai ada di `docs/
 
 Kosakata proyek ada di `CONTEXT.md`. Keputusan arsitektur ada di `docs/adr/`.
 
+## Aturan untuk agen
+
+**Jangan menulis file ke dalam repo ini kecuali diminta.** Riset, pemeriksaan dokumentasi, dan verifikasi harus mengembalikan temuan sebagai teks — bukan dengan membuat file. Kalau sebuah temuan perlu disimpan, tuliskan ke `docs/adr/` sebagai keputusan beserta URL sumbernya, atau laporkan ke pengguna dan biarkan dia yang memutuskan.
+
+Alasan aturan ini ada: subagen dengan akses tulis pernah meninggalkan dump dokumentasi vendor (`llms.txt`, `spec.json`, laporan riset mentah) yang ikut ter-commit oleh `git add -A`. Snapshot dokumentasi pihak ketiga menjadi basi dan mengotori repo.
+
 ## Agent skills
 
 ### Issue tracker
