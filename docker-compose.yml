@@ -1,0 +1,53 @@
+# Menyalakan antarmuka dan backend dengan satu perintah: `docker compose up`.
+#
+# Catatan tentang eksekusi kode: di lokal, Eksekusi Kode tidak lewat Docker —
+# runner dijalankan langsung sebagai proses Python dengan batas waktu, tanpa sandbox.
+# Itu keputusan di docs/design-tree.md, bukan kelalaian. Compose ini hanya untuk
+# antarmuka dan backend.
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      # Port host bisa diganti lewat `.env` kalau bentrok dengan proses lain.
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      # 0.0.0.0 wajib: kalau bind ke localhost, port itu tidak terlihat dari luar container.
+      HOST: "0.0.0.0"
+      PORT: "8080"
+      RUST_LOG: "dsa_backend=info,tower_http=info"
+    volumes:
+      # Kode di-bind supaya perubahan langsung terpakai.
+      - ./backend:/app
+      # `target/` dipisah ke volume bernama supaya hasil kompilasi Linux tidak
+      # tercampur artefak Windows dan tidak ikut ter-bind dari host.
+      - cargo-target:/app/target
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      # Di Windows, sebagian rentang port direservasi Hyper-V/WSL2, dan port yang
+      # jatuh di dalamnya tidak bisa di-bind. Ganti `FRONTEND_PORT` di `.env` kalau itu terjadi.
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      # Dibaca di sisi server oleh rewrite di next.config.ts. Karena server yang
+      # memanggil, alamatnya memakai nama service Compose, bukan localhost.
+      BACKEND_URL: "http://backend:8080"
+      # Docker Desktop di Windows tidak meneruskan event filesystem dari host ke
+      # container, sehingga watcher webpack tidak melihat perubahan. Variabel ini
+      # dibaca `watchpack` (dependensi webpack) dan mengalihkannya ke polling.
+      # Sudah diuji: tanpa ini, perubahan berkas tidak pernah membangun ulang.
+      WATCHPACK_POLLING: "true"
+    volumes:
+      # Kode di-bind, tetapi `node_modules` dan `.next` dikecualikan supaya isi
+      # image (binary Linux) tidak tertimpa oleh folder milik host.
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+
+volumes:
+  cargo-target:

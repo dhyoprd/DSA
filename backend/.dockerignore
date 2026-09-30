@@ -1,0 +1,2 @@
+# Artefak build tidak perlu masuk ke konteks build — di-mount sebagai volume oleh Compose.
+target

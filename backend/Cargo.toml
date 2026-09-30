@@ -1,0 +1,18 @@
+[package]
+name = "dsa-backend"
+version = "0.1.0"
+edition = "2021"
+description = "Backend Rust untuk Situs belajar DSA: Eksekusi Kode, Progres, dan Catatan"
+publish = false
+
+[dependencies]
+axum = "0.8"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
+serde = { version = "1", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tower-http = { version = "0.7", features = ["trace"] }
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }
+serde_json = "1"

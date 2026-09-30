@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* Inter diikat ke `font-sans`, jadi kelas `font-sans` memakai variabel dari next/font. */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Token dasar. Design system lengkap (dua tema, skala tipe, aksen) adalah
+ * lingkup ticket Design system — di sini hanya yang dibutuhkan scaffold
+ * supaya halaman terbaca dan tidak menetapkan keputusan yang belum diambil.
+ */
+:root {
+  --color-bg: #ffffff;
+  --color-fg: #111111;
+  --color-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-accent: #e0342b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0a0a0a;
+    --color-fg: #f5f5f5;
+    --color-muted: #a3a3a3;
+    --color-border: #2a2a2a;
+  }
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
