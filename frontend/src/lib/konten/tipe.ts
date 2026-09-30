@@ -81,6 +81,20 @@ export interface SoalKode {
 export type Soal = Kuis | SoalKode;
 
 /**
+ * Status Progres sebuah Topik.
+ *
+ * Ini satu-satunya bagian bentuk data di modul ini yang **bukan** berasal dari
+ * berkas YAML: Progres hidup di database backend (ADR-0003). Tipenya ada di sini
+ * karena ia kosakata yang dipakai bersama oleh sidebar dan, nanti, backend.
+ *
+ * Belum ada data yang mengisinya. Ticket #7 membangun endpoint Progres dan #8
+ * menyambungkannya ke tampilan; sampai saat itu seluruh Topik tampil `"belum"`.
+ * Nilainya sengaja hanya tiga, sesuai `docs/design-tree.md` (○ belum, ◐ sedang,
+ * ● selesai).
+ */
+export type StatusProgres = "belum" | "sedang" | "selesai";
+
+/**
  * Satu Topik utuh, hasil membaca satu berkas `content/<slug>.yaml`.
  *
  * Field `nomor`, `slug`, `judul`, dan `prasyarat` juga ada di `jalur.yaml`; nilainya

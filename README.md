@@ -83,13 +83,19 @@ cd frontend && npm install && npm run dev
 ```bash
 cd backend && cargo test          # uji integrasi di batas API
 cd frontend && npm run typecheck  # pemeriksaan tipe
-cd frontend && npm test           # uji gerbang validasi konten
+cd frontend && npm test           # uji gerbang validasi konten + logika navigasi
 ```
 
 `npm test` memakai test runner bawaan Node (`node --test`), jadi tidak ada framework
-uji tambahan. Yang diuji adalah aturan konten dan pemuatan berkas sungguhan dari
-`content/` — bukan komponen React, sesuai keputusan di issue #1 bahwa tampilan
-diperiksa manual.
+uji tambahan. Yang diuji adalah **logika**, bukan tampilan: aturan konten dan pemuatan
+berkas sungguhan dari `content/`, penyusunan navigasi Jalur, dan ekstraksi bagian
+Materi beserta id anchor-nya. Komponen React tidak diuji, sesuai keputusan di issue #1
+bahwa tampilan diperiksa manual.
+
+Satu penjaga yang perlu diketahui: `kesepakatan-anchor.test.ts` memastikan nomor baris
+judul yang dihitung `bagian.ts` sepadan dengan yang diteruskan react-markdown. Kalau
+suatu saat tidak lagi sepadan, tautan daftar isi akan melompat ke tempat yang salah
+tanpa error apa pun — jadi uji itu sengaja ada.
 
 ## Gerbang validasi konten
 

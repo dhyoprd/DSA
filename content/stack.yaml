@@ -1,8 +1,9 @@
 # Topik 4 — Stack & Queue.
 #
-# BERKAS DRAF. Tulisannya cukup untuk membuktikan rantai ujung ke ujung (skema,
-# gerbang validasi, dan render), bukan Materi final. Ticket #4 (Halaman Topik),
-# #6 (5 Kuis), dan #10 (Soal Kode) mengganti isinya dengan tulisan sungguhan.
+# Materi di berkas ini sudah tulisan sungguhan (ticket #4). Isi `soal` masih draf
+# yang lolos gerbang: ticket #6 mengganti kelima Kuisnya, dan #10 mengganti Soal
+# Kodenya. Sampai saat itu, keduanya sengaja dibiarkan apa adanya supaya gerbang
+# tetap menguji rantai yang utuh.
 #
 # Semua Soal dan Pembahasan di sini ditulis original, sesuai ADR-0005. Tidak ada
 # teks LeetCode yang disalin maupun diterjemahkan.
@@ -21,33 +22,49 @@ materi:
   id: |
     ## Kenapa dua struktur ini muncul lebih dulu
 
-    Bayangkan tumpukan piring di dapur. Kamu menaruh piring baru di atas, dan kamu
-    mengambil piring dari atas juga. Kamu tidak akan menarik piring paling bawah
-    sambil piring di atasnya masih menumpuk — itu jatuh semua.
+    Bayangkan tumpukan piring di dapur. Kamu menaruh piring baru di atas tumpukan,
+    dan kamu mengambil piring dari atas juga. Kamu tidak akan menarik piring paling
+    bawah sambil piring di atasnya masih menumpuk — seluruh tumpukan akan jatuh.
 
     Tumpukan piring itu adalah **Stack**. Aturannya satu: yang terakhir masuk adalah
-    yang pertama keluar. Dalam bahasa Inggris aturan ini disingkat **LIFO**
-    (*Last In, First Out*).
+    yang pertama keluar.
 
-    Lawannya adalah antrean di kasir. Yang pertama datang dilayani lebih dulu.
-    Struktur ini disebut **Queue**, dan aturannya disingkat **FIFO**
-    (*First In, First Out*).
+    Lawannya adalah antrean di kasir. Siapa yang datang lebih dulu dilayani lebih
+    dulu. Struktur ini disebut **Queue**.
 
-    Dua struktur ini terlihat sepele, tetapi keduanya muncul di mana-mana. Tombol
-    *undo* di editor, riwayat halaman di browser, dan cara pemanggilan fungsi bekerja
-    semuanya memakai Stack. Antrean cetak dokumen dan antrean pesan memakai Queue.
+    Keduanya terlihat sepele, dan justru itu sebabnya keduanya dibahas lebih dulu.
+    Stack dan Queue adalah bahan bangunan: Linked List, Tree, dan Graph semuanya
+    memakai salah satunya, dan cara sebuah program memanggil fungsi bergantung pada
+    Stack. Memahami dua struktur ini membuat Topik berikutnya jauh lebih mudah.
+
+    ## Aturan yang membedakan: LIFO dan FIFO
+
+    Stack memakai aturan **LIFO** — *Last In, First Out*. Yang terakhir masuk adalah
+    yang pertama keluar.
+
+    Queue memakai aturan **FIFO** — *First In, First Out*. Yang pertama masuk adalah
+    yang pertama keluar.
+
+    Keduanya menyimpan elemen yang sama. Yang berbeda hanya **ujung mana yang dipakai
+    untuk keluar**. Stack memakai satu ujung untuk masuk dan keluar. Queue memakai dua
+    ujung: masuk dari belakang, keluar dari depan.
+
+    Perbedaan sekecil itu menghasilkan perilaku yang sama sekali berbeda. Tiga nilai
+    yang sama dimasukkan dengan urutan yang sama akan keluar dengan urutan terbalik
+    dari Stack, dan dengan urutan yang sama dari Queue.
 
     ## Cara Stack bekerja
 
-    Stack punya tiga operasi utama:
+    Stack punya empat operasi:
 
     - `push` — menaruh satu nilai di atas tumpukan.
     - `pop` — mengambil dan membuang nilai paling atas.
     - `top` (kadang disebut `peek`) — melihat nilai paling atas tanpa membuangnya.
+    - `kosong` — memeriksa apakah tumpukan tidak berisi apa pun.
 
-    Perhatikan bahwa `pop` dan `top` sama-sama menyentuh ujung yang sama. Itu
-    sebabnya Stack bisa diimplementasikan dengan array biasa: ujung array sudah
-    berupa ujung tumpukan.
+    Perhatikan bahwa `push`, `pop`, dan `top` semuanya menyentuh ujung yang sama. Itu
+    sebabnya Stack bisa diimplementasikan dengan array biasa: ujung array sudah berupa
+    ujung tumpukan.
 
     ```python
     class Stack:
@@ -58,75 +75,198 @@ materi:
             self._data.append(nilai)
 
         def pop(self):
+            if not self._data:
+                raise IndexError("Stack kosong")
             return self._data.pop()
 
         def top(self):
+            if not self._data:
+                raise IndexError("Stack kosong")
             return self._data[-1]
+
+        def kosong(self):
+            return len(self._data) == 0
     ```
 
-    ## Kenapa Queue tidak sesederhana itu
+    `append` dan `pop` bawaan Python bekerja di ujung akhir array. Keduanya tidak
+    perlu menggeser elemen lain, jadi keduanya berjalan dalam waktu tetap.
+
+    Perhatikan juga bahwa `pop` dan `top` memeriksa kosong lebih dulu. Tanpa
+    pemeriksaan itu, memanggil keduanya pada tumpukan kosong akan memunculkan
+    `IndexError` yang membingungkan. Memeriksa lebih dulu membuat pesan kesalahannya
+    jelas, dan itu kebiasaan yang berguna.
+
+    ## Cara Queue bekerja
 
     Queue membutuhkan dua ujung yang berbeda: masuk dari belakang, keluar dari depan.
-    Kalau kamu memakai array Python dan memanggil `pop(0)` untuk mengeluarkan elemen
-    depan, seluruh elemen sisanya harus bergeser satu langkah.
+    Di sinilah ia tidak sesederhana Stack.
 
-    Satu kali bergeser tidak terasa. Tetapi kalau kamu mengeluarkan `n` elemen,
-    total pekerjaannya menjadi **O(n²)** — jauh lebih lambat daripada yang terlihat.
-    Solusinya adalah `collections.deque`, yang bisa mengeluarkan elemen depan dalam
-    **O(1)**.
+    Kalau kamu memakai array Python dan memanggil `pop(0)` untuk mengeluarkan elemen
+    depan, seluruh elemen sisanya harus bergeser satu langkah ke depan. Satu kali
+    bergeser tidak terasa. Tetapi kalau kamu mengeluarkan `n` elemen satu per satu,
+    total pekerjaannya menjadi **O(n²)** — jauh lebih lambat daripada yang terlihat
+    pada data kecil.
+
+    Solusinya adalah `collections.deque` (*double-ended queue*): struktur bawaan
+    Python yang bisa menambah dan mengeluarkan dari **kedua** ujung dalam waktu tetap.
+
+    ```python
+    from collections import deque
+
+    class Queue:
+        def __init__(self):
+            self._data = deque()
+
+        def enqueue(self, nilai):
+            self._data.append(nilai)
+
+        def dequeue(self):
+            if not self._data:
+                raise IndexError("Queue kosong")
+            return self._data.popleft()
+
+        def front(self):
+            if not self._data:
+                raise IndexError("Queue kosong")
+            return self._data[0]
+
+        def kosong(self):
+            return len(self._data) == 0
+    ```
+
+    Nama operasinya berbeda dari Stack — `enqueue`/`dequeue`/`front`, bukan
+    `push`/`pop`/`top` — tetapi bentuknya mirip. Yang penting adalah `popleft`:
+    mengambil dari ujung **depan** tanpa menggeser apa pun.
 
     ## Kompleksitas
 
-    | Operasi | Stack | Queue (`deque`) |
+    | Operasi | Stack (array) | Queue (`deque`) |
     |---|---|---|
     | Tambah elemen | O(1) | O(1) |
     | Ambil elemen | O(1) | O(1) |
     | Lihat ujung | O(1) | O(1) |
+    | Cari satu nilai | O(n) | O(n) |
 
     Semua operasi inti bernilai **O(1)** — waktu tetap, tidak tumbuh mengikuti
-    banyaknya data. Itu yang membuat kedua struktur ini dipakai sebagai bahan
-    bangunan struktur yang lebih besar, seperti Tree dan Graph pada Topik berikutnya.
+    banyaknya data. Itu yang membuat kedua struktur ini dipakai sebagai bahan bangunan
+    struktur yang lebih besar.
+
+    Satu catatan jujur tentang O(1) pada array: menambah elemen ke array yang sudah
+    penuh memaksa Python membuat array baru yang lebih besar dan menyalin seluruh
+    isinya. Penyalinan itu sendiri O(n). Tetapi penyalinan hanya terjadi sesekali, dan
+    biayanya dibagi ke banyak operasi `push`, sehingga rata-ratanya tetap O(1).
+    Istilahnya **O(1) amortized**. Untuk Queue, `deque` menghindari masalah ini
+    sepenuhnya.
+
+    Perhatikan bahwa **mencari** satu nilai tetap O(n) pada keduanya. Stack dan Queue
+    tidak dirancang untuk pencarian; itu tugas Hash Table di Topik 5. Keduanya
+    dirancang untuk menambah dan mengambil dengan cepat di ujung yang sudah ditentukan.
+
+    ## Di mana keduanya muncul
+
+    Stack muncul setiap kali pekerjaan harus diselesaikan dalam urutan terbalik dari
+    kedatangannya:
+
+    - **Pemanggilan fungsi.** Saat sebuah fungsi memanggil fungsi lain, posisi
+      kembalinya disimpan di sebuah Stack. Fungsi yang terakhir dipanggil selesai
+      lebih dulu. Kalau tidak, sebuah fungsi tidak akan tahu harus kembali ke mana.
+    - **Tombol undo.** Setiap perubahan dicatat; yang terakhir dibatalkan lebih dulu.
+    - **Riwayat halaman di browser.** Tombol *back* membawa kamu ke halaman yang baru
+      saja kamu buka, bukan ke halaman pertama.
+    - **Memeriksa tanda kurung seimbang.** Setiap kurung buka ditumpuk, dan setiap
+      kurung tutup mengambil satu dari atas.
+    - **Penelusuran DFS** pada Tree dan Graph, yang muncul di Topik 9 dan 11.
+
+    Queue muncul setiap kali pekerjaan harus diselesaikan sesuai urutan kedatangan:
+
+    - **Antrean cetak dokumen.** Dokumen yang dikirim lebih dulu dicetak lebih dulu.
+    - **Antrean pesan** pada sistem yang memproses pekerjaan di belakang layar.
+    - **Penjadwalan tugas** oleh sistem operasi.
+    - **Penelusuran BFS** pada Tree dan Graph, yang muncul di Topik 9 dan 11.
+
+    ## Cara memilih di antara keduanya
+
+    Pertanyaan yang menentukan **bukan** "struktur mana yang lebih cepat". Keduanya
+    sama-sama O(1) untuk operasi intinya, jadi kecepatan tidak membedakan apa pun.
+
+    Pertanyaan yang benar: **elemen mana yang harus keluar lebih dulu?**
+
+    - Kalau jawabannya "yang paling baru", pakai **Stack**.
+    - Kalau jawabannya "yang paling lama", pakai **Queue**.
+
+    Beberapa kata kunci yang biasanya menandai Stack: *undo*, *kembali*, *terakhir*,
+    *bersarang*, *berpasangan*, *membuka lalu menutup*.
+
+    Beberapa kata kunci yang biasanya menandai Queue: *antre*, *berurutan*, *pertama
+    datang*, *satu per satu sesuai urutan*, *per level*.
 
     ## Jebakan yang sering terjadi
 
-    **Mengambil dari Stack yang kosong.** `pop` pada tumpukan kosong adalah kesalahan.
-    Di Python, array kosong yang di-`pop` akan memunculkan `IndexError`. Kebiasaan
-    yang baik: periksa dulu apakah Stack kosong sebelum mengambil.
+    **Mengambil dari Stack atau Queue yang kosong.** `pop` pada tumpukan kosong adalah
+    kesalahan. Di Python, array kosong yang di-`pop` akan memunculkan `IndexError`.
+    Kebiasaan yang baik: periksa dulu apakah strukturnya kosong sebelum mengambil.
 
-    **Memakai `pop(0)` pada array sebagai Queue.** Ini bekerja, tetapi lambat, dan
-    lambatnya tidak terlihat pada data kecil. Inilah jenis kesalahan yang baru
-    ketahuan ketika datanya sudah besar.
+    **Memakai `pop(0)` pada array sebagai Queue.** Ini bekerja, dan hasilnya benar,
+    tetapi lambat — dan lambatnya tidak terlihat pada data kecil. Inilah jenis
+    kesalahan yang baru ketahuan ketika datanya sudah besar, saat memperbaikinya sudah
+    paling mahal.
+
+    **Menukar ujung Queue.** Pada Queue, `append` dan `popleft` bekerja di ujung yang
+    **berbeda**. Memakai `pop()` alih-alih `popleft()` membalik seluruh perilakunya
+    menjadi Stack, dan hasilnya akan tampak "hampir benar" pada sebagian test case.
+    Periksa selalu ujung mana yang kamu pakai.
+
+    **Menganggap Stack dan Queue bisa saling menggantikan.** Keduanya menyimpan elemen
+    yang sama, jadi secara teknis keduanya "bisa" dipakai untuk pekerjaan yang sama.
+    Yang berbeda adalah urutan keluarnya, dan urutan itu yang menentukan benar atau
+    salahnya program.
 
   en: |
     ## Why these two structures come first
 
-    Picture a stack of plates in a kitchen. You put a new plate on top, and you take
-    a plate from the top as well. You would not pull out the bottom plate while the
-    ones above it are still stacked — the whole pile would fall.
+    Picture a stack of plates in a kitchen. You put a new plate on top of the pile,
+    and you take a plate from the top as well. You would not pull out the bottom plate
+    while the ones above it are still stacked — the whole pile would fall.
 
-    That stack of plates is a **Stack**. It has one rule: the last one in is the
-    first one out. In English this rule is shortened to **LIFO**
-    (*Last In, First Out*).
+    That stack of plates is a **Stack**. It has one rule: the last one in is the first
+    one out.
 
     Its opposite is the checkout line. Whoever arrives first is served first. This
-    structure is called a **Queue**, and its rule is shortened to **FIFO**
-    (*First In, First Out*).
+    structure is called a **Queue**.
 
-    These two structures look trivial, but they show up everywhere. The *undo* button
-    in an editor, the back button in a browser, and the way function calls work all
-    use a Stack. Print jobs and message queues use a Queue.
+    Both look trivial, and that is exactly why they come first. Stack and Queue are
+    building blocks: Linked List, Tree, and Graph all use one of them, and the way a
+    program calls functions depends on a Stack. Understanding these two makes the next
+    Topics far easier.
+
+    ## The rule that separates them: LIFO and FIFO
+
+    A Stack follows **LIFO** — *Last In, First Out*. The last one in is the first one
+    out.
+
+    A Queue follows **FIFO** — *First In, First Out*. The first one in is the first
+    one out.
+
+    Both hold the same elements. What differs is only **which end is used to remove**.
+    A Stack uses one end for both inserting and removing. A Queue uses two ends:
+    elements enter at the back and leave from the front.
+
+    That small difference produces completely different behaviour. The same three
+    values inserted in the same order come out reversed from a Stack, and in the same
+    order from a Queue.
 
     ## How a Stack works
 
-    A Stack has three main operations:
+    A Stack has four operations:
 
     - `push` — put one value on top of the stack.
     - `pop` — take the top value off and discard it.
     - `top` (sometimes called `peek`) — look at the top value without removing it.
+    - `kosong` — check whether the stack holds nothing.
 
-    Notice that `pop` and `top` both touch the same end. That is why a Stack can be
-    implemented with a plain array: the end of the array is already the top of the
-    stack.
+    Notice that `push`, `pop`, and `top` all touch the same end. That is why a Stack
+    can be implemented with a plain array: the end of the array is already the top of
+    the stack.
 
     ```python
     class Stack:
@@ -137,43 +277,146 @@ materi:
             self._data.append(nilai)
 
         def pop(self):
+            if not self._data:
+                raise IndexError("Stack kosong")
             return self._data.pop()
 
         def top(self):
+            if not self._data:
+                raise IndexError("Stack kosong")
             return self._data[-1]
+
+        def kosong(self):
+            return len(self._data) == 0
     ```
 
-    ## Why a Queue is not that simple
+    Python's built-in `append` and `pop` work on the last end of the array. Neither has
+    to shift other elements, so both run in constant time.
+
+    Notice also that `pop` and `top` check for emptiness first. Without that check,
+    calling either on an empty stack raises a confusing `IndexError`. Checking first
+    makes the error message clear, and that is a useful habit.
+
+    ## How a Queue works
 
     A Queue needs two different ends: elements enter at the back and leave from the
-    front. If you use a Python array and call `pop(0)` to remove the front element,
-    every remaining element has to shift one step.
+    front. This is where it stops being as simple as a Stack.
 
-    Shifting once is unnoticeable. But if you remove `n` elements, the total work
-    becomes **O(n²)** — far slower than it looks. The answer is
-    `collections.deque`, which can remove the front element in **O(1)**.
+    If you use a Python array and call `pop(0)` to remove the front element, every
+    remaining element has to shift one step forward. Shifting once is unnoticeable. But
+    if you remove `n` elements one at a time, the total work becomes **O(n²)** — far
+    slower than it looks on small data.
+
+    The answer is `collections.deque` (*double-ended queue*): a structure built into
+    Python that can add and remove from **both** ends in constant time.
+
+    ```python
+    from collections import deque
+
+    class Queue:
+        def __init__(self):
+            self._data = deque()
+
+        def enqueue(self, nilai):
+            self._data.append(nilai)
+
+        def dequeue(self):
+            if not self._data:
+                raise IndexError("Queue kosong")
+            return self._data.popleft()
+
+        def front(self):
+            if not self._data:
+                raise IndexError("Queue kosong")
+            return self._data[0]
+
+        def kosong(self):
+            return len(self._data) == 0
+    ```
+
+    The operation names differ from a Stack — `enqueue`/`dequeue`/`front` instead of
+    `push`/`pop`/`top` — but the shape is similar. What matters is `popleft`: it removes
+    from the **front** end without shifting anything.
 
     ## Complexity
 
-    | Operation | Stack | Queue (`deque`) |
+    | Operation | Stack (array) | Queue (`deque`) |
     |---|---|---|
     | Add element | O(1) | O(1) |
     | Remove element | O(1) | O(1) |
     | Look at the end | O(1) | O(1) |
+    | Find one value | O(n) | O(n) |
 
     Every core operation is **O(1)** — constant time, not growing with the amount of
-    data. That is what makes both structures building blocks for larger structures,
-    such as Tree and Graph in the next Topics.
+    data. That is what makes both structures building blocks for larger ones.
+
+    One honest note about O(1) on arrays: adding an element to a full array forces
+    Python to allocate a bigger array and copy everything into it. That copy is itself
+    O(n). But the copy happens only occasionally, and its cost is spread across many
+    `push` calls, so the average stays O(1). The term is **amortized O(1)**. For a
+    Queue, `deque` avoids the problem entirely.
+
+    Notice that **finding** a value is still O(n) for both. Stack and Queue are not
+    built for searching; that is the job of Hash Table in Topic 5. Both are built to
+    add and remove quickly at a fixed end.
+
+    ## Where both of them show up
+
+    A Stack appears whenever work has to be finished in reverse order of arrival:
+
+    - **Function calls.** When one function calls another, the return position is kept
+      on a Stack. The most recently called function finishes first. Without this, a
+      function would not know where to return to.
+    - **The undo button.** Every change is recorded; the most recent one is undone
+      first.
+    - **Browser page history.** The *back* button takes you to the page you just
+      opened, not to the first page.
+    - **Checking balanced brackets.** Each opening bracket is pushed, and each closing
+      bracket pops one off the top.
+    - **DFS traversal** of Trees and Graphs, which appear in Topics 9 and 11.
+
+    A Queue appears whenever work has to be finished in order of arrival:
+
+    - **Print jobs.** The document sent first is printed first.
+    - **Message queues** in systems that process background work.
+    - **Task scheduling** by an operating system.
+    - **BFS traversal** of Trees and Graphs, which appear in Topics 9 and 11.
+
+    ## How to choose between them
+
+    The deciding question is **not** "which structure is faster". Both are O(1) for
+    their core operations, so speed distinguishes nothing.
+
+    The right question is: **which element must come out first?**
+
+    - If the answer is "the most recent one", use a **Stack**.
+    - If the answer is "the oldest one", use a **Queue**.
+
+    Some keywords that usually signal a Stack: *undo*, *back*, *last*, *nested*,
+    *paired*, *open then close*.
+
+    Some keywords that usually signal a Queue: *line*, *in order*, *first come*,
+    *one by one in order*, *level by level*.
 
     ## Common traps
 
-    **Removing from an empty Stack.** `pop` on an empty stack is an error. In Python,
-    `pop` on an empty array raises `IndexError`. A good habit: check whether the Stack
-    is empty before removing.
+    **Removing from an empty Stack or Queue.** `pop` on an empty stack is an error. In
+    Python, `pop` on an empty array raises `IndexError`. A good habit: check whether the
+    structure is empty before removing.
 
-    **Using `pop(0)` on an array as a Queue.** This works, but it is slow, and the
-    slowness is invisible on small data. This is exactly the kind of mistake that only
-    shows up once the data is large.
+    **Using `pop(0)` on an array as a Queue.** This works, and the result is correct,
+    but it is slow — and the slowness is invisible on small data. This is exactly the
+    kind of mistake that only shows up once the data is large, when fixing it is most
+    expensive.
+
+    **Swapping the ends of a Queue.** In a Queue, `append` and `popleft` work on
+    **different** ends. Using `pop()` instead of `popleft()` reverses the whole
+    behaviour into a Stack, and the result will look "almost right" on some test cases.
+    Always check which end you are using.
+
+    **Assuming a Stack and a Queue can replace each other.** Both hold the same
+    elements, so technically either can be used for the same job. What differs is the
+    removal order, and that order is what makes a program correct or wrong.
 
 soal:
   - tipe: kuis
