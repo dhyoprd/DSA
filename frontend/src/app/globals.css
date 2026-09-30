@@ -6,9 +6,10 @@
 }
 
 /*
- * Token dasar. Design system lengkap (dua tema, skala tipe, aksen) adalah
- * lingkup ticket Design system — di sini hanya yang dibutuhkan scaffold
- * supaya halaman terbaca dan tidak menetapkan keputusan yang belum diambil.
+ * Token dasar. Warna mengikuti preferensi sistem — itu default yang ditetapkan di
+ * docs/design-tree.md ("default mengikuti sistem"). Pengalih tema manual dan skala
+ * tipe lengkap adalah lingkup ticket Design system; di sini hanya yang dibutuhkan
+ * scaffold supaya halaman terbaca.
  */
 :root {
   --color-bg: #ffffff;

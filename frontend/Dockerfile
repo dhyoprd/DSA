@@ -11,13 +11,12 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install
+# `npm ci` memasang persis versi di package-lock.json, bukan versi yang mungkin
+# bergeser sejak lockfile ditulis.
+RUN npm ci
 
 COPY . .
 
 # `dev:docker` memakai webpack, bukan Turbopack (bawaan Next 16).
-# Alasannya empiris: watcher Turbopack tidak pernah membangun ulang berkas yang
-# di-bind dari host Windows ke container Docker Desktop — halaman tetap menyajikan
-# isi lama walaupun berkas di container sudah berubah. Watcher webpack bekerja
-# tanpa setelan tambahan. `next dev` di host tetap memakai Turbopack.
+# Alasan lengkapnya di README, bagian "Hot reload".
 CMD ["npm", "run", "dev:docker"]

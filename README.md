@@ -19,7 +19,6 @@ ada di `CONTEXT.md`. Keputusan arsitektur ada di `docs/adr/`.
 Butuh Docker Desktop yang jalan.
 
 ```bash
-cp .env.example .env    # lalu isi API_TOKEN
 docker compose up
 ```
 
@@ -27,10 +26,28 @@ docker compose up
 - Backend: <http://localhost:8080/api/health>
 
 Satu perintah itu menyalakan keduanya. Antarmuka memanggil backend lewat rewrite
-di server Next (`frontend/next.config.ts`), jadi tidak ada CORS dan token tidak
-pernah dikirim dari kode klien.
+di server Next (`frontend/next.config.ts`), jadi tidak ada CORS.
+
+`docker compose up` belum butuh berkas `.env`. Kalau nanti backend membaca rahasia,
+salin contohnya lebih dulu dan isi nilainya:
+
+```bash
+cp .env.example .env
+```
 
 Menghentikan: `Ctrl+C`, lalu `docker compose down`.
+
+### Port
+
+Bawaan `3000` (antarmuka) dan `8080` (backend). Di Windows, sebagian rentang port
+direservasi Hyper-V/WSL2, dan port yang jatuh di dalamnya gagal di-bind dengan pesan
+"access a socket in a way forbidden by its access permissions". Periksa dengan
+`netsh interface ipv4 show excludedportrange protocol=tcp`, lalu ganti lewat `.env`:
+
+```
+FRONTEND_PORT=3100
+BACKEND_PORT=8180
+```
 
 ### Hot reload
 

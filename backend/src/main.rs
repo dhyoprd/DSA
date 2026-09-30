@@ -3,7 +3,7 @@
 //! Hanya menangani siklus hidup: baca konfigurasi, siapkan logging, bind, sajikan.
 //! Seluruh bentuk aplikasi ada di `lib.rs`.
 
-use dsa_backend::{app, config::Config, AppState};
+use dsa_backend::{app, config::Config};
 
 #[tokio::main]
 async fn main() {
@@ -23,7 +23,7 @@ async fn main() {
 
     tracing::info!(addr = %config.addr, "backend siap menerima permintaan");
 
-    axum::serve(listener, app(AppState))
+    axum::serve(listener, app())
         .await
         .expect("server berhenti dengan error");
 }

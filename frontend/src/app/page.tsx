@@ -22,7 +22,7 @@ export default function HomePage() {
       </h1>
 
       <p className="text-base leading-relaxed" style={{ color: "var(--color-muted)" }}>
-        Antarmuka Next.js, backend Rust, dan folder konten berjalan bersama. Materi,
+        Antarmuka Next.js, backend Rust, dan folder Materi berjalan bersama. Materi,
         Kuis, dan Soal Kode menyusul di ticket berikutnya.
       </p>
 

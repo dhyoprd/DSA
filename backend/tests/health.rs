@@ -8,12 +8,12 @@ use axum::{
     body::to_bytes,
     http::{Request, StatusCode},
 };
-use dsa_backend::{app, AppState};
+use dsa_backend::app;
 use tower::ServiceExt;
 
 #[tokio::test]
 async fn health_membalas_ok_dengan_bentuk_yang_diharapkan() {
-    let response = app(AppState)
+    let response = app()
         .oneshot(
             Request::builder()
                 .uri("/api/health")
@@ -34,7 +34,7 @@ async fn health_membalas_ok_dengan_bentuk_yang_diharapkan() {
 
 #[tokio::test]
 async fn path_yang_tidak_dikenal_membalas_404() {
-    let response = app(AppState)
+    let response = app()
         .oneshot(
             Request::builder()
                 .uri("/tidak-ada")

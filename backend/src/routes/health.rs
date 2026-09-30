@@ -6,8 +6,6 @@
 use axum::{routing::get, Json, Router};
 use serde::Serialize;
 
-use crate::AppState;
-
 /// Bentuk balasan `GET /api/health`.
 #[derive(Debug, Serialize)]
 pub struct HealthResponse {
@@ -18,7 +16,7 @@ pub struct HealthResponse {
 }
 
 /// Kumpulan route yang dimiliki modul ini.
-pub fn routes() -> Router<AppState> {
+pub fn routes() -> Router {
     Router::new().route("/api/health", get(health))
 }
 

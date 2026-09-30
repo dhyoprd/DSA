@@ -35,10 +35,8 @@ services:
       # Dibaca di sisi server oleh rewrite di next.config.ts. Karena server yang
       # memanggil, alamatnya memakai nama service Compose, bukan localhost.
       BACKEND_URL: "http://backend:8080"
-      # Docker Desktop di Windows tidak meneruskan event filesystem dari host ke
-      # container, sehingga watcher webpack tidak melihat perubahan. Variabel ini
-      # dibaca `watchpack` (dependensi webpack) dan mengalihkannya ke polling.
-      # Sudah diuji: tanpa ini, perubahan berkas tidak pernah membangun ulang.
+      # Docker Desktop di Windows tidak meneruskan event filesystem dari host,
+      # jadi watcher webpack harus polling. Penjelasan di README, bagian "Hot reload".
       WATCHPACK_POLLING: "true"
     volumes:
       # Kode di-bind, tetapi `node_modules` dan `.next` dikecualikan supaya isi

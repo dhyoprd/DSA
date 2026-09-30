@@ -8,9 +8,7 @@ pub mod health;
 
 use axum::Router;
 
-use crate::AppState;
-
 /// Bangun seluruh route aplikasi.
-pub fn router() -> Router<AppState> {
+pub fn router() -> Router {
     Router::new().merge(health::routes())
 }
