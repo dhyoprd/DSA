@@ -1,0 +1,98 @@
+# Jalur — daftar lengkap 12 Topik.
+#
+# Berkas ini mendeklarasikan seluruh Jalur lebih dulu, termasuk Topik yang berkasnya
+# belum ditulis. Itu perlu karena `prasyarat` harus bisa diperiksa terhadap daftar
+# yang lengkap: Stack adalah Topik nomor 4 dengan `prasyarat: [3]`, padahal Topik 3
+# belum tentu sudah ditulis. Tanpa daftar ini, prasyarat yang sah akan tampak seperti
+# prasyarat yang menunjuk Topik tidak ada.
+#
+# Berkas Topik (`content/<slug>.yaml`) hanya ada untuk Topik yang sudah siap. Topik
+# yang belum punya berkas tampil redup dan berlabel "segera" di sidebar (#4).
+#
+# `nomor`, `slug`, `judul`, dan `prasyarat` di sini wajib sama dengan yang ada di
+# berkas Topik. Validator menolak build kalau keduanya berbeda.
+
+topik:
+  - nomor: 1
+    slug: big-o
+    judul:
+      id: Big-O & Kompleksitas
+      en: Big-O & Complexity
+    prasyarat: []
+
+  - nomor: 2
+    slug: array-string
+    judul:
+      id: Array & String
+      en: Array & String
+    prasyarat: [1]
+
+  - nomor: 3
+    slug: linked-list
+    judul:
+      id: Linked List
+      en: Linked List
+    prasyarat: [1, 2]
+
+  - nomor: 4
+    slug: stack
+    judul:
+      id: Stack & Queue
+      en: Stack & Queue
+    prasyarat: [3]
+
+  - nomor: 5
+    slug: hash-table
+    judul:
+      id: Hash Table
+      en: Hash Table
+    prasyarat: [2, 4]
+
+  - nomor: 6
+    slug: rekursi
+    judul:
+      id: Rekursi
+      en: Recursion
+    prasyarat: [3, 4]
+
+  - nomor: 7
+    slug: sorting
+    judul:
+      id: Sorting
+      en: Sorting
+    prasyarat: [2, 6]
+
+  - nomor: 8
+    slug: binary-search
+    judul:
+      id: Binary Search
+      en: Binary Search
+    prasyarat: [2, 7]
+
+  - nomor: 9
+    slug: tree-bst
+    judul:
+      id: Tree & BST
+      en: Tree & BST
+    prasyarat: [3, 6]
+
+  - nomor: 10
+    slug: heap
+    judul:
+      id: Heap
+      en: Heap
+    prasyarat: [7, 9]
+
+  - nomor: 11
+    slug: graph
+    judul:
+      id: Graph
+      en: Graph
+    prasyarat: [4, 9]
+
+  - nomor: 12
+    slug: dynamic-programming
+    judul:
+      id: Dynamic Programming
+      en: Dynamic Programming
+    prasyarat: [6, 11]

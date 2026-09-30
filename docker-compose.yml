@@ -44,6 +44,14 @@ services:
       - ./frontend:/app
       - /app/node_modules
       - /app/.next
+      # Materi dan Soal dibaca saat build dan saat dev, dan letaknya di luar
+      # `frontend/`. Tanpa bind ini, gerbang validasi konten tidak menemukan
+      # berkasnya dan build gagal. Dipasang read-only karena antarmuka hanya membaca,
+      # tidak pernah menulis ke sini — Materi diedit lewat git, bukan lewat situs.
+      # Tujuan `/content` cocok dengan bawaan `direktoriKonten()` di
+      # `src/lib/konten/muat.ts`, yang mencari `../content` dari direktori kerja
+      # container (`/app`).
+      - ./content:/content:ro
     depends_on:
       - backend
 

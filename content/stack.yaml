@@ -1,0 +1,486 @@
+# Topik 4 — Stack & Queue.
+#
+# BERKAS DRAF. Tulisannya cukup untuk membuktikan rantai ujung ke ujung (skema,
+# gerbang validasi, dan render), bukan Materi final. Ticket #4 (Halaman Topik),
+# #6 (5 Kuis), dan #10 (Soal Kode) mengganti isinya dengan tulisan sungguhan.
+#
+# Semua Soal dan Pembahasan di sini ditulis original, sesuai ADR-0005. Tidak ada
+# teks LeetCode yang disalin maupun diterjemahkan.
+#
+# `nomor`, `slug`, `judul`, dan `prasyarat` harus sama dengan content/jalur.yaml —
+# validator menolak build kalau berbeda.
+
+nomor: 4
+slug: stack
+judul:
+  id: Stack & Queue
+  en: Stack & Queue
+prasyarat: [3]
+
+materi:
+  id: |
+    ## Kenapa dua struktur ini muncul lebih dulu
+
+    Bayangkan tumpukan piring di dapur. Kamu menaruh piring baru di atas, dan kamu
+    mengambil piring dari atas juga. Kamu tidak akan menarik piring paling bawah
+    sambil piring di atasnya masih menumpuk — itu jatuh semua.
+
+    Tumpukan piring itu adalah **Stack**. Aturannya satu: yang terakhir masuk adalah
+    yang pertama keluar. Dalam bahasa Inggris aturan ini disingkat **LIFO**
+    (*Last In, First Out*).
+
+    Lawannya adalah antrean di kasir. Yang pertama datang dilayani lebih dulu.
+    Struktur ini disebut **Queue**, dan aturannya disingkat **FIFO**
+    (*First In, First Out*).
+
+    Dua struktur ini terlihat sepele, tetapi keduanya muncul di mana-mana. Tombol
+    *undo* di editor, riwayat halaman di browser, dan cara pemanggilan fungsi bekerja
+    semuanya memakai Stack. Antrean cetak dokumen dan antrean pesan memakai Queue.
+
+    ## Cara Stack bekerja
+
+    Stack punya tiga operasi utama:
+
+    - `push` — menaruh satu nilai di atas tumpukan.
+    - `pop` — mengambil dan membuang nilai paling atas.
+    - `top` (kadang disebut `peek`) — melihat nilai paling atas tanpa membuangnya.
+
+    Perhatikan bahwa `pop` dan `top` sama-sama menyentuh ujung yang sama. Itu
+    sebabnya Stack bisa diimplementasikan dengan array biasa: ujung array sudah
+    berupa ujung tumpukan.
+
+    ```python
+    class Stack:
+        def __init__(self):
+            self._data = []
+
+        def push(self, nilai):
+            self._data.append(nilai)
+
+        def pop(self):
+            return self._data.pop()
+
+        def top(self):
+            return self._data[-1]
+    ```
+
+    ## Kenapa Queue tidak sesederhana itu
+
+    Queue membutuhkan dua ujung yang berbeda: masuk dari belakang, keluar dari depan.
+    Kalau kamu memakai array Python dan memanggil `pop(0)` untuk mengeluarkan elemen
+    depan, seluruh elemen sisanya harus bergeser satu langkah.
+
+    Satu kali bergeser tidak terasa. Tetapi kalau kamu mengeluarkan `n` elemen,
+    total pekerjaannya menjadi **O(n²)** — jauh lebih lambat daripada yang terlihat.
+    Solusinya adalah `collections.deque`, yang bisa mengeluarkan elemen depan dalam
+    **O(1)**.
+
+    ## Kompleksitas
+
+    | Operasi | Stack | Queue (`deque`) |
+    |---|---|---|
+    | Tambah elemen | O(1) | O(1) |
+    | Ambil elemen | O(1) | O(1) |
+    | Lihat ujung | O(1) | O(1) |
+
+    Semua operasi inti bernilai **O(1)** — waktu tetap, tidak tumbuh mengikuti
+    banyaknya data. Itu yang membuat kedua struktur ini dipakai sebagai bahan
+    bangunan struktur yang lebih besar, seperti Tree dan Graph pada Topik berikutnya.
+
+    ## Jebakan yang sering terjadi
+
+    **Mengambil dari Stack yang kosong.** `pop` pada tumpukan kosong adalah kesalahan.
+    Di Python, array kosong yang di-`pop` akan memunculkan `IndexError`. Kebiasaan
+    yang baik: periksa dulu apakah Stack kosong sebelum mengambil.
+
+    **Memakai `pop(0)` pada array sebagai Queue.** Ini bekerja, tetapi lambat, dan
+    lambatnya tidak terlihat pada data kecil. Inilah jenis kesalahan yang baru
+    ketahuan ketika datanya sudah besar.
+
+  en: |
+    ## Why these two structures come first
+
+    Picture a stack of plates in a kitchen. You put a new plate on top, and you take
+    a plate from the top as well. You would not pull out the bottom plate while the
+    ones above it are still stacked — the whole pile would fall.
+
+    That stack of plates is a **Stack**. It has one rule: the last one in is the
+    first one out. In English this rule is shortened to **LIFO**
+    (*Last In, First Out*).
+
+    Its opposite is the checkout line. Whoever arrives first is served first. This
+    structure is called a **Queue**, and its rule is shortened to **FIFO**
+    (*First In, First Out*).
+
+    These two structures look trivial, but they show up everywhere. The *undo* button
+    in an editor, the back button in a browser, and the way function calls work all
+    use a Stack. Print jobs and message queues use a Queue.
+
+    ## How a Stack works
+
+    A Stack has three main operations:
+
+    - `push` — put one value on top of the stack.
+    - `pop` — take the top value off and discard it.
+    - `top` (sometimes called `peek`) — look at the top value without removing it.
+
+    Notice that `pop` and `top` both touch the same end. That is why a Stack can be
+    implemented with a plain array: the end of the array is already the top of the
+    stack.
+
+    ```python
+    class Stack:
+        def __init__(self):
+            self._data = []
+
+        def push(self, nilai):
+            self._data.append(nilai)
+
+        def pop(self):
+            return self._data.pop()
+
+        def top(self):
+            return self._data[-1]
+    ```
+
+    ## Why a Queue is not that simple
+
+    A Queue needs two different ends: elements enter at the back and leave from the
+    front. If you use a Python array and call `pop(0)` to remove the front element,
+    every remaining element has to shift one step.
+
+    Shifting once is unnoticeable. But if you remove `n` elements, the total work
+    becomes **O(n²)** — far slower than it looks. The answer is
+    `collections.deque`, which can remove the front element in **O(1)**.
+
+    ## Complexity
+
+    | Operation | Stack | Queue (`deque`) |
+    |---|---|---|
+    | Add element | O(1) | O(1) |
+    | Remove element | O(1) | O(1) |
+    | Look at the end | O(1) | O(1) |
+
+    Every core operation is **O(1)** — constant time, not growing with the amount of
+    data. That is what makes both structures building blocks for larger structures,
+    such as Tree and Graph in the next Topics.
+
+    ## Common traps
+
+    **Removing from an empty Stack.** `pop` on an empty stack is an error. In Python,
+    `pop` on an empty array raises `IndexError`. A good habit: check whether the Stack
+    is empty before removing.
+
+    **Using `pop(0)` on an array as a Queue.** This works, but it is slow, and the
+    slowness is invisible on small data. This is exactly the kind of mistake that only
+    shows up once the data is large.
+
+soal:
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah program menaruh tiga nilai ke dalam Stack secara berurutan: 1, lalu 2,
+        lalu 3. Setelah itu program memanggil `pop` dua kali dan menampilkan kedua
+        hasilnya.
+      en: |
+        A program puts three values into a Stack in order: 1, then 2, then 3. It then
+        calls `pop` twice and prints both results.
+    kode: |
+      s = Stack()
+      s.push(1)
+      s.push(2)
+      s.push(3)
+      print(s.pop())
+      print(s.pop())
+    opsi:
+      - teks:
+          id: "1, lalu 2"
+          en: "1, then 2"
+        benar: false
+      - teks:
+          id: "3, lalu 2"
+          en: "3, then 2"
+        benar: true
+      - teks:
+          id: "3, lalu 1"
+          en: "3, then 1"
+        benar: false
+      - teks:
+          id: "1, lalu 3"
+          en: "1, then 3"
+        benar: false
+    penjelasan:
+      id: |
+        Stack mengeluarkan dari ujung yang sama dengan tempat ia memasukkan. Karena
+        nilai terakhir yang masuk adalah 3, `pop` pertama mengembalikan 3. Nilai
+        berikutnya yang paling atas adalah 2, jadi `pop` kedua mengembalikan 2.
+      en: |
+        A Stack removes from the same end it inserts into. Since the last value
+        pushed was 3, the first `pop` returns 3. The next value on top is 2, so the
+        second `pop` returns 2.
+
+  - tipe: kuis
+    skenario:
+      id: |
+        Kamu membangun fitur "kembali ke halaman sebelumnya" pada sebuah aplikasi.
+        Setiap kali pengguna membuka halaman baru, halaman itu dicatat. Saat pengguna
+        menekan tombol kembali, halaman yang paling baru dibuka harus muncul lebih
+        dulu, dan setelah itu barulah halaman sebelumnya lagi.
+      en: |
+        You are building a "back to the previous page" feature in an application.
+        Each time the user opens a new page, that page is recorded. When the user
+        presses the back button, the most recently opened page must appear first,
+        followed by the one before it.
+    opsi:
+      - teks:
+          id: Queue, karena halaman dilayani menurut urutan kedatangan
+          en: Queue, because pages are served in arrival order
+        benar: false
+      - teks:
+          id: Stack, karena yang terakhir dibuka harus keluar lebih dulu
+          en: Stack, because the last one opened must come out first
+        benar: true
+      - teks:
+          id: Hash Table, karena halaman perlu dicari berdasarkan alamatnya
+          en: Hash Table, because pages must be looked up by address
+        benar: false
+      - teks:
+          id: Linked List, karena halaman perlu disimpan berurutan
+          en: Linked List, because pages must be stored in order
+        benar: false
+    penjelasan:
+      id: |
+        Aturannya "yang terakhir masuk keluar lebih dulu" persis aturan Stack. Queue
+        akan membalik perilakunya: halaman yang paling lama dibuka akan muncul lebih
+        dulu, dan itu bukan yang diinginkan pengguna.
+      en: |
+        The rule "last in, first out" is exactly the Stack rule. A Queue would reverse
+        the behaviour: the page opened longest ago would appear first, which is not
+        what the user wants.
+
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah program memeriksa apakah tanda kurung pada sebuah teks seimbang.
+        Setiap kali menemukan `(`, ia menaruhnya ke dalam Stack. Setiap kali
+        menemukan `)`, ia mengambil satu dari Stack. Teks yang diperiksa adalah
+        `(()` — dua kurung buka, lalu satu kurung tutup.
+      en: |
+        A program checks whether the brackets in a piece of text are balanced. Each
+        time it sees `(`, it puts one into a Stack. Each time it sees `)`, it takes
+        one out. The text being checked is `(()` — two opening brackets, then one
+        closing bracket.
+    kode: |
+      teks = "(()"
+      tumpukan = Stack()
+      for huruf in teks:
+          if huruf == "(":
+              tumpukan.push(huruf)
+          else:
+              tumpukan.pop()
+      print(tumpukan.kosong())
+    opsi:
+      - teks:
+          id: "True, karena kurungnya seimbang"
+          en: "True, because the brackets are balanced"
+        benar: false
+      - teks:
+          id: "False, karena masih ada satu kurung yang belum ditutup"
+          en: "False, because one bracket is still unclosed"
+        benar: true
+      - teks:
+          id: "True, karena Stack sudah pernah diisi"
+          en: "True, because the Stack was filled at some point"
+        benar: false
+      - teks:
+          id: "False, karena Stack tidak bisa menyimpan kurung"
+          en: "False, because a Stack cannot store brackets"
+        benar: false
+    penjelasan:
+      id: |
+        Dua kurung buka dimasukkan, satu kurung tutup mengeluarkan satu. Sisa satu
+        kurung di dalam Stack, jadi tumpukannya tidak kosong dan jawabannya `False`.
+        Pola ini adalah cara paling umum memakai Stack: memasukkan sesuatu untuk
+        ditutup nanti.
+      en: |
+        Two opening brackets go in, one closing bracket takes one out. One bracket
+        remains in the Stack, so the stack is not empty and the answer is `False`.
+        This pattern is the most common use of a Stack: pushing something to be
+        closed later.
+
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah kantor mengirim dokumen ke satu printer bersama. Dokumen yang dikirim
+        paling awal harus dicetak paling awal, supaya tidak ada pekerjaan yang
+        tertahan tanpa alasan.
+      en: |
+        An office sends documents to one shared printer. The document sent first must
+        be printed first, so that no job is held back without reason.
+    opsi:
+      - teks:
+          id: Stack, karena yang terakhir dikirim harus dicetak dulu
+          en: Stack, because the last one sent must be printed first
+        benar: false
+      - teks:
+          id: Queue, karena yang pertama dikirim harus dicetak dulu
+          en: Queue, because the first one sent must be printed first
+        benar: true
+      - teks:
+          id: Stack, karena printer mencetak dari halaman terakhir
+          en: Stack, because the printer prints from the last page
+        benar: false
+      - teks:
+          id: Queue, karena Queue selalu lebih cepat daripada Stack
+          en: Queue, because a Queue is always faster than a Stack
+        benar: false
+    penjelasan:
+      id: |
+        Urutan "pertama datang, pertama dilayani" adalah Queue. Perhatikan bahwa
+        pilihan yang menyebut Stack karena "lebih cepat" juga salah: Stack dan Queue
+        sama-sama O(1) untuk operasi intinya, jadi kecepatan bukan pembedanya. Yang
+        membedakan adalah urutan keluar.
+      en: |
+        "First come, first served" is a Queue. Note that the option blaming Stack for
+        being "slower" is also wrong: Stack and Queue are both O(1) for their core
+        operations, so speed is not the difference. The difference is the removal
+        order.
+
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah program memakai satu array sebagai Queue. Ia memasukkan tiga nilai
+        dengan `append`, lalu mengeluarkan yang paling depan dengan `pop(0)`.
+        Program dijalankan pada 100.000 nilai, dan terasa jauh lebih lambat daripada
+        yang diharapkan.
+      en: |
+        A program uses a single array as a Queue. It adds three values with `append`,
+        then removes the front one with `pop(0)`. The program is run on 100,000
+        values, and it feels far slower than expected.
+    opsi:
+      - teks:
+          id: Karena `pop(0)` harus menggeser seluruh elemen sisanya, sehingga totalnya O(n²)
+          en: Because `pop(0)` has to shift every remaining element, making the total O(n²)
+        benar: true
+      - teks:
+          id: Karena array Python tidak bisa menyimpan lebih dari 10.000 nilai
+          en: Because a Python array cannot hold more than 10,000 values
+        benar: false
+      - teks:
+          id: Karena `append` memeriksa seluruh isi array setiap kali dipanggil
+          en: Because `append` checks the whole array on every call
+        benar: false
+      - teks:
+          id: Karena Queue memang selalu lebih lambat daripada Stack
+          en: Because a Queue is always slower than a Stack
+        benar: false
+    penjelasan:
+      id: |
+        Mengeluarkan elemen pertama sebuah array memaksa semua elemen setelahnya
+        bergeser satu langkah. Satu kali bergeser murah, tetapi dilakukan `n` kali
+        menjadi **O(n²)**. Penggantinya adalah `collections.deque`, yang mengeluarkan
+        elemen depan dalam **O(1)**. Inilah sebabnya implementasi Queue jarang
+        memakai array biasa.
+      en: |
+        Removing the first element of an array forces every element after it to shift
+        one step. Shifting once is cheap, but doing it `n` times becomes **O(n²)**.
+        The replacement is `collections.deque`, which removes the front element in
+        **O(1)**. This is why Queue implementations rarely use a plain array.
+
+  - tipe: soal-kode
+    skenario:
+      id: |
+        Tulis dari nol sebuah struktur Stack, lalu pakai struktur itu untuk
+        menjalankan serangkaian perintah. Kamu menerima daftar perintah, dan harus
+        mengembalikan daftar hasil untuk setiap perintah yang menghasilkan nilai.
+
+        Setiap perintah adalah daftar. Perintah `["push", x]` menaruh `x` ke atas
+        tumpukan dan tidak menghasilkan nilai. Perintah `["pop"]` mengambil nilai
+        paling atas dan hasilnya dicatat. Perintah `["top"]` melihat nilai paling
+        atas tanpa membuangnya. Perintah `["kosong"]` mengembalikan `True` kalau
+        tumpukan kosong.
+
+        Untuk perintah yang tidak menghasilkan nilai, catat `None`.
+
+        Jangan memakai `list` sebagai pengganti kelas Stack — implementasikan
+        `push`, `pop`, `top`, dan `kosong` sendiri, supaya kamu merasakan mekanisme
+        internalnya.
+      en: |
+        Write a Stack structure from scratch, then use it to run a series of
+        commands. You receive a list of commands, and must return a list of results
+        for each command that produces a value.
+
+        Each command is a list. The command `["push", x]` puts `x` on top of the
+        stack and produces no value. The command `["pop"]` removes the top value and
+        its result is recorded. The command `["top"]` looks at the top value without
+        discarding it. The command `["kosong"]` returns `True` if the stack is empty.
+
+        For commands that produce no value, record `None`.
+
+        Do not use `list` in place of a Stack class — implement `push`, `pop`, `top`,
+        and `kosong` yourself, so that you feel the internal mechanism.
+    fungsi: proses
+    test_case:
+      - argumen:
+          - - ["push", 1]
+            - ["push", 2]
+            - ["pop"]
+            - ["top"]
+        diharapkan: [null, null, 2, 1]
+      - argumen:
+          - - ["kosong"]
+            - ["push", 5]
+            - ["kosong"]
+        diharapkan: [true, null, false]
+      - argumen:
+          - - ["push", 1]
+            - ["push", 2]
+            - ["push", 3]
+            - ["pop"]
+            - ["pop"]
+            - ["pop"]
+            - ["kosong"]
+        diharapkan: [null, null, null, 3, 2, 1, true]
+      - argumen:
+          - - ["push", "a"]
+            - ["top"]
+            - ["push", "b"]
+            - ["top"]
+        diharapkan: [null, "a", null, "b"]
+    solusi_referensi: |
+      class Stack:
+          def __init__(self):
+              self._data = []
+
+          def push(self, nilai):
+              self._data.append(nilai)
+
+          def pop(self):
+              if not self._data:
+                  raise IndexError("Stack kosong")
+              return self._data.pop()
+
+          def top(self):
+              if not self._data:
+                  raise IndexError("Stack kosong")
+              return self._data[-1]
+
+          def kosong(self):
+              return len(self._data) == 0
+
+
+      def proses(perintah):
+          tumpukan = Stack()
+          hasil = []
+          for perintah_satu in perintah:
+              operasi = perintah_satu[0]
+              if operasi == "push":
+                  tumpukan.push(perintah_satu[1])
+                  hasil.append(None)
+              elif operasi == "pop":
+                  hasil.append(tumpukan.pop())
+              elif operasi == "top":
+                  hasil.append(tumpukan.top())
+              elif operasi == "kosong":
+                  hasil.append(tumpukan.kosong())
+          return hasil

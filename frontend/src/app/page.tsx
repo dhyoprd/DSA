@@ -1,13 +1,19 @@
+import Link from "next/link";
+
+import { konten } from "@/lib/konten/muat.ts";
+
 import { BackendStatus } from "./backend-status";
 
 /**
  * Halaman awal — kerangka statis.
  *
- * Isinya sengaja kosong dari Materi: Fase 1 membangun satu Topik (Stack) utuh
- * lewat ticket Skema Topik dan Halaman Topik. Yang ada di sini hanya bukti
- * bahwa tiga bagian repo bisa dinyalakan bersama.
+ * Isinya sengaja kosong dari Materi: navigasi Jalur yang sesungguhnya (sidebar 12
+ * Topik, penanda Progres, label "segera") adalah lingkup ticket #4. Yang ada di sini
+ * hanya tautan ke Topik yang sudah punya berkas, supaya rantai Materi bisa dicoba.
  */
 export default function HomePage() {
+  const { topik } = konten();
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center gap-6 px-6 py-16">
       <p
@@ -22,9 +28,23 @@ export default function HomePage() {
       </h1>
 
       <p className="text-base leading-relaxed" style={{ color: "var(--color-muted)" }}>
-        Antarmuka Next.js, backend Rust, dan folder Materi berjalan bersama. Materi,
-        Kuis, dan Soal Kode menyusul di ticket berikutnya.
+        Antarmuka Next.js, backend Rust, dan folder Materi berjalan bersama. Kuis dan
+        Soal Kode menyusul di ticket berikutnya.
       </p>
+
+      <ul className="flex flex-col gap-2">
+        {topik.map((t) => (
+          <li key={t.slug}>
+            <Link
+              href={`/topik/${t.slug}`}
+              className="font-medium underline underline-offset-4"
+              style={{ color: "var(--color-accent)" }}
+            >
+              {t.judul.id}
+            </Link>
+          </li>
+        ))}
+      </ul>
 
       <BackendStatus />
     </main>

@@ -12,7 +12,7 @@ ada di `CONTEXT.md`. Keputusan arsitektur ada di `docs/adr/`.
 |---|---|
 | `frontend/` | Antarmuka Next.js (App Router, TypeScript, Tailwind) |
 | `backend/` | Backend Rust (axum) — Eksekusi Kode, Progres, Catatan |
-| `content/` | Satu berkas YAML per Topik, dibaca saat build |
+| `content/` | `jalur.yaml` (daftar 12 Topik) + satu berkas YAML per Topik, dibaca saat build |
 
 ## Menyalakan
 
@@ -83,7 +83,23 @@ cd frontend && npm install && npm run dev
 ```bash
 cd backend && cargo test          # uji integrasi di batas API
 cd frontend && npm run typecheck  # pemeriksaan tipe
+cd frontend && npm test           # uji gerbang validasi konten
 ```
+
+`npm test` memakai test runner bawaan Node (`node --test`), jadi tidak ada framework
+uji tambahan. Yang diuji adalah aturan konten dan pemuatan berkas sungguhan dari
+`content/` — bukan komponen React, sesuai keputusan di issue #1 bahwa tampilan
+diperiksa manual.
+
+## Gerbang validasi konten
+
+Build **gagal** kalau isi `content/` tidak sah: field wajib hilang, Materi tidak
+lengkap di kedua bahasa, jumlah Kuis bukan 5, ada Kuis yang tidak punya tepat satu
+jawaban benar, atau `prasyarat` menunjuk Topik yang tidak ada.
+
+Gerbangnya berjalan dari `frontend/next.config.ts`, jadi ia aktif pada `next build`
+**dan** `next dev` — tidak ada perintah terpisah yang bisa terlupa. Pesan kegagalan
+menyebut berkas dan lokasi masalahnya.
 
 ## Catatan: Docker Compose memperlambat loop pengembangan
 
