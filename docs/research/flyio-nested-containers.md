@@ -5,6 +5,12 @@
 **Researched:** 2026-09-30
 **Relevant ADRs:** `docs/adr/0002-eksekusi-kode-publik-risiko-diterima.md` (plans Docker + gVisor on Fly.io)
 
+> **Status verifikasi per bagian.** Temuan di bagian 1-8 dan 10 sudah melewati verifikasi adversarial terhadap sumber primer, dan sudah mengoreksi ADR-0002 serta ADR-0007.
+>
+> **Bagian 9 (Sprites) BELUM diverifikasi** dan sengaja tidak dimasukkan ke keputusan mana pun. Agen penyintesis tidak menyebutnya sama sekali. Jangan perlakukan bagian 9 sebagai fakta sebelum verifikasi selesai — lihat catatan di bawah.
+
+> **Catatan penulisan.** File ini ditulis oleh agen riset selama sesi grilling, bukan oleh pemilik proyek, dan ikut ter-commit otomatis. Isinya dipertahankan karena bersitasi primer dan berguna sebagai rujukan, tetapi ia **bukan dokumen keputusan**. Keputusan yang berlaku ada di `docs/adr/`.
+
 ---
 
 ## TL;DR
@@ -187,6 +193,8 @@ Private-network exposure is a named risk. allison (11361) warned to ensure the r
 For this project, `--network none` on the inner container is still worth keeping (defense in depth), but the VM-level policy is the boundary that matters.
 
 ## 9. Sprites — Fly's purpose-built product for this use case
+
+> ⚠️ **BELUM DIVERIFIKASI.** Bagian ini tidak melewati pemeriksaan adversarial dan tidak dipertimbangkan oleh agen penyintesis. Ia ditulis dari pembacaan dokumentasi sekilas dan belum dikonfirmasi terhadap sumber primer mana pun. Verifikasi sedang berjalan; jangan bangun apa pun di atas bagian ini sampai hasilnya keluar.
 
 [Sprites](https://docs.fly.io/sprites/index.md) are "persistent, hardware-isolated Linux environments for running arbitrary code", explicitly listing "Isolating and executing user-submitted code safely without risking the rest of your system" as a use case. Isolation is rated "Hardware-level ✓ — dedicated microVM", contrasted with "container-level isolation in serverless functions". Billing is per-second with "compute free when idle".
 
