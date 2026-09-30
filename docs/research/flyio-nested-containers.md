@@ -194,7 +194,11 @@ For this project, `--network none` on the inner container is still worth keeping
 
 ## 9. Sprites — Fly's purpose-built product for this use case
 
-> ⚠️ **BELUM DIVERIFIKASI.** Bagian ini tidak melewati pemeriksaan adversarial dan tidak dipertimbangkan oleh agen penyintesis. Ia ditulis dari pembacaan dokumentasi sekilas dan belum dikonfirmasi terhadap sumber primer mana pun. Verifikasi sedang berjalan; jangan bangun apa pun di atas bagian ini sampai hasilnya keluar.
+> ✅ **Sudah diverifikasi (2026-09-30).** Produk ini nyata dan terkonfirmasi terhadap sumber primer. Tetapi **ditolak** sebagai mekanisme eksekusi — lihat ADR-0007 untuk alasannya. Tiga klaim di bawah terbukti salah dan sudah dikoreksi:
+>
+> - ~~"billing is per-second"~~ → ditagih **per jam** menurut halaman pricing (ada kontradiksi tak terselesaikan dengan halaman overview yang menyebut per-detik).
+> - ~~"persistence suits a study site"~~ → **terbalik.** Persistence justru bahayanya: grader yang mewarisi filesystem dari submission sebelumnya bukanlah grader.
+> - ~~"policies are first-party rather than hand-rolled"~~ → **Machines juga punya Network Policies bawaan** (`POST /v1/apps/<app>/network_policies`). Klaim riset sebelumnya bahwa memblokir egress di Machine menuntut iptables sendiri terbukti salah.
 
 [Sprites](https://docs.fly.io/sprites/index.md) are "persistent, hardware-isolated Linux environments for running arbitrary code", explicitly listing "Isolating and executing user-submitted code safely without risking the rest of your system" as a use case. Isolation is rated "Hardware-level ✓ — dedicated microVM", contrasted with "container-level isolation in serverless functions". Billing is per-second with "compute free when idle".
 

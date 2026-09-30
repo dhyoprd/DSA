@@ -22,9 +22,34 @@ Backend Rust tetap ada, karena Progres dan Catatan memang butuh server. Yang ber
 
 - Runner harus di-package sebagai image terpisah dan dijaga tetap kecil, supaya boot-nya cepat.
 - Batas waktu ditegakkan dengan menghancurkan Machine, bukan dengan menghentikan proses di dalamnya.
-- Mekanisme mengembalikan hasil dari Machine yang bersifat sementara **belum ada di permukaan API publik yang terdokumentasi** (tidak ada endpoint exec publik). Ini keputusan desain yang masih terbuka: menangkap stdout, atau memakai volume.
 - Batas laju API Fly 1 permintaan/detik (burst 3) membatasi laju eksekusi. Cukup untuk satu pengguna.
 - Machine hangat bisa disiapkan untuk menyembunyikan cold start 300ms-2s, tetapi itu optimisasi, bukan kebutuhan Fase 1.
+
+## Masalah terbuka yang belum terselesaikan: pengambilan hasil
+
+**Ini risiko desain terbesar proyek ini, dan ia memblokir pembangunan ticket Eksekusi Kode.**
+
+Fly Machines **tidak punya endpoint exec yang terdokumentasi.** API resource-nya hanya mencakup lifecycle, lease, routing, dan metadata — tidak ada cara resmi untuk menjalankan perintah di dalam Machine dan membaca stdout-nya. Diverifikasi independen terhadap dokumentasi Fly.
+
+Dua jalur yang layak:
+
+1. **Runner melapor balik ke backend Rust** lewat jaringan privat 6PN. Ini menuntut policy egress yang mengizinkan **hanya** backend. Catatan penting: apakah Network Policies mencakup traffic 6PN **belum terverifikasi** — dokumentasi hanya menyebut pengecualian Fly Proxy.
+2. **Tulis hasil ke volume lalu baca kembali.** Lebih canggung, karena volume tidak bisa dibagi antar Machine.
+
+Pilih salah satu sebelum membangun apa pun. Jangan mulai dari asumsi bahwa ini akan mudah.
+
+## Hal yang harus diverifikasi secara empiris sebelum diandalkan
+
+- Apakah field `guest` benar-benar membatasi CPU dan memori seperti yang diasumsikan. Riset proyek menemukan batas resource pada nested container rusak karena tata letak cgroup Fly; `guest` adalah mekanisme berbeda, tapi belum diuji.
+- Apakah field `user` pada MachineProcess benar-benar menghasilkan proses non-root, dan apakah runner berfungsi tanpa root.
+- Apakah policy egress benar-benar memblokir 6PN dan internet sebagaimana dimaksud, mengingat pengecualian Fly Proxy.
+
+## Mekanisme egress (terkonfirmasi)
+
+Egress ditolak lewat `POST /v1/apps/<app>/network_policies`. Aturannya deny-by-default begitu ada satu rule untuk arah tersebut, dan hanya mendukung aksi allow.
+
+Dua catatan: rule baru berlaku setelah restart/redeploy, dan policy tidak mencakup traffic Fly Proxy. Bentuk yang koheren adalah deny-all-kecuali-backend.
+
 
 ## Alternatif yang ditolak
 
@@ -35,3 +60,8 @@ Backend Rust tetap ada, karena Progres dan Catatan memang butuh server. Yang ber
 **Judge0 atau Piston self-hosted.** Bobot operasionalnya tidak sebanding untuk proyek hobi satu orang: Judge0 butuh empat peran container dan sunting GRUB, dan kedua sistem itu mensyaratkan versi cgroup yang saling bertentangan.
 
 **Modal Sandboxes.** Menyediakan gVisor atau VM sebagai layanan terkelola, tanpa kernel yang harus dipelihara. Ditolak karena menambah satu penyedia eksternal dan tidak punya tier gratis khusus, padahal solusi satu-Machine sudah memakai host yang ada.
+
+**Fly Sprites.** Produk Fly yang memang dibuat untuk menjalankan kode asing — nyata, dan terverifikasi terhadap sumber primer. Ditolak karena gagal pada **dua persyaratan wajib** ADR-0002: CPU tidak bisa dibatasi (Sprites hanya mengatur memori; CPU tetap 8 vCPU dan tidak bisa diubah), dan tidak ada non-root (Sprites memberi root secara default, API privileges-nya tidak terdokumentasi). Selain itu usianya baru ~8 bulan, image environment-nya masih `v0.0.1-rc48`, dan tesis desainnya — persistence — justru kebalikan dari kebutuhan grader yang bersih per submission.
+
+Satu hal dari Sprites yang tetap berharga dan tidak boleh dilupakan: **endpoint exec-nya menunjukkan bahwa masalah pengambilan hasil itu nyata dan bisa dipecahkan.** Mesin Fly tidak punya padanannya. Diambil sebagai pelajaran, bukan sebagai produk. Dicatat di sini supaya Sprites tidak diusulkan ulang tanpa alasan baru.
+

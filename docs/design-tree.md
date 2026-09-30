@@ -53,6 +53,7 @@ Hasil sesi grilling. Setiap keputusan di bawah sudah dipilih sadar, bukan diasum
 **Backend Rust dan runner wajib di Machine BERBEDA.** Kalau digabung, keduanya berbagi kernel dan batas microVM melindungi host, bukan backend.
 **Konsekuensi yang diterima**: mesin ini tidak boleh menyimpan apa pun yang berharga. Backend yang dikompromikan bisa dipakai menyerang pihak ketiga.
 **Risiko kebijakan yang tidak hilang**: Fly's AUP melarang cryptomining dan security testing, dan ToS-nya membatasi pemakaian untuk "internal use". Mitigasi mengurangi kemungkinan, bukan menghilangkan kemungkinan akun ditangguhkan.
+**Blocker yang belum terselesaikan**: Fly Machines tidak punya endpoint exec terdokumentasi. Belum ada cara resmi menjalankan perintah di dalam Machine dan membaca stdout-nya. Ini risiko desain terbesar dan memblokir ticket Eksekusi Kode. Dua jalur: runner melapor balik ke backend lewat 6PN, atau tulis hasil ke volume.
 
 ## Koreksi setelah verifikasi (2026-09-30)
 
