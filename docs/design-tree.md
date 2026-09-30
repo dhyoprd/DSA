@@ -37,18 +37,35 @@ Hasil sesi grilling. Setiap keputusan di bawah sudah dipilih sadar, bukan diasum
 **Penyimpanan Progres**: database backend.
 **Penyimpanan Kotak Penjelasan**: database backend.
 **Autentikasi**: satu token rahasia di environment. Tanpa akun, tanpa halaman login.
-**Eksekusi Kode**: backend Rust menjalankan Python di container Docker.
+**Eksekusi Kode**: backend Rust membuat satu Machine Firecracker sekali pakai per submission (di produksi). Di lokal, runner dijalankan langsung sebagai proses Python dengan batas waktu — tanpa sandbox, karena kode yang dijalankan adalah kode sendiri.
 **Deploy**: frontend ke Vercel, backend ke Fly.io.
-**Dev loop**: Docker Compose untuk semuanya.
+**Dev loop**: Docker Compose untuk Next.js dan backend Rust. Eksekusi kode di lokal tidak lewat Docker.
 **Testing**: validasi konten saat build + integrasi API di batas backend. Tanpa unit test UI.
 
 ## Cabang 3 — Keamanan (risiko diterima sadar)
 
-**Status**: situs publik + backend menjalankan kode arbitrary. Pengguna sudah diperingatkan bahwa Docker saja tidak cukup, dan memilih melanjutkan.
-**Wajib ada**: `--network none`, `--read-only`, `--cap-drop=ALL`, `--security-opt no-new-privileges`, user non-root, batas memori/CPU/PID, timeout wajib.
+> **Dikoreksi setelah verifikasi 2026-09-30.** Versi pertama cabang ini menyebut gVisor sebagai runtime Docker di Fly.io. Itu **tidak bisa dijalankan** — lihat bagian Koreksi di bawah.
+
+**Status**: situs publik + backend menjalankan kode arbitrary. Pengguna sudah diperingatkan dan memilih melanjutkan.
+**Mekanisme**: satu Machine Firecracker sekali pakai per submission. Setiap submission mendapat kernel Linux sendiri, jadi batas isolasinya lebih kuat daripada Docker dengan gVisor.
+**Wajib ada**: egress ditolak total lewat Network Policy, batas laju per IP, pencatatan setiap eksekusi, batas ukuran kode, batas waktu yang menghancurkan Machine, batas memori/CPU lewat `guest`, user non-root.
 **Batas eksekusi**: 5 detik, 128 MB, 0,5 CPU core.
-**Runtime**: gVisor sebagai runtime Docker (`--runtime=runsc`) untuk menutup sebagian risiko container escape.
+**Backend Rust dan runner wajib di Machine BERBEDA.** Kalau digabung, keduanya berbagi kernel dan batas microVM melindungi host, bukan backend.
 **Konsekuensi yang diterima**: mesin ini tidak boleh menyimpan apa pun yang berharga. Backend yang dikompromikan bisa dipakai menyerang pihak ketiga.
+**Risiko kebijakan yang tidak hilang**: Fly's AUP melarang cryptomining dan security testing, dan ToS-nya membatasi pemakaian untuk "internal use". Mitigasi mengurangi kemungkinan, bukan menghilangkan kemungkinan akun ditangguhkan.
+
+## Koreksi setelah verifikasi (2026-09-30)
+
+Verifikasi terhadap sumber primer membatalkan dua klaim di versi pertama dokumen ini:
+
+| Klaim awal | Koreksi |
+|---|---|
+| gVisor dipasang sebagai runtime Docker di Fly (`docker run --runtime=runsc`) | **Salah.** Fly tidak punya host Docker daemon; field `runtime` tidak ada di skema MachineConfig; gVisor tidak muncul di dokumentasi Fly. Satu-satunya percobaan terdokumentasi gagal pada konfigurasi cgroup. |
+| Firecracker adalah "proyek infrastruktur tersendiri" | **Salah.** Di Fly.io Firecracker adalah default platform — setiap Machine sudah berupa microVM. "Satu Machine per submission" memakai fitur bawaan. |
+| Batas resource lewat flag Docker (`--cpus`, `--memory`) | **Salah di Fly.** Batas CPU terbukti gagal pada nested container karena ketidakcocokan cgroup v1/v2. Batas resource dipindah ke objek `guest`. |
+| `--cap-drop=ALL`, `--security-opt no-new-privileges`, `--read-only` | **Tidak punya padanan langsung** di model konfigurasi Fly. Sebagian tercakup oleh batas microVM, tidak bisa dikonfigurasi terpisah. |
+
+Keputusan yang **selamat tanpa perubahan**: backend Rust tetap ada (Progres dan Catatan memang butuh server), target deploy Fly.io tetap, dan penolakan Pyodide tetap berlaku sebagai preferensi.
 
 ## Cabang 4 — Antarmuka
 
