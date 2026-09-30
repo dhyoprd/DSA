@@ -1,0 +1,32 @@
+# Secrets — never commit. The API token from ADR-0006 lives in .env
+.env
+.env.*
+!.env.example
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+build/
+dist/
+.turbo/
+*.tsbuildinfo
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Rust
+target/
+**/*.rs.bk
+# Cargo.lock is committed on purpose — this is an application, not a library
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local tooling
+.scratch/
+*.local
