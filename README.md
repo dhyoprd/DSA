@@ -28,12 +28,18 @@ docker compose up
 Satu perintah itu menyalakan keduanya. Antarmuka memanggil backend lewat rewrite
 di server Next (`frontend/next.config.ts`), jadi tidak ada CORS.
 
-`docker compose up` belum butuh berkas `.env`. Kalau nanti backend membaca rahasia,
-salin contohnya lebih dulu dan isi nilainya:
+`docker compose up` **butuh berkas `.env`** sejak backend menyimpan Progres: backend
+menolak menyala tanpa `API_TOKEN`, supaya Progres dan Catatan tidak bisa dibaca orang
+asing yang menemukan URL-nya. Salin contohnya lebih dulu dan isi nilainya:
 
 ```bash
 cp .env.example .env
+# lalu isi API_TOKEN dengan nilai acak yang panjang, mis. `openssl rand -hex 32`
 ```
+
+Buka halaman awal di browser dan tempel token itu sekali; token disimpan di browser
+dan dipakai untuk permintaan berikutnya. Alasan token diketik di antarmuka, bukan
+dibakar saat build, ada di `docs/adr/0011-token-diketik-di-antarmuka.md`.
 
 Menghentikan: `Ctrl+C`, lalu `docker compose down`.
 
@@ -71,12 +77,16 @@ BACKEND_PORT=8180
 Backend dan antarmuka bisa dijalankan langsung di host, dan itu **lebih cepat**:
 
 ```bash
-# terminal 1
-cd backend && cargo run
+# terminal 1 — butuh API_TOKEN di environment; backend menolak menyala tanpa itu
+cd backend && API_TOKEN=$(openssl rand -hex 32) cargo run
 
 # terminal 2
 cd frontend && npm install && npm run dev
 ```
+
+Token yang dipakai backend harus sama dengan yang kamu tempel di antarmuka. Kalau
+kamu membuat token acak baru setiap kali menjalankan backend, tempel ulang token itu
+di halaman awal — token lama sudah tidak berlaku.
 
 ## Menjalankan test
 

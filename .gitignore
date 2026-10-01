@@ -14,11 +14,24 @@ dist/
 npm-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+# Ditulis ulang sendiri oleh `next dev` setiap kali dijalankan (lihat
+# node_modules/next/dist/server/lib/generate-agent-files.js). Isinya snapshot
+# petunjuk versi Next yang sedang dipakai, jadi ia artefak build seperti `.next/`:
+# membiarkannya ter-commit berarti setiap sesi menambah diff yang bukan karyanya.
+frontend/AGENTS.md
+frontend/CLAUDE.md
 
 # Rust
 target/
 **/*.rs.bk
 # Cargo.lock is committed on purpose — this is an application, not a library
+
+# Database SQLite lokal. Dibuat oleh `cargo run` di luar Docker (bawaan
+# DATABASE_PATH adalah `dsa.db` di direktori kerja). Isinya Progres dan Catatan
+# pribadi — tidak boleh ikut ter-commit.
+*.db
+*.db-shm
+*.db-wal
 
 # Editor / OS
 .vscode/*

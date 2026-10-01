@@ -9,10 +9,15 @@ publish = false
 axum = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# SQLite dipilih di docs/adr/0010-sqlite-litefs-sebagai-mesin-database.md.
+# `migrate` memberi makro `sqlx::migrate!` yang menanam berkas migrasi ke dalam binary;
+# `derive` memberi turunan `FromRow` dan sekaligus menautkan `sqlx-macros` yang
+# dibutuhkan makro migrasi itu.
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "migrate", "derive"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tower-http = { version = "0.7", features = ["trace"] }
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
-serde_json = "1"

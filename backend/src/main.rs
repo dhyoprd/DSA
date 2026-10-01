@@ -1,9 +1,9 @@
 //! Titik masuk proses backend.
 //!
-//! Hanya menangani siklus hidup: baca konfigurasi, siapkan logging, bind, sajikan.
-//! Seluruh bentuk aplikasi ada di `lib.rs`.
+//! Hanya menangani siklus hidup: baca konfigurasi, siapkan logging, buka database,
+//! bind, sajikan. Seluruh bentuk aplikasi ada di `lib.rs`.
 
-use dsa_backend::{app, config::Config};
+use dsa_backend::{app, config::Config, db, AppState};
 
 #[tokio::main]
 async fn main() {
@@ -17,13 +17,24 @@ async fn main() {
 
     let config = Config::from_env();
 
+    // Berhenti sebelum bind kalau tokennya belum diisi. Alasannya ada di `Config::periksa`.
+    config.periksa();
+
+    let pool = db::buka(&config.database_path)
+        .await
+        .unwrap_or_else(|pesan| panic!("{pesan}"));
+
+    tracing::info!(path = %config.database_path.display(), "database siap");
+
+    let state = AppState::baru(config.api_token.clone(), pool);
+
     let listener = tokio::net::TcpListener::bind(config.addr)
         .await
         .unwrap_or_else(|error| panic!("gagal bind ke {}: {error}", config.addr));
 
     tracing::info!(addr = %config.addr, "backend siap menerima permintaan");
 
-    axum::serve(listener, app())
+    axum::serve(listener, app(state))
         .await
         .expect("server berhenti dengan error");
 }

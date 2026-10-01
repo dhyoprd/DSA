@@ -3,6 +3,7 @@ import Link from "next/link";
 import { konten } from "@/lib/konten/muat.ts";
 
 import { BackendStatus } from "./backend-status";
+import { TokenForm } from "./token-form";
 
 /**
  * Halaman awal — kerangka statis.
@@ -10,6 +11,10 @@ import { BackendStatus } from "./backend-status";
  * Isinya sengaja kosong dari Materi: navigasi Jalur yang sesungguhnya (sidebar 12
  * Topik, penanda Progres, label "segera") adalah lingkup ticket #4. Yang ada di sini
  * hanya tautan ke Topik yang sudah punya berkas, supaya rantai Materi bisa dicoba.
+ *
+ * `TokenForm` adalah antarmuka tempat token dimasukkan sekali (ticket #7). Ia
+ * komponen klien, jadi halaman ini tetap statis dan Materi tetap terbaca walaupun
+ * backend mati.
  */
 export default function HomePage() {
   const { topik } = konten();
@@ -47,6 +52,7 @@ export default function HomePage() {
       </ul>
 
       <BackendStatus />
+      <TokenForm />
     </main>
   );
 }

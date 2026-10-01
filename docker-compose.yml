@@ -17,12 +17,22 @@ services:
       HOST: "0.0.0.0"
       PORT: "8080"
       RUST_LOG: "dsa_backend=info,tower_http=info"
+      # Token rahasia (ADR-0006). Tanpa ini backend menolak menyala — lihat
+      # `Config::periksa`. Nilainya dibaca Compose dari `.env` di akar repo.
+      API_TOKEN: "${API_TOKEN:?API_TOKEN belum diisi. Salin .env.example menjadi .env, lalu isi nilainya.}"
+      # Berkas database SQLite. Diarahkan ke dalam volume bernama di bawah, bukan ke
+      # direktori kode, supaya `docker compose restart` tidak menghapusnya dan isinya
+      # tidak tercampur berkas dari host.
+      DATABASE_PATH: "/data/dsa.db"
     volumes:
       # Kode di-bind supaya perubahan langsung terpakai.
       - ./backend:/app
       # `target/` dipisah ke volume bernama supaya hasil kompilasi Linux tidak
       # tercampur artefak Windows dan tidak ikut ter-bind dari host.
       - cargo-target:/app/target
+      # Database bertahan antar restart. Di produksi, berkas ini hidup di Fly Volume
+      # dan direplikasi LiteFS (ADR-0010); di lokal cukup volume biasa.
+      - data-db:/data
 
   frontend:
     build:
@@ -57,3 +67,6 @@ services:
 
 volumes:
   cargo-target:
+  # Berkas SQLite backend. Volume bernama, bukan bind ke host, supaya berkas
+  # database tidak ikut terlihat git dan tidak tercampur antar mesin.
+  data-db:

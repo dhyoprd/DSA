@@ -6,6 +6,8 @@
 use axum::{routing::get, Json, Router};
 use serde::Serialize;
 
+use crate::state::AppState;
+
 /// Bentuk balasan `GET /api/health`.
 #[derive(Debug, Serialize)]
 pub struct HealthResponse {
@@ -16,7 +18,12 @@ pub struct HealthResponse {
 }
 
 /// Kumpulan route yang dimiliki modul ini.
-pub fn routes() -> Router {
+///
+/// Tipe `Router<AppState>` ditulis walaupun handler ini tidak memakai state: semua
+/// route harus memakai tipe state yang sama agar bisa digabung di `routes::router`.
+/// Handler-nya sendiri tetap tidak menerima `State`, jadi tidak ada ketergantungan
+/// yang muncul hanya karena anotasi ini.
+pub fn routes() -> Router<AppState> {
     Router::new().route("/api/health", get(health))
 }
 
