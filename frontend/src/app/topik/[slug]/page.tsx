@@ -8,6 +8,7 @@ import { susunNavigasi } from "@/lib/konten/navigasi.ts";
 import { nomorDuaDigit } from "@/lib/konten/nomor.ts";
 
 import { DaftarIsi } from "../daftar-isi.tsx";
+import { PengalihTema } from "../../pengalih-tema.tsx";
 import { Sidebar } from "../sidebar.tsx";
 
 /**
@@ -24,7 +25,11 @@ import { Sidebar } from "../sidebar.tsx";
  * `id` bagian ke dua tempat yang harus sepakat.
  *
  * Belum ada di sini, dan memang bukan lingkup ticket ini: pengalih bahasa (#12),
- * tema (#5), Progres dari backend (#8), Kuis (#6), dan Soal Kode (#10).
+ * Progres dari backend (#8), Kuis (#6), dan Soal Kode (#10).
+ *
+ * `PengalihTema` (#5) sudah ada di halaman ini. Ia komponen klien, tetapi halaman
+ * tetap statis: yang dirender server hanyalah tombolnya, dan temanya sendiri dipasang
+ * skrip sebaris di `layout.tsx` sebelum cat pertama.
  */
 export function generateStaticParams(): { slug: string }[] {
   return konten().topik.map((topik) => ({ slug: topik.slug }));
@@ -76,6 +81,18 @@ export default async function HalamanTopik({
    */
   return (
     <div className="mx-auto max-w-[84rem] px-5 py-8 sm:px-8 lg:py-12">
+      {/*
+        Pengalih tema di kanan atas, mengikuti aliran halaman. Diletakkan **di luar**
+        grid supaya ia tidak mengambil kolom dari daftar isi di layar lebar, dan tidak
+        menambah tinggi baris pertama grid di layar sempit.
+
+        Ia sengaja tidak mengapung: pengalih yang selalu terlihat akan menutupi Materi
+        atau pita Jalur di layar HP, dan tema jarang diubah saat membaca.
+      */}
+      <div className="mb-4 flex justify-end">
+        <PengalihTema />
+      </div>
+
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[15rem_minmax(0,1fr)_13rem] lg:gap-12">
         <aside className="order-1 lg:col-start-1">
           <Sidebar baris={navigasi} slugAktif={topik.slug} />

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { konten } from "@/lib/konten/muat.ts";
 
 import { BackendStatus } from "./backend-status";
+import { PengalihTema } from "./pengalih-tema.tsx";
 import { TokenForm } from "./token-form";
 
 /**
@@ -21,6 +22,13 @@ export default function HomePage() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center gap-6 px-6 py-16">
+      {/* Pengalih tema juga ada di sini: halaman awal adalah halaman pertama yang
+          dibuka, dan pemakai yang ingin tema gelap tidak seharusnya perlu masuk ke
+          sebuah Topik lebih dulu untuk mengubahnya. */}
+      <div className="flex justify-end">
+        <PengalihTema />
+      </div>
+
       <p
         className="font-mono text-xs tracking-widest uppercase"
         style={{ color: "var(--color-muted)" }}
@@ -28,7 +36,7 @@ export default function HomePage() {
         Situs belajar DSA
       </p>
 
-      <h1 className="text-4xl leading-tight font-semibold tracking-tight sm:text-5xl">
+      <h1 className="text-4xl leading-tight font-semibold tracking-tight">
         Kerangka tiga bagian sudah menyala.
       </h1>
 

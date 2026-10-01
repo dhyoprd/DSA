@@ -1,30 +1,218 @@
 @import "tailwindcss";
 
-/* Inter diikat ke `font-sans`, jadi kelas `font-sans` memakai variabel dari next/font. */
+/*
+ * ============================================================================
+ * Sistem desain — token warna, huruf, dan spasi
+ * ============================================================================
+ *
+ * Gaya Swiss/International (docs/design-tree.md): tenang, tipografi-led, satu
+ * warna aksen. Nilai yang perlu dipakai bersama — warna, huruf, dan skala tipe —
+ * didefinisikan sebagai **custom properties** di berkas ini, dan komponen
+ * membacanya lewat `var()` atau lewat kelas Tailwind yang memakai token itu.
+ *
+ * Yang **tidak** lewat token: jarak di dalam komponen, yang memakai kelas Tailwind
+ * langsung (`gap-8`, `px-5`, `p-4`). Itu disengaja — Tailwind sudah punya tangga
+ * spasinya sendiri, dan `--space-*` di bawah dipakai untuk jarak yang perlu konsisten
+ * lintas halaman, bukan untuk menggantikan setiap `p-4`. Dua tangga ini hidup
+ * berdampingan; jangan menyimpulkan salah satunya tidak ada.
+ *
+ * Aturan penempatan token, dan alasannya:
+ *
+ * - `@theme` — token yang perlu **melahirkan kelas utilitas** (`text-lg`, `font-mono`).
+ *   Tailwind memangkas variabel `@theme` yang tidak dipakai utilitas mana pun, jadi
+ *   token yang hidup di sini hanya bertahan kalau memang ada yang memakainya.
+ * - `:root` biasa — token yang dibaca langsung lewat `var()` dari CSS atau dari
+ *   atribut `style` di JSX. Ini **tidak pernah dipangkas**, sehingga aman dijadikan
+ *   sumber tunggal.
+ *
+ * Salah menaruh token di antara keduanya menghasilkan kegagalan senyap: variabelnya
+ * hilang dari CSS keluaran, dan `var()` yang menunjuk ke sana menjadi tidak sah.
+ */
+
+/*
+ * Seluruh tema di situs ini lewat token `var(--color-*)` di bawah, bukan lewat kelas
+ * `dark:`. Itu disengaja: satu nilai per token, dan `light-dark()` yang memilih.
+ *
+ * **Jebakan bagi yang menambah kelas `dark:` nanti.** Varian `dark:` bawaan Tailwind
+ * hanya membaca `prefers-color-scheme`, sehingga ia **mengabaikan pengalih tema
+ * manual** — kelasnya akan tetap terang saat pemakai memilih "Gelap". Kalau suatu saat
+ * kelas `dark:` memang dibutuhkan, variannya harus didefinisikan lebih dulu:
+ *
+ *     @custom-variant dark {
+ *       @media (prefers-color-scheme: dark) {
+ *         &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+ *           @slot;
+ *         }
+ *       }
+ *       &:where([data-theme="dark"], [data-theme="dark"] *) {
+ *         @slot;
+ *       }
+ *     }
+ *
+ * Selama token di bawah sudah cukup — dan sekarang cukup — varian itu sengaja tidak
+ * dipasang: abstraksi tanpa pemakai adalah beban, bukan keamanan.
+ */
+
+/*
+ * Huruf.
+ *
+ * **Inter adalah satu-satunya keluarga huruf yang diunduh**, dan ia diikat ke
+ * `font-sans` lewat `var(--font-inter)` yang dipasang `next/font` di `layout.tsx`.
+ * Itu yang membuat "font Inter dipakai di seluruh situs" berlaku tanpa ada nama
+ * keluarga huruf yang ditulis di komponen.
+ *
+ * `--font-mono` bukan keluarga huruf kedua yang diunduh: ia tumpukan **huruf sistem**
+ * (tidak ada berkas yang diambil dari jaringan) yang dipakai untuk kode dan angka
+ * meta. Angka meta memerlukannya supaya lebarnya seragam — nomor `01`–`12` di sidebar
+ * dan penanda "04 / 12" akan bergoyang kalau memakai huruf proporsional. Tumpukan ini
+ * sudah dipakai `.materi :where(code)` sebelum ticket #5; di sini ia hanya dijadikan
+ * token bernama, sehingga tidak ada dua tumpukan monospace yang berbeda di satu situs.
+ */
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 /*
- * Token dasar. Warna mengikuti preferensi sistem — itu default yang ditetapkan di
- * docs/design-tree.md ("default mengikuti sistem"). Pengalih tema manual dan skala
- * tipe lengkap adalah lingkup ticket Design system; di sini hanya yang dibutuhkan
- * scaffold supaya halaman terbaca.
+ * Skala tipe. Ditempatkan di `@theme` supaya kelas seperti `text-sm` dan `text-4xl`
+ * ikut memakai skala ini, bukan bawaan Tailwind — satu skala, bukan dua.
+ *
+ * Ukuran judul memakai `clamp()` supaya mengecil di layar sempit tanpa media query
+ * terpisah, dan `--text-*--line-height` disetel berdampingan karena judul besar
+ * membutuhkan `line-height` lebih rapat daripada teks badan.
  */
-:root {
-  --color-bg: #ffffff;
-  --color-fg: #111111;
-  --color-muted: #6b7280;
-  --color-border: #e5e7eb;
-  --color-accent: #e0342b;
+@theme {
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.5;
+
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.6;
+
+  --text-base: clamp(1rem, 0.97rem + 0.15vw, 1.0625rem);
+  --text-base--line-height: 1.7;
+
+  --text-lg: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+  --text-lg--line-height: 1.6;
+
+  --text-xl: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
+  --text-xl--line-height: 1.45;
+
+  --text-2xl: clamp(1.5rem, 1.35rem + 0.6vw, 1.875rem);
+  --text-2xl--line-height: 1.35;
+
+  --text-3xl: clamp(1.75rem, 1.5rem + 1vw, 2.5rem);
+  --text-3xl--line-height: 1.25;
+
+  --text-4xl: clamp(2.125rem, 1.75rem + 1.6vw, 3.25rem);
+  --text-4xl--line-height: 1.15;
 }
 
-@media (prefers-color-scheme: dark) {
+/*
+ * Warna.
+ *
+ * `light-dark()` dipilih daripada dua blok nilai terpisah: dengan begitu setiap
+ * warna **ditulis satu kali**, dan peralihan tema hanya mengubah `color-scheme` di
+ * bawah. Alternatifnya — satu blok terang dan satu blok gelap berisi nama token yang
+ * sama — membuat setiap penambahan token harus dikerjakan dua kali, dan token yang
+ * terlupa di salah satu blok menjadi bug yang hanya terlihat di satu tema.
+ *
+ * **`light-dark()` tidak sampai ke peramban apa adanya.** Lightning CSS — bagian dari
+ * pipeline Tailwind 4 — menurunkannya saat build menjadi pasangan variabel
+ * `--lightningcss-light` / `--lightningcss-dark` yang nilainya diatur oleh aturan
+ * `color-scheme` di bawah. Jadi `color-scheme` bukan sekadar memberi tahu peramban
+ * warna kontrol bawaannya; ia **mekanisme yang menjalankan seluruh peralihan warna**.
+ * Kalau aturan `color-scheme` di bawah dihapus, warnanya berhenti mengikuti tema.
+ * Diverifikasi dengan memeriksa CSS hasil build (tidak ada `light-dark(` di keluaran)
+ * dan dengan mengukur `getComputedStyle` di Chromium pada kedua tema.
+ *
+ * **Aksen.** docs/design-tree.md menetapkan merah `#e0342b`. Nilai itu gagal ambang
+ * kontras WCAG AA di kedua tema (4,47:1 di terang, 4,43:1 di gelap; ambangnya 4,50:1
+ * untuk teks normal), dan aksen ini dipakai untuk tautan di dalam Materi serta tombol
+ * utama. Warnanya disetel per tema — hue merah yang sama, hanya gelap-terangnya —
+ * sehingga lulus AA di keduanya. Penyimpangan dari design-tree.md ini dicatat di
+ * docs/adr/0012.
+ */
+:root {
+  --color-bg: light-dark(#ffffff, #0a0a0a);
+  --color-fg: light-dark(#111111, #f5f5f5);
+  --color-muted: light-dark(#5c6370, #a3a3a3);
+  --color-border: light-dark(#e5e7eb, #2a2a2a);
+  --color-accent: light-dark(#c9302a, #ff5f52);
+  /* Teks di atas aksen. Terang di tema terang, gelap di tema gelap — kebalikan dari
+     tombol biasa, karena aksennya sendiri yang berbalik. Tanpa token ini, teks putih
+     di atas aksen gelap akan kehilangan kontras. */
+  --color-accent-fg: light-dark(#ffffff, #0a0a0a);
+}
+
+/*
+ * Peralihan tema.
+ *
+ * Tanpa `[data-theme]`, `light dark` membuat peramban mengikuti pengaturan sistem —
+ * itu default-nya. Atribut yang dipasang pengalih tema (atau skrip sebaris di
+ * `layout.tsx`) menimpanya. Urutannya penting: `:root[data-theme=...]` berjalan
+ * belakangan dan kekhususannya lebih tinggi daripada `:root`.
+ *
+ * `color-scheme` juga memberi tahu peramban tema kontrol bawaannya — bilah gulir,
+ * kursor teks, dan kontrol formulir — sehingga tidak ada bagian yang tertinggal
+ * terang saat halaman sudah gelap.
+ */
+:root {
+  color-scheme: light dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/*
+ * Spasi.
+ *
+ * Tangga ini **lengkap dengan sengaja**, berbeda dari token lain di berkas ini yang
+ * hanya ada kalau sudah ada pemakainya. Alasannya: tangga spasi adalah hasil ticket
+ * #5 itu sendiri — kosakata yang dipakai bersama, bukan abstraksi yang menunggu
+ * kebutuhan. Ticket berikutnya (Kuis #6, Progres #8, Soal Kode #10, Pencarian #13)
+ * memilih anak tangga dari sini alih-alih menulis angka sendiri, dan itulah yang
+ * membuat jarak antar halaman terasa satu sistem.
+ *
+ * Kelipatan 4px sampai 64px; anak tangga terbesar untuk jeda antar bagian.
+ *
+ * Sengaja **tidak** mengubah `--spacing` Tailwind: nilai itu adalah satuan dasar
+ * seluruh kelas `p-*`, `gap-*`, dan `m-*`, dan mengubahnya akan menggeser tata letak
+ * setiap komponen yang sudah ada sekaligus.
+ */
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 2.5rem;
+  --space-8: 4rem;
+
+  /* Sudut. Dua tingkat: elemen kecil (kode sebaris, tombol) dan wadah (blok kode). */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+
+  /* Gerak. Durasinya pendek dengan sengaja: peralihan tema dan hover harus terasa
+     seketika, bukan menjadi animasi yang harus ditunggu. */
+  --dur-cepat: 150ms;
+}
+
+/*
+ * Gerak yang bisa dimatikan pemakai.
+ *
+ * `docs/design-tree.md` tidak menyebut ini, tetapi peralihan warna yang tidak bisa
+ * dimatikan adalah masalah aksesibilitas yang nyata. Transisinya dipertahankan
+ * sebagai deklarasi, hanya durasinya yang dijadikan nol.
+ */
+@media (prefers-reduced-motion: reduce) {
   :root {
-    --color-bg: #0a0a0a;
-    --color-fg: #f5f5f5;
-    --color-muted: #a3a3a3;
-    --color-border: #2a2a2a;
+    --dur-cepat: 0ms;
   }
 }
 
@@ -37,9 +225,7 @@ body {
  * Gaya Materi yang dirender dari Markdown.
  *
  * Cakupannya sengaja terbatas pada "terbaca": lebar baca, jarak antar bagian, blok
- * kode yang bisa digulir, dan tabel yang tidak merusak tata letak di HP. Skala tipe,
- * skala spasi, dan token warna lengkap adalah lingkup ticket Design system (#5);
- * nilai di bawah memakai token yang sudah ada supaya tidak lahir sumber token kedua.
+ * kode yang bisa digulir, dan tabel yang tidak merusak tata letak di HP.
  *
  * Memakai `:where()` supaya kekhususan nol: halaman atau komponen yang ingin
  * menimpa salah satunya bisa melakukannya dengan kelas biasa, tanpa `!important`.
@@ -52,19 +238,19 @@ body {
   line-height: 1.25;
   font-weight: 600;
   letter-spacing: -0.01em;
-  margin-block: 2.5rem 1rem;
+  margin-block: var(--space-7) var(--space-4);
 }
 
 .materi :where(h1) {
-  font-size: 1.75rem;
+  font-size: var(--text-2xl);
 }
 
 .materi :where(h2) {
-  font-size: 1.4rem;
+  font-size: var(--text-xl);
 }
 
 .materi :where(h3) {
-  font-size: 1.15rem;
+  font-size: var(--text-lg);
 }
 
 .materi :where(h1, h2, h3, h4):first-child {
@@ -72,11 +258,11 @@ body {
 }
 
 .materi :where(p, ul, ol) {
-  margin-block: 1rem;
+  margin-block: var(--space-4);
 }
 
 .materi :where(ul, ol) {
-  padding-inline-start: 1.5rem;
+  padding-inline-start: var(--space-5);
 }
 
 .materi :where(ul) {
@@ -88,7 +274,7 @@ body {
 }
 
 .materi :where(li) {
-  margin-block: 0.4rem;
+  margin-block: var(--space-2);
 }
 
 .materi :where(a) {
@@ -104,22 +290,22 @@ body {
 /* Kode sebaris dan blok kode. Blok kode digulir mendatar, bukan membungkus,
    karena pembungkusan membuat indentasi Python tidak terbaca. */
 .materi :where(code) {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.875em;
 }
 
 .materi :where(:not(pre) > code) {
   background: color-mix(in srgb, var(--color-fg) 8%, transparent);
-  border-radius: 0.25rem;
+  border-radius: var(--radius-sm);
   padding: 0.15em 0.35em;
 }
 
 .materi :where(pre) {
   background: color-mix(in srgb, var(--color-fg) 6%, transparent);
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
-  padding: 1rem 1.15rem;
-  margin-block: 1.5rem;
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-block: var(--space-5);
   overflow-x: auto;
 }
 
@@ -132,7 +318,7 @@ body {
 .materi :where(pre code[data-bahasa])::before {
   content: attr(data-bahasa);
   display: block;
-  margin-block-end: 0.5rem;
+  margin-block-end: var(--space-2);
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -141,19 +327,19 @@ body {
 
 /* Tabel dibungkus agar bisa digulir mendatar di layar sempit. */
 .materi :where(.tabel-gulir) {
-  margin-block: 1.5rem;
+  margin-block: var(--space-5);
   overflow-x: auto;
 }
 
 .materi :where(table) {
   border-collapse: collapse;
   inline-size: 100%;
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
 }
 
 .materi :where(th, td) {
   border: 1px solid var(--color-border);
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   text-align: start;
 }
 
@@ -164,13 +350,13 @@ body {
 
 .materi :where(blockquote) {
   border-inline-start: 3px solid var(--color-accent);
-  padding-inline-start: 1rem;
-  margin-block: 1.5rem;
+  padding-inline-start: var(--space-4);
+  margin-block: var(--space-5);
   color: var(--color-muted);
 }
 
 .materi :where(hr) {
   border: 0;
   border-block-start: 1px solid var(--color-border);
-  margin-block: 2.5rem;
+  margin-block: var(--space-7);
 }

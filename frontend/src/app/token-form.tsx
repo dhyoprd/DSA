@@ -168,7 +168,13 @@ export function TokenForm() {
             type="submit"
             disabled={keadaan.kind === "menyimpan"}
             className="rounded px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-            style={{ background: "var(--color-accent)", color: "white" }}
+            /*
+             * `--color-accent-fg`, bukan `white`. Di tema gelap aksennya adalah merah
+             * terang, dan teks putih di atasnya hanya mencapai kontras 2,8:1 —
+             * di bawah ambang. Token ini yang tahu warna teks yang benar untuk
+             * masing-masing tema.
+             */
+            style={{ background: "var(--color-accent)", color: "var(--color-accent-fg)" }}
           >
             {keadaan.kind === "menyimpan" ? "Memeriksa…" : "Simpan"}
           </button>
