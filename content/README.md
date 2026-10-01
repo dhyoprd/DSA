@@ -50,10 +50,10 @@ ia bekerja pada nilai JavaScript biasa, jadi bisa diuji tanpa membuat berkas con
 
 ## Isi saat ini
 
-`stack.yaml` masih **draf**. Tulisannya cukup untuk membuktikan rantai ujung ke ujung
-(skema, gerbang, render), bukan Materi final. Ticket #4 (Halaman Topik), #6 (5 Kuis),
-dan #10 (Soal Kode) menggantinya dengan isi sungguhan. Topik selain Stack belum punya
-berkas.
+Materi dan kelima Kuis `stack.yaml` sudah tulisan sungguhan — ticket #4 menulis
+Materinya, dan ticket #6 menambahkan komponen serta logika penilaian Kuis-nya. Yang
+masih **draf** tinggal Soal Kodenya; ticket #10 menggantinya. Topik selain Stack
+belum punya berkas.
 
 Catatan yang ditulis dari situs **tidak** disimpan di sini. Catatan dan Progres
 hidup di database backend, sesuai ADR-0003.

@@ -1,9 +1,15 @@
 # Topik 4 — Stack & Queue.
 #
-# Materi di berkas ini sudah tulisan sungguhan (ticket #4). Isi `soal` masih draf
-# yang lolos gerbang: ticket #6 mengganti kelima Kuisnya, dan #10 mengganti Soal
-# Kodenya. Sampai saat itu, keduanya sengaja dibiarkan apa adanya supaya gerbang
-# tetap menguji rantai yang utuh.
+# Materi di berkas ini sudah tulisan sungguhan (ticket #4), dan kelima Kuisnya juga
+# (ticket #6). Yang masih draf hanyalah Soal Kodenya: ticket #10 menggantinya, dan
+# sampai saat itu ia dibiarkan apa adanya supaya gerbang tetap menguji rantai yang
+# utuh.
+#
+# Kuis-nya tidak ditulis ulang oleh #6. Draf yang ada sejak #3 ternyata sudah
+# memenuhi seluruh kriteria penerimaan — masing-masing dibuka skenario nyata, dua
+# menampilkan kode untuk ditebak outputnya, dua menanyakan struktur mana yang tepat
+# beserta alasannya, dan setiap Kuis menguji konsep yang diajarkan Materi di atas.
+# #6 membangun komponen dan logika penilaiannya, bukan menulis ulang isinya.
 #
 # Semua Soal dan Pembahasan di sini ditulis original, sesuai ADR-0005. Tidak ada
 # teks LeetCode yang disalin maupun diterjemahkan.
