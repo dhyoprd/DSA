@@ -8,11 +8,12 @@ import { susunNavigasi } from "@/lib/konten/navigasi.ts";
 import { nomorDuaDigit } from "@/lib/konten/nomor.ts";
 
 import { DaftarIsi } from "../daftar-isi.tsx";
+import { DaftarKuis } from "../daftar-kuis.tsx";
 import { PengalihTema } from "../../pengalih-tema.tsx";
 import { Sidebar } from "../sidebar.tsx";
 
 /**
- * Halaman Topik: sidebar Jalur, Materi, dan daftar isi.
+ * Halaman Topik: sidebar Jalur, Materi, Kuis, dan daftar isi.
  *
  * `generateStaticParams` membuat halaman setiap Topik yang punya berkas menjadi
  * statis saat build, sesuai keputusan issue #1 bahwa Materi tidak melalui backend.
@@ -20,16 +21,16 @@ import { Sidebar } from "../sidebar.tsx";
  *
  * Halaman ini adalah **titik sambungan**, bukan tempat aturan hidup: aturan
  * "Topik mana yang tersedia" ada di `susunNavigasi`, aturan "bagian mana yang ada"
- * ada di `daftarBagian`, dan aturan "bagaimana Markdown tampil" ada di
- * `MateriMarkdown`. Yang dikerjakan di sini hanya menyusunnya dan menyerahkan
- * `id` bagian ke dua tempat yang harus sepakat.
+ * ada di `daftarBagian`, aturan "bagaimana Markdown tampil" ada di `MateriMarkdown`,
+ * dan aturan "Kuis mana yang tampil" ada di `DaftarKuis`. Yang dikerjakan di sini
+ * hanya menyusunnya dan menyerahkan `id` bagian ke dua tempat yang harus sepakat.
+ *
+ * Halaman tetap statis walaupun memuat Kuis: `DaftarKuis` merender kerangka Kuis di
+ * server, dan yang interaktif — pengacakan opsi, penilaian, Pembahasan — baru hidup
+ * setelah React mengambil alih di peramban.
  *
  * Belum ada di sini, dan memang bukan lingkup ticket ini: pengalih bahasa (#12),
- * Progres dari backend (#8), Kuis (#6), dan Soal Kode (#10).
- *
- * `PengalihTema` (#5) sudah ada di halaman ini. Ia komponen klien, tetapi halaman
- * tetap statis: yang dirender server hanyalah tombolnya, dan temanya sendiri dipasang
- * skrip sebaris di `layout.tsx` sebelum cat pertama.
+ * Progres dari backend (#8), dan Soal Kode (#10).
  */
 export function generateStaticParams(): { slug: string }[] {
   return konten().topik.map((topik) => ({ slug: topik.slug }));
@@ -114,6 +115,15 @@ export default async function HalamanTopik({
           <article className="mt-8 max-w-[68ch] text-base">
             <MateriMarkdown markdown={topik.materi.id} idJudul={idJudul} />
           </article>
+
+          {/*
+            Kuis diletakkan di dalam `main`, setelah Materi — urutan yang sama dengan
+            `design-tree.md`: baca konsepnya dulu, baru uji diri. Lebar bacanya
+            dibatasi seperti Materi supaya keduanya terasa satu kolom.
+          */}
+          <div className="max-w-[68ch]">
+            <DaftarKuis topik={topik} />
+          </div>
         </main>
 
         <aside className="order-2 lg:col-start-3 lg:row-start-1">
