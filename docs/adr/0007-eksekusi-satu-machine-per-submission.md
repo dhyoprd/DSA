@@ -27,6 +27,13 @@ Backend Rust tetap ada, karena Progres dan Catatan memang butuh server. Yang ber
 
 ## Masalah terbuka yang belum terselesaikan: pengambilan hasil
 
+> **DIBATALKAN 2026-10-01 — lihat ADR-0015.** Bagian di bawah ini bertumpu pada klaim
+> yang ternyata **salah**: Fly Machines **punya** endpoint exec yang terdokumentasi,
+> `POST /v1/apps/{app_name}/machines/{machine_id}/exec`. `flyctl` membawa perintah
+> `machine exec` sejak Januari 2023, dan endpoint-nya terdaftar di OpenAPI spec resmi
+> Fly. ADR-0015 memutuskan memakai endpoint itu. Isi di bawah dipertahankan sebagai
+> catatan sejarah — jangan dipakai sebagai dasar keputusan.
+
 **Ini risiko desain terbesar proyek ini, dan ia memblokir pembangunan ticket Eksekusi Kode.**
 
 Fly Machines **tidak punya endpoint exec yang terdokumentasi.** API resource-nya hanya mencakup lifecycle, lease, routing, dan metadata — tidak ada cara resmi untuk menjalankan perintah di dalam Machine dan membaca stdout-nya. Diverifikasi independen terhadap dokumentasi Fly.
@@ -40,7 +47,11 @@ Pilih salah satu sebelum membangun apa pun. Jangan mulai dari asumsi bahwa ini a
 
 ## Hal yang harus diverifikasi secara empiris sebelum diandalkan
 
-- Apakah field `guest` benar-benar membatasi CPU dan memori seperti yang diasumsikan. Riset proyek menemukan batas resource pada nested container rusak karena tata letak cgroup Fly; `guest` adalah mekanisme berbeda, tapi belum diuji.
+> **Masih terbuka per 2026-10-01.** ADR-0015 memindahkan daftar ini ke sana,
+> menambahkan satu butir (bukti bahwa hasil kembali ke backend), dan memecah butir
+> egress menjadi dua. Ketiga butir di bawah **belum diuji**.
+
+- Apakah field `guest` benar-benar membatasi CPU dan memori seperti yang diasumsikan. Riset proyek menemukan batas resource pada nested container rusak karena tata letak cgroup Fly; `guest` adalah mekanisme berbeda, tapi belum diuji. **Sebagian terjawab secara dokumenter sejak itu:** batas CPU memang ditegakkan lewat cgroup CFS quota (`docs.fly.io/machines/cpu-performance`); batas memori belum.
 - Apakah field `user` pada MachineProcess benar-benar menghasilkan proses non-root, dan apakah runner berfungsi tanpa root.
 - Apakah policy egress benar-benar memblokir 6PN dan internet sebagaimana dimaksud, mengingat pengecualian Fly Proxy.
 
@@ -63,5 +74,5 @@ Dua catatan: rule baru berlaku setelah restart/redeploy, dan policy tidak mencak
 
 **Fly Sprites.** Produk Fly yang memang dibuat untuk menjalankan kode asing — nyata, dan terverifikasi terhadap sumber primer. Ditolak karena gagal pada **dua persyaratan wajib** ADR-0002: CPU tidak bisa dibatasi (Sprites hanya mengatur memori; CPU tetap 8 vCPU dan tidak bisa diubah), dan tidak ada non-root (Sprites memberi root secara default, API privileges-nya tidak terdokumentasi). Selain itu usianya baru ~8 bulan, image environment-nya masih `v0.0.1-rc48`, dan tesis desainnya — persistence — justru kebalikan dari kebutuhan grader yang bersih per submission.
 
-Satu hal dari Sprites yang tetap berharga dan tidak boleh dilupakan: **endpoint exec-nya menunjukkan bahwa masalah pengambilan hasil itu nyata dan bisa dipecahkan.** Mesin Fly tidak punya padanannya. Diambil sebagai pelajaran, bukan sebagai produk. Dicatat di sini supaya Sprites tidak diusulkan ulang tanpa alasan baru.
+Satu hal dari Sprites yang tetap berharga dan tidak boleh dilupakan: **endpoint exec-nya menunjukkan bahwa masalah pengambilan hasil itu nyata dan bisa dipecahkan.** ~~Mesin Fly tidak punya padanannya.~~ **Dikoreksi 2026-10-01:** Mesin Fly **punya** padanannya — `POST /v1/apps/{app}/machines/{id}/exec`, sejak Januari 2023. Lihat ADR-0015. Sprites tetap ditolak dengan alasan di atas, tetapi bukan karena alasan ini. Dicatat di sini supaya Sprites tidak diusulkan ulang tanpa alasan baru.
 
