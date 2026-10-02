@@ -1,3 +1,4 @@
+import type { Kamus } from "@/lib/bahasa/kamus.ts";
 import type { StatusProgres } from "@/lib/konten/tipe.ts";
 
 /**
@@ -7,6 +8,11 @@ import type { StatusProgres } from "@/lib/konten/tipe.ts";
  * terbaca mesin pembaca layar, jadi teksnya selalu disertakan sebagai
  * `aria-label` + `title`, dan lambangnya disembunyikan dari accessibility tree.
  * Tanpa itu, tiga status berbeda terdengar sama saja.
+ *
+ * Nama statusnya datang dari kamus (ticket #12), bukan dari peta di berkas ini:
+ * "Belum dikerjakan" dan "Not started" adalah kalimat antarmuka, dan kalimat
+ * antarmuka hidup di satu tempat. Yang tetap di sini hanyalah lambangnya, karena
+ * lambang tidak diterjemahkan.
  *
  * Progres belum punya sumber data: endpoint-nya dibangun di ticket #7 dan disambung
  * ke tampilan di ticket #8. Sampai saat itu pemanggil memberi `"belum"`, dan
@@ -20,29 +26,44 @@ const LAMBANG: Record<StatusProgres, string> = {
   selesai: "●",
 };
 
-/** Nama status dalam bahasa Indonesia, untuk `aria-label` dan `title`. */
-const SEBUTAN: Record<StatusProgres, string> = {
-  belum: "Belum dikerjakan",
-  sedang: "Sedang dikerjakan",
-  selesai: "Selesai",
-};
-
 interface Props {
   status: StatusProgres;
+  /** Kamus bahasa yang sedang berlaku, untuk nama statusnya. */
+  kamus: Kamus;
   /** Ukuran lambang dalam kelas Tailwind, mis. `"text-xs"`. */
   kelas?: string;
 }
 
-export function PenandaProgres({ status, kelas = "text-sm" }: Props) {
+export function PenandaProgres({ status, kamus, kelas = "text-sm" }: Props) {
+  const sebutan = kamus[`progres${namaStatus(status)}`];
+
   return (
     <span
       className={`${kelas} leading-none`}
       style={{ color: status === "belum" ? "var(--color-muted)" : "var(--color-accent)" }}
       role="img"
-      aria-label={`Progres: ${SEBUTAN[status]}`}
-      title={SEBUTAN[status]}
+      aria-label={`${kamus.progres}: ${sebutan}`}
+      title={sebutan}
     >
       {LAMBANG[status]}
     </span>
   );
+}
+
+/**
+ * Nama field kamus untuk sebuah status, dalam bentuk Kapital.
+ *
+ * `"belum"` → `"Belum"`, sehingga kuncinya menjadi `progresBelum`. Pemetaan ini
+ * menjaga hubungan antara tiga nilai `StatusProgres` dan tiga field kamusnya tetap
+ * eksplisit dan diperiksa tipe: `keyof Kamus` menolak nama yang tidak ada.
+ */
+function namaStatus(status: StatusProgres): "Belum" | "Sedang" | "Selesai" {
+  switch (status) {
+    case "belum":
+      return "Belum";
+    case "sedang":
+      return "Sedang";
+    case "selesai":
+      return "Selesai";
+  }
 }

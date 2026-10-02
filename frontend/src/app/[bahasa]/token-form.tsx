@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import type { Kamus } from "@/lib/bahasa/kamus.ts";
 import { ambilProgres, unduhProgres } from "@/lib/api";
 import { ambilToken, hapusToken, normalkanToken, simpanToken } from "@/lib/token.ts";
 
@@ -19,7 +20,15 @@ import { ambilToken, hapusToken, normalkanToken, simpanToken } from "@/lib/token
  *
  * Komponen ini klien (`"use client"`) karena `localStorage` hanya ada di browser.
  * Halaman yang memuatnya tetap statis; hanya bagian ini yang berjalan di browser.
+ *
+ * Teksnya diterima lewat `kamus` (ticket #12). Galat dari `api.ts` juga memakai kamus
+ * ini, supaya pesan seperti "Token tidak diterima" ikut berganti bahasa.
  */
+
+interface Props {
+  /** Kamus bahasa yang sedang berlaku. */
+  kamus: Kamus;
+}
 
 type Keadaan =
   | { kind: "memeriksa" }
@@ -28,7 +37,7 @@ type Keadaan =
   | { kind: "menyimpan" }
   | { kind: "galat"; pesan: string };
 
-export function TokenForm() {
+export function TokenForm({ kamus }: Props) {
   const [keadaan, setKeadaan] = useState<Keadaan>({ kind: "memeriksa" });
   const [masukan, setMasukan] = useState("");
 
@@ -44,7 +53,7 @@ export function TokenForm() {
 
     const kandidat = normalkanToken(masukan);
     if (kandidat === null) {
-      setKeadaan({ kind: "galat", pesan: "Token masih kosong." });
+      setKeadaan({ kind: "galat", pesan: kamus.tokenKosong });
       return;
     }
 
@@ -52,10 +61,10 @@ export function TokenForm() {
       // Token diuji ke backend SEBELUM disimpan. Urutan ini penting: kalau disimpan
       // lebih dulu, token yang salah akan sempat tersimpan, dan halaman lain akan
       // memakainya sambil gagal tanpa menjelaskan kenapa.
-      await ambilProgres(kandidat);
+      await ambilProgres(kandidat, kamus);
     } catch (galat) {
       // `ambilProgres` sudah menerjemahkan status HTTP menjadi pesan yang berguna.
-      const pesan = galat instanceof Error ? galat.message : "Tidak bisa menghubungi backend.";
+      const pesan = galat instanceof Error ? galat.message : kamus.galatBackendMati;
       setKeadaan({ kind: "galat", pesan });
       return;
     }
@@ -64,7 +73,7 @@ export function TokenForm() {
     if (!simpanToken(kandidat)) {
       setKeadaan({
         kind: "galat",
-        pesan: "Token benar, tetapi browser menolak menyimpannya. Token akan hilang saat halaman ditutup.",
+        pesan: kamus.tokenTidakBisaDisimpan,
       });
       return;
     }
@@ -81,9 +90,9 @@ export function TokenForm() {
 
   async function unduh() {
     try {
-      await unduhProgres();
+      await unduhProgres(kamus);
     } catch (galat) {
-      const pesan = galat instanceof Error ? galat.message : "Unduhan gagal.";
+      const pesan = galat instanceof Error ? galat.message : kamus.galatBackendMati;
       setKeadaan({ kind: "galat", pesan });
     }
   }
@@ -95,24 +104,23 @@ export function TokenForm() {
       aria-labelledby="judul-token"
     >
       <h2 id="judul-token" className="text-sm font-semibold">
-        Token
+        {kamus.token}
       </h2>
 
       <p className="mt-1 text-sm" style={{ color: "var(--color-muted)" }}>
-        Progres dan Catatanmu hanya bisa dibaca dengan token. Cukup ditempel sekali di
-        tiap perangkat.
+        {kamus.tokenRingkasan}
       </p>
 
       {keadaan.kind === "memeriksa" && (
         <p className="mt-3 text-sm" style={{ color: "var(--color-muted)" }}>
-          Memeriksa…
+          {kamus.tokenMemeriksa}
         </p>
       )}
 
       {keadaan.kind === "tersimpan" && (
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <p className="text-sm" style={{ color: "var(--color-accent)" }}>
-            Token tersimpan di perangkat ini.
+            {kamus.tokenTersimpan}
           </p>
           <button
             type="button"
@@ -120,7 +128,7 @@ export function TokenForm() {
             className="rounded border px-3 py-1.5 text-sm"
             style={{ borderColor: "var(--color-border)" }}
           >
-            Lupakan token
+            {kamus.tokenLupakan}
           </button>
           {/*
             Tombol, bukan <a href>. Unduhan ini butuh header `Authorization`, dan
@@ -136,7 +144,7 @@ export function TokenForm() {
             className="rounded border px-3 py-1.5 text-sm"
             style={{ borderColor: "var(--color-border)" }}
           >
-            Unduh Progres
+            {kamus.tokenUnduh}
           </button>
         </div>
       )}
@@ -146,7 +154,7 @@ export function TokenForm() {
         keadaan.kind === "galat") && (
         <form onSubmit={simpan} className="mt-3 flex flex-wrap items-center gap-2">
           <label htmlFor="token" className="sr-only">
-            Token rahasia
+            {kamus.tokenLabel}
           </label>
           <input
             id="token"
@@ -155,7 +163,7 @@ export function TokenForm() {
             onChange={(peristiwa) => {
               setMasukan(peristiwa.target.value);
             }}
-            placeholder="Tempel token di sini"
+            placeholder={kamus.tokenPlaceholder}
             autoComplete="off"
             className="min-w-0 flex-1 rounded border px-3 py-1.5 font-mono text-sm"
             style={{
@@ -176,7 +184,7 @@ export function TokenForm() {
              */
             style={{ background: "var(--color-accent)", color: "var(--color-accent-fg)" }}
           >
-            {keadaan.kind === "menyimpan" ? "Memeriksa…" : "Simpan"}
+            {keadaan.kind === "menyimpan" ? kamus.tokenMemeriksa : kamus.tokenSimpan}
           </button>
         </form>
       )}

@@ -19,6 +19,22 @@ const backendUrl = process.env.BACKEND_URL ?? "http://localhost:8080";
 jalankanGerbangKonten();
 
 const nextConfig: NextConfig = {
+  experimental: {
+    /*
+     * Halaman 404 untuk alamat yang tidak cocok rute mana pun.
+     *
+     * Restrukturisasi ticket #12 menaruh root layout di `app/[bahasa]/layout.tsx`,
+     * dan Next.js menangani alamat yang tidak cocok rute apa pun di tingkat routing —
+     * sebelum layout itu dirender. Tanpa berkas ini, 404 tampil sebagai `<html>`
+     * polos tanpa `lang` dan tanpa token warna situs. Dokumentasi Next.js menyebut
+     * "root layout memakai segmen dinamis tingkat atas" sebagai salah satu pemicu
+     * yang mengharuskan `global-not-found`. Halamannya ada di
+     * `src/app/global-not-found.tsx`.
+     *
+     * Fiturnya masih eksperimental, jadi namanya ada di bawah `experimental`.
+     */
+    globalNotFound: true,
+  },
   async rewrites() {
     return [
       {

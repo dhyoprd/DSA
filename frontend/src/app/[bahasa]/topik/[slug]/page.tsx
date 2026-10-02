@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { type Bahasa } from "@/lib/bahasa/bahasa.ts";
+import { kamusUntuk } from "@/lib/bahasa/kamus.ts";
 import { daftarBagian } from "@/lib/konten/bagian.ts";
 import { MateriMarkdown } from "@/lib/konten/materi-markdown.tsx";
 import { konten, topikDenganSlug } from "@/lib/konten/muat.ts";
@@ -9,6 +11,7 @@ import { nomorDuaDigit } from "@/lib/konten/nomor.ts";
 
 import { DaftarIsi } from "../daftar-isi.tsx";
 import { DaftarKuis } from "../daftar-kuis.tsx";
+import { PengalihBahasa } from "../../pengalih-bahasa.tsx";
 import { PengalihTema } from "../../pengalih-tema.tsx";
 import { Sidebar } from "../sidebar.tsx";
 
@@ -29,8 +32,11 @@ import { Sidebar } from "../sidebar.tsx";
  * server, dan yang interaktif — pengacakan opsi, penilaian, Pembahasan — baru hidup
  * setelah React mengambil alih di peramban.
  *
- * Belum ada di sini, dan memang bukan lingkup ticket ini: pengalih bahasa (#12),
- * Progres dari backend (#8), dan Soal Kode (#10).
+ * **Bahasa mengikuti segmen URL** (ticket #12), bukan pilihan di peramban. Segmen
+ * `[bahasa]` ada di atas halaman ini, jadi ia sudah pasti sah saat kode ini berjalan
+ * — root layout di `[bahasa]/layout.tsx` yang menolak segmen yang tidak dikenal.
+ * Bahasa itu dipakai tiga tempat: teks antarmuka dari kamus, `topik.materi[b]`, dan
+ * seluruh `judul[b]`/`skenario[b]` di dalam Soal.
  */
 export function generateStaticParams(): { slug: string }[] {
   return konten().topik.map((topik) => ({ slug: topik.slug }));
@@ -39,33 +45,38 @@ export function generateStaticParams(): { slug: string }[] {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ bahasa: string; slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { bahasa, slug } = await params;
+  const b = bahasa as Bahasa;
   const topik = topikDenganSlug(slug);
   if (topik === null) return {};
-  return { title: `${topik.judul.id} — Situs belajar DSA` };
+  return { title: `${topik.judul[b]} — ${kamusUntuk(b).judulSitus}` };
 }
 
 export default async function HalamanTopik({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ bahasa: string; slug: string }>;
 }) {
-  const { slug } = await params;
+  const { bahasa, slug } = await params;
+  const b = bahasa as Bahasa;
+  const kamus = kamusUntuk(b);
+
   const topik = topikDenganSlug(slug);
   if (topik === null) notFound();
 
   const { jalur, topik: semuaTopik } = konten();
   const navigasi = susunNavigasi(jalur, semuaTopik);
 
-  // Materi versi Indonesia. Pengalih bahasa adalah lingkup ticket #12.
-  const bagian = daftarBagian(topik.materi.id);
+  // Materi dalam bahasa yang sedang berlaku. Daftar isi disusun dari Markdown yang
+  // sama, jadi judul bagiannya pun ikut bahasa yang berlaku.
+  const bagian = daftarBagian(topik.materi[b]);
 
   // Dipetakan dari nomor baris judul ke `id` yang diberikan `daftarBagian`. Dihitung
   // sekali dan dipakai dua tempat — daftar isi dan heading — sehingga keduanya tidak
   // mungkin menyimpang.
-  const idJudul = new Map(bagian.map((b) => [b.baris, b.id]));
+  const idJudul = new Map(bagian.map((x) => [x.baris, x.id]));
 
   const nomor = nomorDuaDigit(topik.nomor);
   const total = nomorDuaDigit(navigasi.length);
@@ -83,20 +94,21 @@ export default async function HalamanTopik({
   return (
     <div className="mx-auto max-w-[84rem] px-5 py-8 sm:px-8 lg:py-12">
       {/*
-        Pengalih tema di kanan atas, mengikuti aliran halaman. Diletakkan **di luar**
-        grid supaya ia tidak mengambil kolom dari daftar isi di layar lebar, dan tidak
-        menambah tinggi baris pertama grid di layar sempit.
+        Pengalih bahasa dan tema di kanan atas, mengikuti aliran halaman. Diletakkan
+        **di luar** grid supaya keduanya tidak mengambil kolom dari daftar isi di layar
+        lebar, dan tidak menambah tinggi baris pertama grid di layar sempit.
 
-        Ia sengaja tidak mengapung: pengalih yang selalu terlihat akan menutupi Materi
-        atau pita Jalur di layar HP, dan tema jarang diubah saat membaca.
+        Keduanya sengaja tidak mengapung: pengalih yang selalu terlihat akan menutupi
+        Materi atau pita Jalur di layar HP, dan keduanya jarang diubah saat membaca.
       */}
-      <div className="mb-4 flex justify-end">
-        <PengalihTema />
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        <PengalihBahasa aktif={b} kamus={kamus} />
+        <PengalihTema kamus={kamus} />
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[15rem_minmax(0,1fr)_13rem] lg:gap-12">
         <aside className="order-1 lg:col-start-1">
-          <Sidebar baris={navigasi} slugAktif={topik.slug} />
+          <Sidebar baris={navigasi} slugAktif={topik.slug} bahasa={b} kamus={kamus} />
         </aside>
 
         <main className="order-3 min-w-0 lg:col-start-2 lg:row-start-1">
@@ -105,15 +117,15 @@ export default async function HalamanTopik({
             className="font-mono text-xs tracking-widest uppercase"
             style={{ color: "var(--color-muted)" }}
           >
-            Topik {nomor} / {total}
+            {kamus.topik} {nomor} / {total}
           </p>
 
           <h1 className="mt-3 text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">
-            {topik.judul.id}
+            {topik.judul[b]}
           </h1>
 
           <article className="mt-8 max-w-[68ch] text-base">
-            <MateriMarkdown markdown={topik.materi.id} idJudul={idJudul} />
+            <MateriMarkdown markdown={topik.materi[b]} idJudul={idJudul} />
           </article>
 
           {/*
@@ -122,12 +134,12 @@ export default async function HalamanTopik({
             dibatasi seperti Materi supaya keduanya terasa satu kolom.
           */}
           <div className="max-w-[68ch]">
-            <DaftarKuis topik={topik} />
+            <DaftarKuis topik={topik} bahasa={b} kamus={kamus} />
           </div>
         </main>
 
         <aside className="order-2 lg:col-start-3 lg:row-start-1">
-          <DaftarIsi bagian={bagian} />
+          <DaftarIsi bagian={bagian} kamus={kamus} />
         </aside>
       </div>
     </div>

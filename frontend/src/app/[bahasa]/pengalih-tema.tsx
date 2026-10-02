@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import type { Kamus } from "@/lib/bahasa/kamus.ts";
 import {
   PILIHAN_TEMA,
   ambilPilihanTema,
@@ -25,16 +26,27 @@ import {
  * berjalan sebelum cat pertama, sehingga tidak ada kedipan saat halaman dibuka.
  * Komponen ini hanya menggambar pilihan yang sedang aktif, dan memasang tema saat
  * pemakai mengubahnya.
+ *
+ * **Labelnya datang dari `kamus`** (ticket #12), bukan ditulis di sini: setiap kalimat
+ * antarmuka punya dua versi di `src/lib/bahasa/kamus.ts`. Kamus diterima utuh, sama
+ * seperti komponen lain di repo ini — bukan tiga field yang dipilih satu per satu.
+ * Itu membuat menambah label keempat nanti hanya mengubah berkas ini, bukan setiap
+ * tempat yang memanggilnya.
  */
 
-/** Label tiap pilihan, dipakai sebagai teks tombol. */
-const LABEL: Record<PilihanTema, string> = {
-  sistem: "Sistem",
-  terang: "Terang",
-  gelap: "Gelap",
+/** Nama field kamus untuk tiap pilihan tema. */
+const FIELD_LABEL: Record<PilihanTema, keyof Kamus> = {
+  sistem: "temaSistem",
+  terang: "temaTerang",
+  gelap: "temaGelap",
 };
 
-export function PengalihTema() {
+interface Props {
+  /** Kamus bahasa yang sedang berlaku. */
+  kamus: Kamus;
+}
+
+export function PengalihTema({ kamus }: Props) {
   /*
    * `null` berarti "belum diketahui", dan itu keadaan yang benar untuk render
    * pertama: nilai sesungguhnya hanya ada di peramban. Menebaknya di sini — misalnya
@@ -80,7 +92,7 @@ export function PengalihTema() {
       */}
       <div
         role="group"
-        aria-label="Tema"
+        aria-label={kamus.tema}
         className="inline-flex rounded-md border p-0.5"
         style={{ borderColor: "var(--color-border)" }}
       >
@@ -107,7 +119,7 @@ export function PengalihTema() {
                 transitionDuration: "var(--dur-cepat)",
               }}
             >
-              {LABEL[pilihan]}
+              {kamus[FIELD_LABEL[pilihan]]}
             </button>
           );
         })}
@@ -119,7 +131,7 @@ export function PengalihTema() {
       */}
       {gagalDiingat && (
         <p role="status" className="text-xs" style={{ color: "var(--color-muted)" }}>
-          Tema tidak bisa diingat di peramban ini.
+          {kamus.temaGagalDiingat}
         </p>
       )}
     </div>

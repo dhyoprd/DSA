@@ -10,6 +10,7 @@
  */
 
 import { ambilToken } from "./token.ts";
+import type { Kamus } from "./bahasa/kamus.ts";
 import type { StatusProgres } from "./konten/tipe.ts";
 
 /** Balasan `GET /api/health`. */
@@ -32,12 +33,17 @@ export interface BarisProgres {
  *
  * Melempar kalau backend tidak menjawab, supaya pemanggil bisa membedakan
  * "backend hidup" dari "backend mati" dan menampilkannya ke pengguna.
+ *
+ * `kamus` wajib, bukan opsional dengan cadangan: pesan galat di sini adalah kalimat
+ * yang dibaca pemakai, dan modul ini tidak punya cara tahu bahasa apa yang sedang
+ * berlaku — bahasa datang dari URL, dan URL bukan urusannya. Memberinya nilai
+ * cadangan berarti halaman English bisa diam-diam menampilkan galat Indonesia.
  */
-export async function getHealth(): Promise<HealthResponse> {
+export async function getHealth(kamus: Kamus): Promise<HealthResponse> {
   const response = await fetch("/api/health", { cache: "no-store" });
 
   if (!response.ok) {
-    throw new Error(pesanGalat(response.status));
+    throw new Error(pesanGalat(response.status, kamus));
   }
 
   return response.json() as Promise<HealthResponse>;
@@ -53,14 +59,14 @@ export async function getHealth(): Promise<HealthResponse> {
  * Galatnya sudah berupa pesan yang bisa ditampilkan langsung, karena status HTTP
  * diterjemahkan di sini (`pesanGalat`) alih-alih dibocorkan ke pemanggil.
  */
-export async function ambilProgres(token?: string): Promise<BarisProgres[]> {
+export async function ambilProgres(token: string | undefined, kamus: Kamus): Promise<BarisProgres[]> {
   const response = await fetch("/api/progres", {
     cache: "no-store",
     headers: headerToken(token),
   });
 
   if (!response.ok) {
-    throw new Error(pesanGalat(response.status));
+    throw new Error(pesanGalat(response.status, kamus));
   }
 
   const isi = (await response.json()) as { progres: BarisProgres[] };
@@ -77,14 +83,14 @@ export async function ambilProgres(token?: string): Promise<BarisProgres[]> {
  * Nama berkasnya diambil dari header `Content-Disposition` kalau ada, supaya backend
  * tetap satu-satunya yang menentukan nama — antarmuka tidak perlu tahu.
  */
-export async function unduhProgres(): Promise<void> {
+export async function unduhProgres(kamus: Kamus): Promise<void> {
   const response = await fetch("/api/ekspor/progres", {
     cache: "no-store",
     headers: { ...headerToken() },
   });
 
   if (!response.ok) {
-    throw new Error(pesanGalat(response.status));
+    throw new Error(pesanGalat(response.status, kamus));
   }
 
   const blob = await response.blob();
@@ -126,16 +132,16 @@ function headerToken(token?: string): Record<string, string> {
   return { Authorization: `Bearer ${dipakai}` };
 }
 
-/** Pesan yang berguna untuk pemakai, berdasarkan status HTTP. */
-function pesanGalat(status: number): string {
+/** Pesan yang berguna untuk pemakai, berdasarkan status HTTP, dalam bahasa aktif. */
+function pesanGalat(status: number, kamus: Kamus): string {
   if (status === 401) {
-    return "Token tidak diterima. Periksa lagi token yang kamu tempel.";
+    return kamus.galatToken;
   }
   // Rewrite Next membalas 5xx ketika backend tidak bisa dihubungi. Tanpa cabang ini,
   // backend yang sedang mati akan tampak seperti kesalahan token, dan pemakai akan
   // menempel ulang token yang sebenarnya benar.
   if (status >= 500) {
-    return "Backend tidak bisa dihubungi. Coba lagi sebentar lagi.";
+    return kamus.galatBackendMati;
   }
-  return `Backend membalas ${String(status)}`;
+  return `${kamus.galatStatus} ${String(status)}`;
 }

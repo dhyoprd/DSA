@@ -1,3 +1,5 @@
+import type { Bahasa } from "@/lib/bahasa/bahasa.ts";
+import type { Kamus } from "@/lib/bahasa/kamus.ts";
 import type { Kuis as BentukKuis, Topik } from "@/lib/konten/tipe.ts";
 import { TeksKaya } from "@/lib/konten/teks-kaya.tsx";
 
@@ -6,10 +8,10 @@ import { Kuis, type KuisSiap } from "./kuis.tsx";
 /**
  * Daftar seluruh Kuis sebuah Topik.
  *
- * Komponen server, tanpa JavaScript. Yang dikerjakan di sini tiga: memilih Soal
- * ber-`tipe: kuis`, merender teks Markdown-nya menjadi ReactNode, dan memberinya
- * nomor urut. Aturan penilaian dan pengacakan ada di `src/lib/kuis/`; komponen
- * interaktifnya ada di `kuis.tsx`.
+ * Komponen server, tanpa JavaScript. Yang dikerjakan di sini empat: memilih Soal
+ * ber-`tipe: kuis`, memilih versi bahasanya, merender teks Markdown-nya menjadi
+ * ReactNode, dan memberinya nomor urut. Aturan penilaian dan pengacakan ada di
+ * `src/lib/kuis/`; komponen interaktifnya ada di `kuis.tsx`.
  *
  * **Kenapa Markdown dirender di sini, bukan di komponen klien.** `react-markdown`
  * beserta penguraian Markdown-nya adalah paket yang tidak kecil. Kalau `kuis.tsx`
@@ -18,6 +20,11 @@ import { Kuis, type KuisSiap } from "./kuis.tsx";
  * yang dikirim sebagai prop — bentuk komposisi server → klien yang didukung Next.js,
  * dan bundel klien hanya berisi logika Kuis yang memang perlu hidup di peramban.
  *
+ * **Bahasa dipilih di sini**, bukan di `kuis.tsx`: teksnya sudah menjadi ReactNode
+ * saat menyeberang ke klien, jadi versi bahasanya harus dipilih sebelum itu. Ini juga
+ * sebabnya `kuis.tsx` tidak perlu tahu bahasa sama sekali — ia hanya menerima teks
+ * jadi dan label yang sudah diterjemahkan.
+ *
  * `indeksSoal` yang diteruskan adalah posisi Soal di dalam `topik.soal` — bukan
  * nomor urut Kuis — karena itulah yang dipakai benih pengacakan. Memakai nomor urut
  * Kuis akan membuat benih Kuis pertama bertabrakan dengan Soal Kode.
@@ -25,6 +32,10 @@ import { Kuis, type KuisSiap } from "./kuis.tsx";
 
 interface Props {
   topik: Topik;
+  /** Bahasa yang sedang berlaku. */
+  bahasa: Bahasa;
+  /** Kamus bahasa yang sedang berlaku. */
+  kamus: Kamus;
 }
 
 /** Soal ber-tipe Kuis, beserta posisinya di dalam daftar Soal Topik. */
@@ -37,20 +48,20 @@ function kuisDenganPosisi(topik: Topik): { kuis: BentukKuis; indeksSoal: number 
     .map((item) => ({ kuis: item.soal, indeksSoal: item.indeksSoal }));
 }
 
-/** Ubah satu Kuis dari bentuk YAML menjadi bentuk siap render. */
-function siapkanKuis(kuis: BentukKuis): KuisSiap {
+/** Ubah satu Kuis dari bentuk YAML menjadi bentuk siap render, dalam satu bahasa. */
+function siapkanKuis(kuis: BentukKuis, bahasa: Bahasa): KuisSiap {
   return {
-    skenario: <TeksKaya markdown={kuis.skenario.id} />,
+    skenario: <TeksKaya markdown={kuis.skenario[bahasa]} />,
     kode: kuis.kode,
     opsi: kuis.opsi.map((opsi) => ({
-      teks: <TeksKaya markdown={opsi.teks.id} />,
+      teks: <TeksKaya markdown={opsi.teks[bahasa]} />,
       benar: opsi.benar,
     })),
-    penjelasan: <TeksKaya markdown={kuis.penjelasan.id} />,
+    penjelasan: <TeksKaya markdown={kuis.penjelasan[bahasa]} />,
   };
 }
 
-export function DaftarKuis({ topik }: Props) {
+export function DaftarKuis({ topik, bahasa, kamus }: Props) {
   const daftar = kuisDenganPosisi(topik);
 
   // Topik tanpa Kuis tidak menampilkan judul bagian yang menggantung. Gerbang build
@@ -61,21 +72,22 @@ export function DaftarKuis({ topik }: Props) {
   return (
     <section className="mt-16" aria-labelledby="kuis-judul">
       <h2 id="kuis-judul" className="text-xl font-semibold tracking-tight">
-        Kuis
+        {kamus.kuis}
       </h2>
       <p className="mt-2 text-sm" style={{ color: "var(--color-muted)" }}>
-        Jawaban salah boleh dicoba lagi. Pembahasan terbuka setelah jawaban benar.
+        {kamus.kuisRingkasan}
       </p>
 
       <div className="mt-8 flex flex-col gap-10">
         {daftar.map((item, urutan) => (
           <Kuis
             key={item.indeksSoal}
-            kuis={siapkanKuis(item.kuis)}
+            kuis={siapkanKuis(item.kuis, bahasa)}
             indeksSoal={item.indeksSoal}
             nomor={urutan + 1}
             total={daftar.length}
             slugTopik={topik.slug}
+            kamus={kamus}
           />
         ))}
       </div>
