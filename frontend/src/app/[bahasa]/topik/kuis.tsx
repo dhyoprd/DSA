@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 
+import type { Kamus } from "@/lib/bahasa/kamus.ts";
 import { benihOpsi, urutanTeracak } from "@/lib/kuis/acak.ts";
 import {
   keadaanAwal,
@@ -34,7 +35,10 @@ import { idSesiKlien, idSesiServer, langgananIdSesi } from "@/lib/kuis/sesi.ts";
  * `react-markdown`, pengurai Markdown ikut masuk bundel sisi klien untuk tiga potong
  * teks pendek — jauh lebih mahal daripada menyerahkan hasilnya sebagai prop.
  *
- * Teks memakai versi Indonesia; pengalih bahasa adalah lingkup ticket #12.
+ * **Bahasa tidak dikenal komponen ini** (ticket #12). Teks Soal sudah dipilih
+ * bahasanya di `daftar-kuis.tsx` sebelum menyeberang, dan kalimat antarmuka seperti
+ * "Belum tepat" datang lewat `kamus` yang juga sudah dipilih di sana. Yang dikerjakan
+ * di sini hanya menggambar.
  */
 
 /** Satu opsi yang sudah dirender, siap ditampilkan. */
@@ -63,9 +67,11 @@ interface Props {
   /** Jumlah Kuis di Topik ini, untuk "Kuis 1 dari 5". */
   total: number;
   slugTopik: string;
+  /** Kamus bahasa yang sedang berlaku, untuk kalimat antarmuka Kuis. */
+  kamus: Kamus;
 }
 
-export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik }: Props) {
+export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik, kamus }: Props) {
   /*
    * Id sesi dibaca lewat `useSyncExternalStore`, bukan langsung saat merender.
    *
@@ -130,7 +136,7 @@ export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik }: Props) {
         className="font-mono text-xs tracking-widest uppercase"
         style={{ color: "var(--color-muted)" }}
       >
-        Kuis {nomor} dari {total}
+        {kamus.kuis} {nomor} {kamus.kuisDari} {total}
       </p>
 
       {/* Skenario nyata — user story 16: Kuis dibuka dengan *kenapa*, bukan soal. */}
@@ -197,7 +203,7 @@ export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik }: Props) {
                 }}
               >
                 {idSesiSiap ? opsi.teks : null}
-                {salahTerakhir && <span className="sr-only"> — jawaban salah</span>}
+                {salahTerakhir && <span className="sr-only">{kamus.jawabanSalah}</span>}
               </button>
             </li>
           );
@@ -222,12 +228,12 @@ export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik }: Props) {
       <div role="status" className="mt-4 min-h-6">
         {keadaan.percobaan > 0 && !terbuka && (
           <p className="text-sm" style={{ color: "var(--color-accent)" }}>
-            Belum tepat. Coba lagi.
+            {kamus.belumTepat}
           </p>
         )}
         {terbuka && (
           <p className="text-sm font-medium" style={{ color: "var(--color-accent)" }}>
-            Benar.
+            {kamus.benar}
           </p>
         )}
       </div>
@@ -235,7 +241,7 @@ export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik }: Props) {
       {/* Jumlah percobaan — user story 30, supaya terlihat Kuis mana yang perlu diulang. */}
       {keadaan.percobaan > 0 && (
         <p className="mt-1 font-mono text-xs" style={{ color: "var(--color-muted)" }}>
-          Percobaan: {keadaan.percobaan}
+          {kamus.percobaan}: {keadaan.percobaan}
         </p>
       )}
 
@@ -253,7 +259,7 @@ export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik }: Props) {
             className="font-mono text-xs tracking-widest uppercase"
             style={{ color: "var(--color-muted)" }}
           >
-            Pembahasan
+            {kamus.pembahasan}
           </p>
           <div className="mt-2 text-sm" style={{ color: "var(--color-fg)" }}>
             {kuis.penjelasan}

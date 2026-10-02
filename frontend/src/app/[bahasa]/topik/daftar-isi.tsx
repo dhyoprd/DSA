@@ -1,3 +1,4 @@
+import type { Kamus } from "@/lib/bahasa/kamus.ts";
 import type { Bagian } from "@/lib/konten/bagian.ts";
 
 /**
@@ -25,9 +26,11 @@ import type { Bagian } from "@/lib/konten/bagian.ts";
 
 interface Props {
   bagian: Bagian[];
+  /** Kamus bahasa yang sedang berlaku, untuk judul dan `aria-label`. */
+  kamus: Kamus;
 }
 
-export function DaftarIsi({ bagian }: Props) {
+export function DaftarIsi({ bagian, kamus }: Props) {
   // Materi tanpa judul tidak punya bagian untuk ditautkan. Menampilkan kerangka
   // kosong lebih buruk daripada tidak menampilkan apa pun.
   if (bagian.length === 0) return null;
@@ -39,22 +42,22 @@ export function DaftarIsi({ bagian }: Props) {
           className="cursor-pointer font-mono text-xs tracking-widest uppercase"
           style={{ color: "var(--color-muted)" }}
         >
-          Daftar isi
+          {kamus.daftarIsi}
         </summary>
-        <nav aria-label="Daftar isi Materi" className="mt-3">
+        <nav aria-label={kamus.daftarIsiMateri} className="mt-3">
           <DaftarTautan bagian={bagian} />
         </nav>
       </details>
 
       <nav
-        aria-label="Daftar isi Materi"
+        aria-label={kamus.daftarIsiMateri}
         className="hidden lg:sticky lg:top-8 lg:block lg:max-h-[calc(100dvh-4rem)] lg:overflow-y-auto"
       >
         <p
           className="font-mono text-xs tracking-widest uppercase"
           style={{ color: "var(--color-muted)" }}
         >
-          Daftar isi
+          {kamus.daftarIsi}
         </p>
         <div className="mt-3">
           <DaftarTautan bagian={bagian} />
@@ -72,7 +75,7 @@ export function DaftarIsi({ bagian }: Props) {
  * tingkat terendah yang ada, bukan dari angka mutlak, supaya Materi yang hanya
  * memakai `###` tidak seluruhnya menjorok tanpa alasan.
  */
-function DaftarTautan({ bagian }: Props) {
+function DaftarTautan({ bagian }: { bagian: Bagian[] }) {
   const tingkatTerendah = Math.min(...bagian.map((b) => b.tingkat));
 
   return (

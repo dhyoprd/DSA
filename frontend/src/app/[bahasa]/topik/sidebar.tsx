@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import type { Bahasa } from "@/lib/bahasa/bahasa.ts";
+import type { Kamus } from "@/lib/bahasa/kamus.ts";
 import type { BarisNavigasi } from "@/lib/konten/navigasi.ts";
 import { nomorDuaDigit } from "@/lib/konten/nomor.ts";
 import type { StatusProgres } from "@/lib/konten/tipe.ts";
@@ -26,7 +28,8 @@ import { PenandaProgres } from "./penanda-progres.tsx";
  * salinan yang harus dijaga sepakat.
  *
  * Ini komponen server. Progres diterima sebagai prop, bukan dibaca sendiri, karena
- * datanya baru ada di ticket #7.
+ * datanya baru ada di ticket #7. Bahasa dan kamus juga props (ticket #12), supaya
+ * komponen ini tidak perlu tahu cara membacanya.
  */
 
 interface Props {
@@ -34,6 +37,10 @@ interface Props {
   baris: BarisNavigasi[];
   /** Slug Topik yang sedang dibuka, untuk menandai baris aktif. */
   slugAktif?: string;
+  /** Bahasa yang sedang berlaku, untuk judul dan tautan. */
+  bahasa: Bahasa;
+  /** Kamus bahasa yang sedang berlaku. */
+  kamus: Kamus;
   /**
    * Status Progres per slug. Slug yang tidak ada di sini dianggap `"belum"`.
    *
@@ -42,14 +49,17 @@ interface Props {
   status?: Record<string, StatusProgres>;
 }
 
-export function Sidebar({ baris, slugAktif, status = {} }: Props) {
+export function Sidebar({ baris, slugAktif, bahasa, kamus, status = {} }: Props) {
   return (
-    <nav aria-label={`Jalur, ${String(baris.length)} Topik`} className="lg:sticky lg:top-8">
+    <nav
+      aria-label={`${kamus.jalur}, ${String(baris.length)} ${kamus.topikJamak}`}
+      className="lg:sticky lg:top-8"
+    >
       <p
         className="font-mono text-xs tracking-widest uppercase"
         style={{ color: "var(--color-muted)" }}
       >
-        Jalur · {baris.length} Topik
+        {kamus.jalur} · {baris.length} {kamus.topikJamak}
       </p>
 
       <ul
@@ -63,6 +73,8 @@ export function Sidebar({ baris, slugAktif, status = {} }: Props) {
               item={item}
               aktif={item.slug === slugAktif}
               status={status[item.slug] ?? "belum"}
+              bahasa={bahasa}
+              kamus={kamus}
             />
           </li>
         ))}
@@ -76,29 +88,33 @@ function BarisJalur({
   item,
   aktif,
   status,
+  bahasa,
+  kamus,
 }: {
   item: BarisNavigasi;
   aktif: boolean;
   status: StatusProgres;
+  bahasa: Bahasa;
+  kamus: Kamus;
 }) {
   const nomor = nomorDuaDigit(item.nomor);
 
   const isi = (
     <>
-      <PenandaProgres status={status} kelas="text-xs" />
+      <PenandaProgres status={status} kamus={kamus} kelas="text-xs" />
       <span
         className="font-mono text-xs tabular-nums"
         style={{ color: "var(--color-muted)" }}
       >
         {nomor}
       </span>
-      <span className="truncate">{item.judul.id}</span>
+      <span className="truncate">{item.judul[bahasa]}</span>
       {!item.tersedia && (
         <span
           className="ml-auto font-mono text-[0.65rem] tracking-wider uppercase"
           style={{ color: "var(--color-muted)" }}
         >
-          segera
+          {kamus.segera}
         </span>
       )}
     </>
@@ -124,7 +140,7 @@ function BarisJalur({
 
   return (
     <Link
-      href={`/topik/${item.slug}`}
+      href={`/${bahasa}/topik/${item.slug}`}
       className={`${dasar} hover:bg-[color-mix(in_srgb,var(--color-fg)_6%,transparent)] lg:w-full`}
       style={{
         // Topik aktif ditandai latar tipis + aksen di nomor, bukan hanya warna teks,

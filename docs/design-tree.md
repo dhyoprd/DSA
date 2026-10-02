@@ -91,6 +91,9 @@ dan pada level VM Fly memang menegakkan batas CPU lewat cgroup CFS quota.
 **Layout**: sidebar kiri (12 Topik + penanda progres) + konten tengah + daftar isi kanan.
 **Perangkat**: laptop dan HP sama penting. Semua komponen harus nyaman di keduanya.
 **Progres visual**: ○ belum, ◐ sedang, ● selesai.
+**Bahasa**: segmen pertama URL (`/[bahasa]/...`), pilihan diingat lewat cookie, permintaan
+tanpa bahasa dialihkan `proxy.ts`. Materi tetap halaman statis per bahasa. Lihat
+[ADR-0016](adr/0016-bahasa-di-url-pilihan-di-cookie.md).
 
 ## Cabang 5 — Fitur
 

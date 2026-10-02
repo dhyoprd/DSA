@@ -139,6 +139,67 @@ test("Kuis dengan skenario satu bahasa ditolak", () => {
   assert.ok(adaMasalah(periksa(topik), "soal[0].skenario", "English"));
 });
 
+test("Kuis dengan opsi yang belum diterjemahkan ditolak", () => {
+  // Ticket #12, kriteria penerimaan 5: Topik yang terjemahannya belum lengkap tidak
+  // lolos gerbang build. Opsi jawaban ikut diperiksa, bukan hanya Materi — opsi
+  // yang setengah diterjemahkan akan tampil sebagai teks kosong bagi pembaca bahasa
+  // itu, dan itu justru kesalahan yang tidak terlihat saat membaca bahasa Indonesia.
+  const topik = topikSah();
+  const soal = topik.soal as Kuis[];
+  soal[0].opsi[2].teks = { id: "Hanya Indonesia" } as Kuis["opsi"][number]["teks"];
+  assert.ok(adaMasalah(periksa(topik), "soal[0].opsi[2].teks", "English"));
+});
+
+test("Kuis dengan Pembahasan satu bahasa ditolak", () => {
+  const topik = topikSah();
+  const soal = topik.soal as Kuis[];
+  soal[0].penjelasan = { id: "Hanya Indonesia" } as Kuis["penjelasan"];
+  assert.ok(adaMasalah(periksa(topik), "soal[0].penjelasan", "English"));
+});
+
+test("Soal Kode dengan skenario satu bahasa ditolak", () => {
+  const topik = topikSah();
+  const soal = topik.soal as SoalKode[];
+  const kode = soal.find((s) => s.tipe === "soal-kode") as SoalKode;
+  kode.skenario = { id: "Hanya Indonesia" } as SoalKode["skenario"];
+  assert.ok(adaMasalah(periksa(topik), "soal[5].skenario", "English"));
+});
+
+test("seluruh field dwibahasa Topik diperiksa, bukan hanya Materi", () => {
+  // Ringkasan kriteria penerimaan 5: tidak ada satu field dwibahasa pun yang boleh
+  // lolos tanpa versi English-nya. Uji ini mengumpulkan lokasi masalah untuk satu
+  // Topik yang **setiap** teks dwibahasanya tinggal Indonesia, lalu memastikan
+  // setiap field dilaporkan — supaya menambah field dwibahasa baru tanpa menambah
+  // pemeriksaannya ketahuan di sini.
+  const topik = topikSah();
+  topik.judul = { id: "Judul" } as { id: string; en: string };
+  topik.materi = { id: "Materi" } as { id: string; en: string };
+  // Hanya Kuis yang punya `skenario`, `opsi`, dan `penjelasan`; Soal Kode punya
+  // `skenario` sendiri dan diperiksa uji terpisah di atas.
+  const daftarKuis = (topik.soal as Kuis[]).filter((s) => s.tipe === "kuis");
+  for (const kuis of daftarKuis) {
+    kuis.skenario = { id: "S" } as Kuis["skenario"];
+    kuis.penjelasan = { id: "P" } as Kuis["penjelasan"];
+    for (const opsi of kuis.opsi) {
+      opsi.teks = { id: "O" } as Kuis["opsi"][number]["teks"];
+    }
+  }
+
+  const masalah = periksa(topik);
+  const lokasi = new Set(masalah.map((m) => m.lokasi));
+
+  for (const wajib of [
+    "judul.en",
+    "materi.en",
+    "soal[0].skenario.en",
+    "soal[0].penjelasan.en",
+    "soal[0].opsi[0].teks.en",
+    "soal[4].opsi[3].teks.en",
+  ]) {
+    assert.ok(lokasi.has(wajib), `field "${wajib}" tidak dilaporkan`);
+  }
+});
+
 // --- Komposisi Soal ------------------------------------------------------------
 
 test("Kuis kurang dari 5 ditolak", () => {
