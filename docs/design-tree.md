@@ -49,11 +49,11 @@ Hasil sesi grilling. Setiap keputusan di bawah sudah dipilih sadar, bukan diasum
 **Status**: situs publik + backend menjalankan kode arbitrary. Pengguna sudah diperingatkan dan memilih melanjutkan.
 **Mekanisme**: satu Machine Firecracker sekali pakai per submission. Setiap submission mendapat kernel Linux sendiri, jadi batas isolasinya lebih kuat daripada Docker dengan gVisor.
 **Wajib ada**: egress ditolak total lewat Network Policy, batas laju per IP, pencatatan setiap eksekusi, batas ukuran kode, batas waktu yang menghancurkan Machine, batas memori/CPU lewat `guest`, user non-root.
-**Batas eksekusi**: 5 detik, 128 MB, 0,5 CPU core.
+**Batas eksekusi**: 5 detik, **256 MB, 1 shared CPU** (minimum yang dapat dinyatakan Fly; batas lama 128 MB / 0,5 CPU core tidak dapat dinyatakan — lihat ADR-0015). Ini angka yang **dikonfigurasi**, bukan angka yang sudah terverifikasi ditegakkan: batas 5 detik tidak punya field di platform, dan penegakan memori belum diuji.
 **Backend Rust dan runner wajib di Machine BERBEDA.** Kalau digabung, keduanya berbagi kernel dan batas microVM melindungi host, bukan backend.
 **Konsekuensi yang diterima**: mesin ini tidak boleh menyimpan apa pun yang berharga. Backend yang dikompromikan bisa dipakai menyerang pihak ketiga.
 **Risiko kebijakan yang tidak hilang**: Fly's AUP melarang cryptomining dan security testing, dan ToS-nya membatasi pemakaian untuk "internal use". Mitigasi mengurangi kemungkinan, bukan menghilangkan kemungkinan akun ditangguhkan.
-**Blocker yang belum terselesaikan**: Fly Machines tidak punya endpoint exec terdokumentasi. Belum ada cara resmi menjalankan perintah di dalam Machine dan membaca stdout-nya. Ini risiko desain terbesar dan memblokir ticket Eksekusi Kode. Dua jalur: runner melapor balik ke backend lewat 6PN, atau tulis hasil ke volume.
+**Pengambilan hasil**: **keputusannya sudah diambil** — lewat `POST /v1/apps/{app}/machines/{id}/exec`. Lihat ADR-0015. Blocker lama ("tidak ada endpoint exec terdokumentasi") **dibatalkan**. Yang **BELUM**: verifikasi empirisnya (hasil benar-benar kembali, batas resource, non-root, blokir jaringan). Ticket #9 tetap terbuka sampai itu diuji — lihat "Yang belum terverifikasi" di ADR-0015.
 
 ## Koreksi setelah verifikasi (2026-09-30)
 
@@ -67,6 +67,20 @@ Verifikasi terhadap sumber primer membatalkan dua klaim di versi pertama dokumen
 | `--cap-drop=ALL`, `--security-opt no-new-privileges`, `--read-only` | **Tidak punya padanan langsung** di model konfigurasi Fly. Sebagian tercakup oleh batas microVM, tidak bisa dikonfigurasi terpisah. |
 
 Keputusan yang **selamat tanpa perubahan**: backend Rust tetap ada (Progres dan Catatan memang butuh server), target deploy Fly.io tetap, dan penolakan Pyodide tetap berlaku sebagai preferensi.
+
+## Koreksi setelah verifikasi (2026-10-01)
+
+Ticket #9 memeriksa ulang sisa blocker di Cabang 3 dan membatalkan dua klaim lagi.
+**Tabel koreksinya ada di [ADR-0015](adr/0015-pengambilan-hasil-lewat-exec-endpoint.md),
+bukan di sini** — supaya tidak ada dua salinan yang bisa saling menyimpang. Ringkasnya:
+klaim "tidak ada endpoint exec" salah (endpoint-nya ada, sejak Januari 2023), dan batas
+128 MB / 0,5 CPU tidak dapat dinyatakan di Fly (diganti 256 MB / 1 shared CPU).
+
+Yang **dikonfirmasi** (bukan dikoreksi): keraguan atas batas CPU sudah dijawab dengan
+benar oleh dokumen ini sejak awal — yang rusak adalah batas pada **nested container**,
+dan pada level VM Fly memang menegakkan batas CPU lewat cgroup CFS quota.
+
+**Catatan yang tetap berlaku**: batas 5 detik **tidak** punya padanan field di platform; `auto_destroy` bekerja setelah proses selesai, bukan sebagai umur maksimum. Batas waktu harus ditegakkan runner sendiri, dengan penghentian Machine oleh backend sebagai jaring pengaman.
 
 ## Cabang 4 — Antarmuka
 
