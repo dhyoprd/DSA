@@ -126,6 +126,16 @@ CSV dan Catatan tidak. Lihat [ADR-0019](adr/0019-field-kompleksitas-istilah-dan-
 "ekspor mencakup Topik yang sudah diselesaikan" belum bisa diuji sampai Topik kedua
 ditulis.
 
+**Pencarian (#13) selesai.** Fase 1 nomor 2 kini ada: halaman `/[bahasa]/pencarian`
+dengan kotak yang menampilkan hasil **saat mengetik**. Indeks disusun dari Materi
+**saat build** (satu entri per bagian, memakai anchor dari `daftarBagian`), lalu
+pencocokannya berjalan di peramban — tanpa backend, tanpa token, dan tetap bekerja
+saat backend mati. Tautan ke halaman ini ada di beranda dan di sidebar setiap Topik.
+Istilah **Pencarian** ditambahkan ke `CONTEXT.md` oleh ticket ini. Lihat
+[ADR-0020](adr/0020-pencarian-halaman-indeks-dan-pencocokan-di-peramban.md).
+**Catatan**: baru `stack` yang punya berkas, jadi baru bagian Materi Topik itu yang
+bisa ditemukan; keduanya bertambah sendiri saat Topik berikutnya ditulis.
+
 **Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
 → pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini
 memenuhi user story 49 ("Pembahasan tersembunyi di balik tombol") yang sebelumnya

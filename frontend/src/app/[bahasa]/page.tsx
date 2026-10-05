@@ -80,6 +80,19 @@ export default async function HomePage({
         ))}
       </ul>
 
+      {/*
+        Tautan ke pencarian (ticket #13). Di beranda, setelah daftar Topik: pemakai
+        yang belum tahu harus membuka Topik mana adalah orang yang paling butuh
+        mencari, jadi tautannya diletakkan di jalur pertama yang ia baca.
+      */}
+      <Link
+        href={`/${b}/pencarian`}
+        className="font-medium underline underline-offset-4"
+        style={{ color: "var(--color-accent)" }}
+      >
+        {kamus.pencarianBuka}
+      </Link>
+
       <BackendStatus kamus={kamus} />
       <TokenForm kamus={kamus} />
 
