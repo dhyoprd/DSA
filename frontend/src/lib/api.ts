@@ -44,6 +44,19 @@ export interface BarisPenjelasan {
 }
 
 /**
+ * Catatan sebuah Topik dari backend.
+ *
+ * Bentuknya sejajar dengan `BarisPenjelasan`, kecuali tanpa `soal_indeks`: Catatan
+ * disimpan per **Topik**, bukan per Soal (CONTEXT.md). `diperbarui` `null` berarti
+ * Topik ini belum pernah ditulis.
+ */
+export interface BarisCatatan {
+  topik_slug: string;
+  isi: string;
+  diperbarui: string | null;
+}
+
+/**
  * Ambil status kesehatan backend.
  *
  * Melempar kalau backend tidak menjawab, supaya pemanggil bisa membedakan
@@ -182,6 +195,56 @@ export async function simpanPenjelasan(
   }
 
   return response.json() as Promise<BarisPenjelasan>;
+}
+
+/**
+ * Baca Catatan sebuah Topik.
+ *
+ * Topik yang belum pernah ditulis dibalas `200` dengan isi kosong oleh backend, jadi
+ * fungsi ini tidak pernah melempar untuk "belum pernah menulis" — ia hanya melempar
+ * untuk galat sungguhan (token salah, backend mati). Sama dengan `ambilPenjelasan`.
+ */
+export async function ambilCatatan(slugTopik: string, kamus: Kamus): Promise<BarisCatatan> {
+  const response = await fetch(`/api/catatan/${encodeURIComponent(slugTopik)}`, {
+    cache: "no-store",
+    headers: headerToken(),
+  });
+
+  if (!response.ok) {
+    throw new Error(pesanGalat(response.status, kamus));
+  }
+
+  return response.json() as Promise<BarisCatatan>;
+}
+
+/**
+ * Simpan Catatan sebuah Topik.
+ *
+ * `PUT`, bukan `POST` — sama dengan backend: permintaannya mengganti seluruh isi satu
+ * Catatan yang alamatnya pasti, jadi mengirim dua kali menghasilkan keadaan yang sama.
+ *
+ * Mengembalikan baris hasil simpan. Pemanggil saat ini belum memakai nilai
+ * kembaliannya — editor hanya menandai "Tersimpan" — jadi ia sengaja tidak menampilkan
+ * waktu penyimpanan. Kalau nanti mau, waktunya sudah ada di sini tanpa permintaan
+ * kedua.
+ */
+export async function simpanCatatan(
+  slugTopik: string,
+  isi: string,
+  kamus: Kamus,
+): Promise<BarisCatatan> {
+  const response = await fetch(`/api/catatan/${encodeURIComponent(slugTopik)}`, {
+    method: "PUT",
+    cache: "no-store",
+    headers: { ...headerToken(), "Content-Type": "application/json" },
+    body: JSON.stringify({ isi }),
+  });
+
+  if (!response.ok) {
+    throw new Error(pesanGalat(response.status, kamus));
+  }
+
+  return response.json() as Promise<BarisCatatan>;
 }
 
 /** Nama berkas dari header `Content-Disposition`, atau `null` kalau tidak ada. */

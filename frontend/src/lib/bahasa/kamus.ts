@@ -104,6 +104,26 @@ export interface Kamus {
   /** Status saat tulisan tersimpan sedang dimuat. */
   kotakPenjelasanMemuat: string;
 
+  // --- Catatan (ticket #11) ----------------------------------------------------
+  /** Judul editor Catatan. */
+  catatan: string;
+  /** Satu kalimat penjelas di bawah judul Catatan. */
+  catatanRingkasan: string;
+  /** Label editor, terbaca pembaca layar dan terlihat sebagai label. */
+  catatanLabel: string;
+  /** Placeholder editor. */
+  catatanPlaceholder: string;
+  /** Tombol menyimpan Catatan. */
+  catatanSimpan: string;
+  /** Status saat Catatan sedang disimpan. */
+  catatanMenyimpan: string;
+  /** Konfirmasi Catatan sudah tersimpan. */
+  catatanTersimpan: string;
+  /** Tombol mengunduh Catatan sebagai Markdown. */
+  catatanUnduh: string;
+  /** Status saat Catatan tersimpan sedang dimuat. */
+  catatanMemuat: string;
+
   // --- Pengalih tema -----------------------------------------------------------
   /** `aria-label` grup tombol tema. */
   tema: string;
@@ -226,6 +246,19 @@ export const KAMUS: Record<Bahasa, Kamus> = {
     kotakPenjelasanTanpaNilai: "Tulisan ini tidak dinilai otomatis.",
     kotakPenjelasanMemuat: "Memuat tulisan tersimpan…",
 
+    catatan: "Catatan",
+    catatanRingkasan:
+      "Tulisanmu sendiri tentang Topik ini, tersimpan di backend — jadi tetap ada " +
+      "saat kamu berpindah antara laptop dan HP, dan tidak hilang saat data peramban " +
+      "dibersihkan. Isinya disimpan sebagai Markdown, jadi bisa diunduh sebagai berkas .md.",
+    catatanLabel: "Catatanmu",
+    catatanPlaceholder: "Tulis rangkuman, pertanyaan, atau hal yang ingin kamu ingat…",
+    catatanSimpan: "Simpan",
+    catatanMenyimpan: "Menyimpan…",
+    catatanTersimpan: "Tersimpan.",
+    catatanUnduh: "Unduh sebagai Markdown",
+    catatanMemuat: "Memuat Catatan tersimpan…",
+
     tema: "Tema",
     temaSistem: "Sistem",
     temaTerang: "Terang",
@@ -308,6 +341,19 @@ export const KAMUS: Record<Bahasa, Kamus> = {
     kotakPenjelasanBandingkan: "Compare with the Explanation",
     kotakPenjelasanTanpaNilai: "This writing is not graded automatically.",
     kotakPenjelasanMemuat: "Loading your saved writing…",
+
+    catatan: "Notes",
+    catatanRingkasan:
+      "Your own writing about this Topic, saved in the backend — so it stays with you " +
+      "as you move between laptop and phone, and is not lost when browser data is " +
+      "cleared. Markdown is supported.",
+    catatanLabel: "Your notes",
+    catatanPlaceholder: "Write a summary, a question, or something you want to remember…",
+    catatanSimpan: "Save",
+    catatanMenyimpan: "Saving…",
+    catatanTersimpan: "Saved.",
+    catatanUnduh: "Download as Markdown",
+    catatanMemuat: "Loading your saved Notes…",
 
     tema: "Theme",
     temaSistem: "System",

@@ -7,6 +7,7 @@
 //! Di sinilah batas "publik" dan "perlu token" ditegakkan — satu tempat, bukan
 //! keputusan yang diulang di setiap modul endpoint.
 
+pub mod catatan;
 pub mod health;
 pub mod penjelasan;
 pub mod progres;
@@ -36,6 +37,7 @@ pub fn router(state: AppState) -> Router {
     let terlindungi = Router::new()
         .merge(progres::routes())
         .merge(penjelasan::routes())
+        .merge(catatan::routes())
         .route_layer(middleware::from_fn_with_state(state.clone(), auth::wajib_token));
 
     publik.merge(terlindungi).with_state(state)

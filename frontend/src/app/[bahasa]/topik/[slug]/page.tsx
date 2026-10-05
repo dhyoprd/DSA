@@ -11,6 +11,7 @@ import { nomorDuaDigit } from "@/lib/konten/nomor.ts";
 
 import { DaftarIsi } from "../daftar-isi.tsx";
 import { DaftarKuis } from "../daftar-kuis.tsx";
+import { Catatan } from "../catatan.tsx";
 import { PengalihBahasa } from "../../pengalih-bahasa.tsx";
 import { PengalihTema } from "../../pengalih-tema.tsx";
 import { Sidebar } from "../sidebar.tsx";
@@ -127,6 +128,37 @@ export default async function HalamanTopik({
           <article className="mt-8 max-w-[68ch] text-base">
             <MateriMarkdown markdown={topik.materi[b]} idJudul={idJudul} />
           </article>
+
+          {/*
+            Catatan tepat **di bawah Materi**, sebelum Kuis (ticket #11). Kriteria
+            penerimaan meminta "Tampil di bawah Materi Topik itu", dan user story 59
+            menginginkannya "dalam satu layar" dengan Materi yang dijelaskannya. Ia juga
+            jadi jeda alami: baca konsep, tulis rangkuman dengan kata sendiri, baru uji
+            diri lewat Kuis.
+
+            Editornya komponen klien yang memuat sendiri; halaman ini tetap statis.
+            Lebarnya dibatasi sama seperti Materi dan Kuis supaya ketiganya terasa satu
+            kolom.
+          */}
+          <div className="max-w-[68ch]">
+            {/*
+              `key={topik.slug}` bukan hiasan. Next.js **mempertahankan keadaan
+              komponen klien** saat berpindah rute kalau komponennya menempati posisi
+              yang sama — `/id/topik/stack` dan `/id/topik/queue` berbagi layout dan
+              sama-sama merender `Catatan` di posisi ini. Tanpa `key`, instance yang
+              sama dipakai ulang dengan `slugTopik` baru, dan penanda "sudah menyalin
+              tulisan awal" di dalamnya membuat editornya menampilkan Catatan Topik
+              **sebelumnya** — bukan yang sedang dibuka. `key` memaksa React memasang
+              instance baru per Topik, jadi keadaan editor selalu milik satu Topik.
+              Ini cara yang didokumentasikan React untuk keadaan yang terikat entitas.
+            */}
+            <Catatan
+              key={topik.slug}
+              slugTopik={topik.slug}
+              judulTopik={topik.judul[b]}
+              kamus={kamus}
+            />
+          </div>
 
           {/*
             Kuis diletakkan di dalam `main`, setelah Materi — urutan yang sama dengan

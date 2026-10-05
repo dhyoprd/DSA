@@ -103,12 +103,18 @@ tanpa bahasa dialihkan `proxy.ts`. Materi tetap halaman statis per bahasa. Lihat
 3. Export ke Anki.
 4. Editor Catatan di situs.
 
-**Status rantai inti per 2026-10-05** (ticket #8): Materi (#4), Kuis (#6), Progres
-(#7, backend saja), token (#7), Kotak Penjelasan (#8), dan pengalih bahasa (#12) sudah
-ada. **Yang belum**: Soal Kode (#10, terkunci oleh #9). **Catatan penting**: Progres
+**Status rantai inti per 2026-10-05** (ticket #11): Materi (#4), Kuis (#6), Progres
+(#7, backend saja), token (#7), Kotak Penjelasan (#8), pengalih bahasa (#12), dan
+Catatan (#11) sudah ada. **Yang belum**: Soal Kode (#10, terkunci oleh #9), dan ekspor
+gabungan Progres + Catatan (#14). **Catatan penting**: Progres
 sudah punya endpoint tetapi **belum tersambung ke tampilan** — status ○◐● di sidebar
 masih selalu ○. Beberapa komentar di kode menyebut #8 sebagai yang menyambungkannya;
 itu keliru, dan sudah dikoreksi. Lihat [ADR-0017](adr/0017-kotak-penjelasan-dan-pembahasan-di-balik-tombol.md).
+
+**Catatan (#11) selesai sebagian rantai Fase 1.** Editor Catatan per Topik ada di
+bawah Materi, tersimpan di backend, dan bisa diunduh sebagai Markdown **per Topik**.
+Ekspor gabungan seluruh Progres + Catatan tetap milik #14. Lihat
+[ADR-0018](adr/0018-catatan-per-topik-dan-unduhan-markdown.md).
 
 **Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
 → pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini
