@@ -11,6 +11,7 @@ import { nomorDuaDigit } from "@/lib/konten/nomor.ts";
 
 import { DaftarIsi } from "../daftar-isi.tsx";
 import { DaftarKuis } from "../daftar-kuis.tsx";
+import { DaftarVisualisasi } from "../daftar-visualisasi.tsx";
 import { Catatan } from "../catatan.tsx";
 import { PengalihBahasa } from "../../pengalih-bahasa.tsx";
 import { PengalihTema } from "../../pengalih-tema.tsx";
@@ -26,8 +27,12 @@ import { Sidebar } from "../sidebar.tsx";
  * Halaman ini adalah **titik sambungan**, bukan tempat aturan hidup: aturan
  * "Topik mana yang tersedia" ada di `susunNavigasi`, aturan "bagian mana yang ada"
  * ada di `daftarBagian`, aturan "bagaimana Markdown tampil" ada di `MateriMarkdown`,
- * dan aturan "Kuis mana yang tampil" ada di `DaftarKuis`. Yang dikerjakan di sini
- * hanya menyusunnya dan menyerahkan `id` bagian ke dua tempat yang harus sepakat.
+ * aturan "Kuis mana yang tampil" ada di `DaftarKuis`, dan aturan "Visualisasi mana
+ * yang tampil" ada di `DaftarVisualisasi`. Yang dikerjakan di sini hanya menyusunnya
+ * dan menyerahkan `id` bagian ke dua tempat yang harus sepakat.
+ *
+ * Urutan isinya mengikuti cara belajar: Materi (konsep) → Visualisasi (mekanismenya
+ * bergerak) → Catatan (rangkuman dengan kata sendiri) → Kuis (uji diri).
  *
  * Halaman tetap statis walaupun memuat Kuis: `DaftarKuis` merender kerangka Kuis di
  * server, dan yang interaktif — pengacakan opsi, penilaian, Pembahasan — baru hidup
@@ -130,11 +135,30 @@ export default async function HalamanTopik({
           </article>
 
           {/*
-            Catatan tepat **di bawah Materi**, sebelum Kuis (ticket #11). Kriteria
-            penerimaan meminta "Tampil di bawah Materi Topik itu", dan user story 59
+            Visualisasi tepat **di bawah Materi**, sebelum Catatan (ticket #15).
+            Urutannya mengikuti alasan yang sama dengan Catatan dan Kuis: baca
+            konsepnya, lihat mekanismenya bergerak, tulis rangkuman, baru uji diri.
+
+            Komponennya yang memutuskan apakah ia menampilkan apa pun — Topik tanpa
+            Visualisasi tidak menampilkan judul bagian yang menggantung, dan halaman
+            tidak perlu tahu Topik mana yang punya. Lebarnya dibatasi sama seperti
+            Materi supaya keduanya terasa satu kolom.
+
+            Halaman tetap statis: yang dirender server adalah kerangka Visualisasi, dan
+            animasinya baru hidup setelah React mengambil alih di peramban.
+          */}
+          <div className="max-w-[68ch]">
+            <DaftarVisualisasi slug={topik.slug} bahasa={b} kamus={kamus} />
+          </div>
+
+          {/*
+            Catatan ada **di antara Visualisasi dan Kuis** (ticket #11; posisinya
+            bergeser satu tingkat ketika ticket #15 menyisipkan Visualisasi di atasnya,
+            dan kriteria "tampil di bawah Materi" tetap terpenuhi). Kriteria penerimaan
+            meminta "Tampil di bawah Materi Topik itu", dan user story 59
             menginginkannya "dalam satu layar" dengan Materi yang dijelaskannya. Ia juga
-            jadi jeda alami: baca konsep, tulis rangkuman dengan kata sendiri, baru uji
-            diri lewat Kuis.
+            jadi jeda alami: baca konsep, lihat mekanismenya bergerak, tulis rangkuman
+            dengan kata sendiri, baru uji diri lewat Kuis.
 
             Editornya komponen klien yang memuat sendiri; halaman ini tetap statis.
             Lebarnya dibatasi sama seperti Materi dan Kuis supaya ketiganya terasa satu

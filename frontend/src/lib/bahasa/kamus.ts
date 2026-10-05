@@ -170,6 +170,50 @@ export interface Kamus {
   /** Label bagian Materi yang jadi tempat hasil ditemukan. */
   pencarianBagian: string;
 
+  // --- Visualisasi (ticket #15) ------------------------------------------------
+  /*
+   * Yang ada di sini hanya kalimat yang bergantung **bahasa** saja. Nama struktur
+   * dan nama ujungnya (atas / belakang / depan) bergantung pada bahasa **dan**
+   * struktur, jadi ia tidak muat di kamus datar ini — tempatnya di
+   * `lib/visualisasi/label.ts`, dengan tipe `Record<Bahasa, Record<JenisStruktur, …>>`.
+   */
+  /** Judul bagian Visualisasi di halaman Topik. */
+  visualisasi: string;
+  /** Satu kalimat penjelas di bawah judul Visualisasi. */
+  visualisasiRingkasan: string;
+  /** Nama operasi push, untuk tombol dan pembaca layar. */
+  visualisasiPush: string;
+  /** Nama operasi pop. */
+  visualisasiPop: string;
+  /** Keterangan keadaan saat belum ada langkah yang dijalankan. */
+  visualisasiAwal: string;
+  /** Keterangan saat struktur kosong. */
+  visualisasiKosong: string;
+  /** Kalimat yang menyebut langkah yang baru dijalankan, diikuti namanya. */
+  visualisasiLangkah: string;
+  /** Kalimat saat sebuah nilai keluar dari struktur, diikuti nilainya. */
+  visualisasiKeluar: string;
+  /** Awalan daftar isi struktur saat ini, diikuti nilainya. */
+  visualisasiIsi: string;
+  /** Kalimat utuh saat struktur tidak berisi apa pun, untuk pembaca layar. */
+  visualisasiIsiKosong: string;
+  /** Kalimat utuh saat `pop` dijalankan pada struktur yang kosong. */
+  visualisasiPopKosong: string;
+  /** Penghitung langkah, diikuti posisi dan totalnya. */
+  visualisasiPenghitung: string;
+  /** Tombol mundur satu langkah. */
+  visualisasiMundur: string;
+  /** Tombol maju satu langkah. */
+  visualisasiMaju: string;
+  /** Tombol kembali ke awal. */
+  visualisasiUlang: string;
+  /** Tombol mulai berjalan sendiri. */
+  visualisasiPutar: string;
+  /** Tombol menghentikan pemutaran otomatis. */
+  visualisasiJeda: string;
+  /** Keterangan bahwa urutan langkahnya sama untuk kedua struktur. */
+  visualisasiBandingkan: string;
+
   // --- Pengalih tema -----------------------------------------------------------
   /** `aria-label` grup tombol tema. */
   tema: string;
@@ -334,6 +378,28 @@ export const KAMUS: Record<Bahasa, Kamus> = {
     pencarianTanpaKirim: "Pencarian berjalan di peramban — tidak ada yang dikirim ke mana pun.",
     pencarianBagian: "Bagian",
 
+    visualisasi: "Visualisasi",
+    visualisasiRingkasan:
+      "Jalankan langkahnya satu per satu dan lihat sendiri di ujung mana elemen masuk " +
+      "dan keluar. Urutan langkahnya sengaja sama untuk Stack dan Queue, supaya yang " +
+      "berbeda hanya ujungnya.",
+    visualisasiPush: "push",
+    visualisasiPop: "pop",
+    visualisasiAwal: "Tekan maju untuk menjalankan langkah pertama.",
+    visualisasiKosong: "Kosong",
+    visualisasiLangkah: "Langkah",
+    visualisasiKeluar: "Keluar:",
+    visualisasiIsi: "Isi sekarang:",
+    visualisasiIsiKosong: "Strukturnya kosong.",
+    visualisasiPopKosong: "Tidak ada yang keluar — strukturnya kosong.",
+    visualisasiPenghitung: "langkah",
+    visualisasiMundur: "Mundur",
+    visualisasiMaju: "Maju",
+    visualisasiUlang: "Ulang",
+    visualisasiPutar: "Putar",
+    visualisasiJeda: "Jeda",
+    visualisasiBandingkan: "Urutan langkahnya sama untuk Stack dan Queue.",
+
     tema: "Tema",
     temaSistem: "Sistem",
     temaTerang: "Terang",
@@ -458,6 +524,28 @@ export const KAMUS: Record<Bahasa, Kamus> = {
     pencarianKosong: "No section matches. Try another word.",
     pencarianTanpaKirim: "Search runs in the browser — nothing is sent anywhere.",
     pencarianBagian: "Section",
+
+    visualisasi: "Visualization",
+    visualisasiRingkasan:
+      "Run the steps one at a time and see for yourself which end elements enter and " +
+      "leave from. The step order is deliberately the same for Stack and Queue, so the " +
+      "only thing that differs is the end.",
+    visualisasiPush: "push",
+    visualisasiPop: "pop",
+    visualisasiAwal: "Press next to run the first step.",
+    visualisasiKosong: "Empty",
+    visualisasiLangkah: "Step",
+    visualisasiKeluar: "Out:",
+    visualisasiIsi: "Contents now:",
+    visualisasiIsiKosong: "The structure is empty.",
+    visualisasiPopKosong: "Nothing came out — the structure is empty.",
+    visualisasiPenghitung: "steps",
+    visualisasiMundur: "Back",
+    visualisasiMaju: "Next",
+    visualisasiUlang: "Restart",
+    visualisasiPutar: "Play",
+    visualisasiJeda: "Pause",
+    visualisasiBandingkan: "The step order is the same for Stack and Queue.",
 
     tema: "Theme",
     temaSistem: "System",
