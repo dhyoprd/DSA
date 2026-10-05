@@ -136,13 +136,27 @@ Istilah **Pencarian** ditambahkan ke `CONTEXT.md` oleh ticket ini. Lihat
 **Catatan**: baru `stack` yang punya berkas, jadi baru bagian Materi Topik itu yang
 bisa ditemukan; keduanya bertambah sendiri saat Topik berikutnya ditulis.
 
+**Visualisasi Stack (#15) selesai sebagian.** Visualisasi pertama ada: bagian di
+halaman Topik, tepat di bawah Materi, menampilkan **Stack dan Queue** dengan urutan
+langkah yang sama — sehingga yang terlihat berbeda hanya ujung tempat `pop` mengambil
+(LIFO 3 lalu 2; FIFO 1 lalu 2). Langkahnya bisa dimajukan, **dimundurkan**, diulang,
+dan diputar sendiri; `prefers-reduced-motion` dihormati lewat `MotionConfig
+reducedMotion="user"`. Geraknya memakai pustaka **`motion`** (Framer Motion, ~45 KB
+gzip, hanya di rute Topik). Urutan langkahnya ada di dalam kode, **bukan** di
+`content/stack.yaml` — skema konten dan validator tidak tersentuh. Istilah
+**Visualisasi** di `CONTEXT.md` dipakai kode untuk pertama kalinya. Lihat
+[ADR-0021](adr/0021-visualisasi-stack-di-halaman-topik-lewat-motion.md).
+**Catatan**: ini baru 1 dari 12 Visualisasi yang dijanjikan; 11 Topik lain belum punya,
+dan `VISUALISASI_PER_TOPIK` di `daftar-visualisasi.tsx` masih berisi satu baris.
+
 **Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
 → pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini
 memenuhi user story 49 ("Pembahasan tersembunyi di balik tombol") yang sebelumnya
 bertabrakan dengan perilaku #6 (Pembahasan terbuka otomatis).
 
 **Menyusul setelah Fase 1**:
-- Visualisasi, untuk 12 Topik (dijanjikan, belum dikerjakan).
+- Visualisasi, untuk 12 Topik (dijanjikan, belum dikerjakan). **Diperbarui #15**: satu
+  sudah ada (Stack & Queue, di halaman Topik); 11 Topik lain belum. Lihat ADR-0021.
 - Dry-run tabel dan cari bug sebagai format Kuis.
 - SRS di dalam situs (saat ini: export ke Anki, Anki yang menjadwalkan).
 
