@@ -105,6 +105,20 @@ pub fn permintaan_json(uri: &str, badan: &serde_json::Value) -> Request<Body> {
         .unwrap()
 }
 
+/// Bangun permintaan `PUT` dengan badan JSON.
+///
+/// Terpisah dari `permintaan_json` karena metodenya bagian dari kontrak: menyimpan
+/// Kotak Penjelasan adalah `PUT` (mengganti seluruh isi satu alamat yang pasti),
+/// bukan `POST`. Uji yang memakai metode salah harus gagal, bukan kebetulan lolos.
+pub fn permintaan_put_json(uri: &str, badan: &serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("PUT")
+        .uri(uri)
+        .header("content-type", "application/json")
+        .body(Body::from(badan.to_string()))
+        .unwrap()
+}
+
 /// Bangun permintaan `GET`.
 pub fn permintaan_get(uri: &str) -> Request<Body> {
     Request::builder()

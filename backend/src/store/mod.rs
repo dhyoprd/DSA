@@ -6,4 +6,5 @@
 //! Ticket #8 menambahkan `penjelasan`, #11 menambahkan `catatan` — masing-masing
 //! sebagai modul baru di sini, bukan dengan menyunting `progres`.
 
+pub mod penjelasan;
 pub mod progres;

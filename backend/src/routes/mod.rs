@@ -8,6 +8,7 @@
 //! keputusan yang diulang di setiap modul endpoint.
 
 pub mod health;
+pub mod penjelasan;
 pub mod progres;
 
 use axum::middleware;
@@ -34,6 +35,7 @@ pub fn router(state: AppState) -> Router {
 
     let terlindungi = Router::new()
         .merge(progres::routes())
+        .merge(penjelasan::routes())
         .route_layer(middleware::from_fn_with_state(state.clone(), auth::wajib_token));
 
     publik.merge(terlindungi).with_state(state)
