@@ -199,6 +199,77 @@ function periksaPrasyarat(
   });
 }
 
+// --- Kompleksitas & Istilah (ticket #14) ---------------------------------------
+
+/**
+ * Periksa satu daftar `kompleksitas`.
+ *
+ * Bentuknya dipakai menyusun CSV untuk Anki, jadi aturannya ditegakkan di sini —
+ * bukan dibiarkan longgar lalu ditangani dengan cabang `if` di penyusun CSV. CSV yang
+ * kehilangan baris tanpa pesan justru kelas kesalahan yang paling sulit terlihat.
+ */
+function periksaKompleksitas(nilai: unknown, tambah: TambahMasalah): void {
+  if (!adalahArray(nilai) || nilai.length === 0) {
+    tambah("kompleksitas", "harus daftar struktur yang tidak kosong");
+    return;
+  }
+
+  nilai.forEach((struktur, indeks) => {
+    const lokasi = `kompleksitas[${indeks}]`;
+    if (!adalahObjek(struktur)) {
+      tambah(lokasi, `harus objek, bukan ${jenis(struktur)}`);
+      return;
+    }
+
+    periksaTeksDwibahasa(struktur.struktur, `${lokasi}.struktur`, tambah);
+
+    if (!teksTerisi(struktur.ruang)) {
+      tambah(`${lokasi}.ruang`, "kompleksitas ruang kosong atau tidak ada");
+    }
+
+    if (!adalahArray(struktur.operasi) || struktur.operasi.length === 0) {
+      tambah(`${lokasi}.operasi`, "harus daftar operasi yang tidak kosong");
+      return;
+    }
+
+    struktur.operasi.forEach((operasi, posisi) => {
+      const lokasiOperasi = `${lokasi}.operasi[${posisi}]`;
+      if (!adalahObjek(operasi)) {
+        tambah(lokasiOperasi, `harus objek, bukan ${jenis(operasi)}`);
+        return;
+      }
+      periksaTeksDwibahasa(operasi.nama, `${lokasiOperasi}.nama`, tambah);
+      if (!teksTerisi(operasi.waktu)) {
+        tambah(`${lokasiOperasi}.waktu`, "kompleksitas waktu kosong atau tidak ada");
+      }
+    });
+  });
+}
+
+/**
+ * Periksa satu daftar `istilah`.
+ *
+ * Istilah dwibahasa wajib lengkap: definisi yang hanya ada di satu bahasa akan
+ * menghasilkan kartu yang setengah kosong bagi pembaca bahasa lain, dan itu tidak
+ * terlihat saat membaca bahasa Indonesia.
+ */
+function periksaIstilah(nilai: unknown, tambah: TambahMasalah): void {
+  if (!adalahArray(nilai) || nilai.length === 0) {
+    tambah("istilah", "harus daftar istilah yang tidak kosong");
+    return;
+  }
+
+  nilai.forEach((istilah, indeks) => {
+    const lokasi = `istilah[${indeks}]`;
+    if (!adalahObjek(istilah)) {
+      tambah(lokasi, `harus objek, bukan ${jenis(istilah)}`);
+      return;
+    }
+    periksaTeksDwibahasa(istilah.istilah, `${lokasi}.istilah`, tambah);
+    periksaTeksDwibahasa(istilah.definisi, `${lokasi}.definisi`, tambah);
+  });
+}
+
 // --- Satu berkas Topik ---------------------------------------------------------
 
 /**
@@ -224,6 +295,11 @@ export function periksaTopik(nilai: unknown, konteks: KonteksTopik): Masalah[] {
   }
   periksaTeksDwibahasa(nilai.judul, "judul", tambah);
   periksaTeksDwibahasa(nilai.materi, "materi", tambah);
+  // Diperiksa sebelum `soal` supaya Topik yang Soalnya rusak tetap melaporkan masalah
+  // kompleksitas dan istilahnya sekaligus — gerbang ini mengumpulkan semua masalah,
+  // bukan berhenti di yang pertama.
+  periksaKompleksitas(nilai.kompleksitas, tambah);
+  periksaIstilah(nilai.istilah, tambah);
 
   if (!adalahArray(nilai.prasyarat)) {
     tambah("prasyarat", `harus daftar nomor Topik, bukan ${jenis(nilai.prasyarat)}`);

@@ -116,6 +116,16 @@ bawah Materi, tersimpan di backend, dan bisa diunduh sebagai Markdown **per Topi
 Ekspor gabungan seluruh Progres + Catatan tetap milik #14. Lihat
 [ADR-0018](adr/0018-catatan-per-topik-dan-unduhan-markdown.md).
 
+**Ekspor (#14) selesai.** Skema Topik bertambah `kompleksitas` dan `istilah`; dari
+keduanya disusun CSV berformat Anki **saat build**, disajikan statis di
+`/[bahasa]/ekspor/anki` (tanpa backend, tanpa token). Unduhan gabungan seluruh Catatan
+ditambahkan di antarmuka (beranda), mengikuti pola ADR-0018. `GET /api/ekspor/progres`
+**tetap terpisah** — keputusan pemilik, karena Progres hanya ada di server sedangkan
+CSV dan Catatan tidak. Lihat [ADR-0019](adr/0019-field-kompleksitas-istilah-dan-ekspor-csv.md).
+**Catatan**: baru `stack` yang punya berkas, jadi CSV baru berisi Topik itu; kriteria
+"ekspor mencakup Topik yang sudah diselesaikan" belum bisa diuji sampai Topik kedua
+ditulis.
+
 **Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
 → pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini
 memenuhi user story 49 ("Pembahasan tersembunyi di balik tombol") yang sebelumnya

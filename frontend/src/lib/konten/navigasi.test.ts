@@ -32,6 +32,8 @@ function topikTersedia(slug: string, nomor: number): Topik {
     judul: { id: "Apa saja", en: "Whatever" },
     prasyarat: [],
     materi: { id: "Materi", en: "Material" },
+    kompleksitas: [],
+    istilah: [],
     soal: [],
   };
 }

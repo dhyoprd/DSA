@@ -54,6 +54,21 @@ function topikSah(): Record<string, unknown> {
     judul: { id: "Stack", en: "Stack" },
     prasyarat: [3],
     materi: { id: "Materi Indonesia", en: "English material" },
+    kompleksitas: [
+      {
+        struktur: { id: "Stack (array)", en: "Stack (array)" },
+        ruang: "O(n)",
+        operasi: [
+          { nama: { id: "Tambah elemen", en: "Add element" }, waktu: "O(1)" },
+        ],
+      },
+    ],
+    istilah: [
+      {
+        istilah: { id: "Tumpukan", en: "Stack" },
+        definisi: { id: "Struktur LIFO.", en: "A LIFO structure." },
+      },
+    ],
     soal: [kuisSah(0), kuisSah(1), kuisSah(2), kuisSah(3), kuisSah(0), soalKodeSah()],
   };
 }
@@ -306,6 +321,50 @@ test("test case tanpa kunci diharapkan ditolak", () => {
   const kode = soal.find((s) => s.tipe === "soal-kode") as SoalKode;
   kode.test_case = [{ argumen: [[1]] } as unknown as SoalKode["test_case"][number]];
   assert.ok(adaMasalah(periksa(topik), "soal[5].test_case[0]", "diharapkan"));
+});
+
+// --- Kompleksitas & Istilah (ticket #14) ---------------------------------------
+
+test("kompleksitas yang hilang ditolak", () => {
+  const topik = topikSah();
+  delete topik.kompleksitas;
+  assert.ok(adaMasalah(periksa(topik), "kompleksitas", "tidak kosong"));
+});
+
+test("kompleksitas dengan daftar operasi kosong ditolak", () => {
+  const topik = topikSah();
+  (topik.kompleksitas as { operasi: unknown[] }[])[0].operasi = [];
+  assert.ok(adaMasalah(periksa(topik), "kompleksitas[0].operasi", "tidak kosong"));
+});
+
+test("operasi tanpa kompleksitas waktu ditolak", () => {
+  const topik = topikSah();
+  (topik.kompleksitas as { operasi: { waktu?: string }[] }[])[0].operasi[0].waktu = "";
+  assert.ok(adaMasalah(periksa(topik), "kompleksitas[0].operasi[0].waktu", "waktu"));
+});
+
+test("struktur tanpa kompleksitas ruang ditolak", () => {
+  const topik = topikSah();
+  (topik.kompleksitas as { ruang?: string }[])[0].ruang = "";
+  assert.ok(adaMasalah(periksa(topik), "kompleksitas[0].ruang", "ruang"));
+});
+
+test("istilah yang hilang ditolak", () => {
+  const topik = topikSah();
+  delete topik.istilah;
+  assert.ok(adaMasalah(periksa(topik), "istilah", "tidak kosong"));
+});
+
+test("istilah dengan definisi satu bahasa ditolak", () => {
+  const topik = topikSah();
+  (topik.istilah as { definisi: { id: string } }[])[0].definisi = { id: "Hanya Indonesia" };
+  assert.ok(adaMasalah(periksa(topik), "istilah[0].definisi", "English"));
+});
+
+test("istilah dengan pasangan istilah satu bahasa ditolak", () => {
+  const topik = topikSah();
+  (topik.istilah as { istilah: { id: string } }[])[0].istilah = { id: "Hanya Indonesia" };
+  assert.ok(adaMasalah(periksa(topik), "istilah[0].istilah", "English"));
 });
 
 // --- Prasyarat -----------------------------------------------------------------

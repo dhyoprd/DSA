@@ -5,6 +5,7 @@ import { kamusUntuk } from "@/lib/bahasa/kamus.ts";
 import { konten } from "@/lib/konten/muat.ts";
 
 import { BackendStatus } from "./backend-status";
+import { Ekspor } from "./ekspor";
 import { PengalihBahasa } from "./pengalih-bahasa.tsx";
 import { PengalihTema } from "./pengalih-tema.tsx";
 import { TokenForm } from "./token-form";
@@ -81,6 +82,17 @@ export default async function HomePage({
 
       <BackendStatus kamus={kamus} />
       <TokenForm kamus={kamus} />
+
+      {/*
+        Ekspor (ticket #14). Diletakkan setelah formulir token supaya urutannya masuk
+        akal: masukkan token dulu, baru mengekspor. Bagian ini tetap bekerja tanpa
+        token untuk CSV-nya, karena berkasnya statis.
+      */}
+      <Ekspor
+        topik={topik.map((t) => ({ slug: t.slug, judul: t.judul[b] }))}
+        bahasa={b}
+        kamus={kamus}
+      />
     </main>
   );
 }

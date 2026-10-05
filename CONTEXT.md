@@ -51,3 +51,8 @@ _Avoid_: Notes, anotasi
 **Progres**:
 Rekam jejak Topik dan Soal mana yang sudah kamu selesaikan, dan Kotak Penjelasan yang sudah kamu tulis. Tersimpan di backend.
 _Avoid_: Tracking, riwayat, history
+
+**Istilah**:
+Kosakata sebuah Topik yang layak dihafal, beserta definisinya di kedua bahasa dan pasangan Indonesia–English-nya. Tersimpan di berkas Topik, dipakai menyusun ekspor CSV.
+_Avoid_: Glosarium, glossary, kamus, vocabulary
+

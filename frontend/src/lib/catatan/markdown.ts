@@ -42,3 +42,40 @@ export function markdownCatatan(judul: string, isi: string): string {
 export function namaBerkasCatatan(slug: string): string {
   return `${slug}.md`;
 }
+
+/** Satu Topik dalam berkas gabungan: judulnya, dan Catatannya. */
+export interface CatatanTopik {
+  /** Judul Topik dalam bahasa aktif. */
+  judul: string;
+  /** Isi Catatan Topik itu. Boleh kosong. */
+  isi: string;
+}
+
+/**
+ * Susun satu berkas Markdown dari seluruh Catatan (ticket #14).
+ *
+ * Berbeda dari [`markdownCatatan`] yang menyusun satu Topik, fungsi ini menggabungkan
+ * semuanya menjadi satu berkas. Judul Topik menjadi heading `##` di bawah satu heading
+ * `#` berkas, sehingga berkasnya terbaca sebagai satu dokumen dan setiap Topik tetap
+ * terpisah jelas.
+ *
+ * **Topik yang Catatannya kosong tetap ditulis**, dengan keterangan bahwa belum ada
+ * isinya. Kalau Topik kosong dilewati begitu saja, berkas gabungannya tidak bisa
+ * dibedakan dari berkas yang Topiknya memang belum pernah dibuat — padahal bagi
+ * pemelajar keduanya berbeda: yang satu "belum saya tulis", yang lain "belum ada
+ * Topiknya".
+ *
+ * **Fungsi murni.** Yang bisa salah adalah bentuk teksnya, dan itu diuji sebagai teks.
+ */
+export function markdownSemuaCatatan(judulBerkas: string, topik: CatatanTopik[]): string {
+  const bagian = topik.map((t) => {
+    const badan = t.isi.trimEnd();
+    return badan.length === 0 ? `## ${t.judul}\n` : `## ${t.judul}\n\n${badan}\n`;
+  });
+
+  // Berkas tanpa Topik tetap menghasilkan headingnya saja — berkas kosong yang tidak
+  // menjelaskan apa pun lebih membingungkan daripada berkas berjudul tanpa isi.
+  if (bagian.length === 0) return `# ${judulBerkas}\n`;
+
+  return `# ${judulBerkas}\n\n${bagian.join("\n")}`;
+}

@@ -24,6 +24,73 @@ judul:
   en: Stack & Queue
 prasyarat: [3]
 
+# Kompleksitas dan istilah (ticket #14) adalah sumber terstruktur untuk ekspor CSV
+# yang bisa diimpor ke Anki. Tabel kompleksitas yang sama sudah ada di dalam Materi
+# di bawah, tetapi tabel itu untuk dibaca manusia; yang ini untuk mesin. Keduanya
+# sengaja dibiarkan ada: mengurainya dari prosa akan rapuh, dan menghapus tabelnya
+# akan membuat Materi kehilangan salah satu bagian yang paling sering dibaca ulang.
+#
+# `waktu` dan `ruang` memakai notasi O(...) apa adanya — notasi itu sama di kedua
+# bahasa, jadi tidak diterjemahkan.
+kompleksitas:
+  - struktur:
+      id: Stack (array)
+      en: Stack (array)
+    ruang: O(n)
+    operasi:
+      - nama: { id: Tambah elemen (push), en: Add element (push) }
+        waktu: O(1)
+      - nama: { id: Ambil elemen (pop), en: Remove element (pop) }
+        waktu: O(1)
+      - nama: { id: Lihat ujung (top), en: Look at the end (top) }
+        waktu: O(1)
+      - nama: { id: Cari satu nilai, en: Find one value }
+        waktu: O(n)
+
+  - struktur:
+      id: Queue (deque)
+      en: Queue (deque)
+    ruang: O(n)
+    operasi:
+      - nama: { id: Tambah elemen (enqueue), en: Add element (enqueue) }
+        waktu: O(1)
+      - nama: { id: Ambil elemen (dequeue), en: Remove element (dequeue) }
+        waktu: O(1)
+      - nama: { id: Lihat ujung (front), en: Look at the end (front) }
+        waktu: O(1)
+      - nama: { id: Cari satu nilai, en: Find one value }
+        waktu: O(n)
+
+# Istilah yang layak dihafal. `istilah` adalah pasangan Indonesia–English; `definisi`
+# menjelaskannya di kedua bahasa. Istilah yang tidak punya padanan Indonesia (mis.
+# "LIFO") tetap dicatat, tetapi pasangannya sama di kedua bahasa — kartu "LIFO → LIFO"
+# tidak dihasilkan, karena tidak menguji apa pun.
+istilah:
+  - istilah: { id: Tumpukan, en: Stack }
+    definisi:
+      id: Struktur yang menambah dan mengambil elemen dari ujung yang sama, sehingga yang terakhir masuk keluar lebih dulu.
+      en: A structure that adds and removes elements from the same end, so the last one in comes out first.
+  - istilah: { id: Antrean, en: Queue }
+    definisi:
+      id: Struktur yang menambah elemen di belakang dan mengambilnya dari depan, sehingga yang pertama masuk keluar lebih dulu.
+      en: A structure that adds elements at the back and removes them from the front, so the first one in comes out first.
+  - istilah: { id: LIFO, en: LIFO }
+    definisi:
+      id: Last In, First Out — aturan Stack, yang terakhir masuk keluar lebih dulu.
+      en: Last In, First Out — the Stack rule, where the last one in comes out first.
+  - istilah: { id: FIFO, en: FIFO }
+    definisi:
+      id: First In, First Out — aturan Queue, yang pertama masuk keluar lebih dulu.
+      en: First In, First Out — the Queue rule, where the first one in comes out first.
+  - istilah: { id: Operasi amortized, en: Amortized operation }
+    definisi:
+      id: Operasi yang sesekali mahal tetapi rata-ratanya tetap murah karena biayanya dibagi ke banyak operasi lain.
+      en: An operation that is occasionally expensive but cheap on average, because its cost is spread across many other operations.
+  - istilah: { id: Ujung, en: End }
+    definisi:
+      id: Tempat elemen masuk atau keluar pada Stack atau Queue. Stack memakai satu ujung, Queue memakai dua.
+      en: Where elements enter or leave a Stack or Queue. A Stack uses one end, a Queue uses two.
+
 materi:
   id: |
     ## Kenapa dua struktur ini muncul lebih dulu

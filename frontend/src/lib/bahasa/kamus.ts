@@ -124,6 +124,30 @@ export interface Kamus {
   /** Status saat Catatan tersimpan sedang dimuat. */
   catatanMemuat: string;
 
+  // --- Ekspor (ticket #14) -----------------------------------------------------
+  /** Judul bagian ekspor di beranda. */
+  ekspor: string;
+  /** Satu kalimat penjelas di bawah judul ekspor. */
+  eksporRingkasan: string;
+  /** Tombol mengunduh seluruh Catatan sebagai satu Markdown. */
+  eksporCatatan: string;
+  /** Tombol mengunduh CSV untuk Anki. */
+  eksporAnki: string;
+  /** Status saat ekspor sedang disusun atau diambil. */
+  eksporMemuat: string;
+  /** Keterangan bahwa CSV Anki bisa diimpor apa adanya. */
+  eksporAnkiKeterangan: string;
+  /** Awalan sisi depan kartu kompleksitas waktu. */
+  eksporKompleksitasWaktu: string;
+  /** Awalan sisi depan kartu kompleksitas ruang. */
+  eksporKompleksitasRuang: string;
+  /** Awalan sisi depan kartu definisi istilah. */
+  eksporDefinisi: string;
+  /** Awalan sisi depan kartu pasangan istilah Indonesia–English. */
+  eksporPasanganIstilah: string;
+  /** Judul heading berkas gabungan seluruh Catatan. */
+  eksporJudulCatatan: string;
+
   // --- Pengalih tema -----------------------------------------------------------
   /** `aria-label` grup tombol tema. */
   tema: string;
@@ -259,6 +283,22 @@ export const KAMUS: Record<Bahasa, Kamus> = {
     catatanUnduh: "Unduh sebagai Markdown",
     catatanMemuat: "Memuat Catatan tersimpan…",
 
+    ekspor: "Ekspor",
+    eksporRingkasan:
+      "Bawa keluar apa yang sudah kamu kerjakan: seluruh Catatan sebagai satu berkas " +
+      "Markdown, dan fakta yang layak dihafal sebagai CSV yang bisa diimpor ke Anki.",
+    eksporCatatan: "Unduh semua Catatan (Markdown)",
+    eksporAnki: "Unduh CSV untuk Anki",
+    eksporMemuat: "Menyiapkan…",
+    eksporAnkiKeterangan:
+      "Berkas CSV-nya sudah berformat impor Anki — buka Anki, pilih File → Import, " +
+      "dan pilih berkasnya. Tidak perlu menyunting apa pun.",
+    eksporKompleksitasWaktu: "Kompleksitas waktu",
+    eksporKompleksitasRuang: "Kompleksitas ruang",
+    eksporDefinisi: "Definisi",
+    eksporPasanganIstilah: "Istilah",
+    eksporJudulCatatan: "Seluruh Catatan",
+
     tema: "Tema",
     temaSistem: "Sistem",
     temaTerang: "Terang",
@@ -354,6 +394,22 @@ export const KAMUS: Record<Bahasa, Kamus> = {
     catatanTersimpan: "Saved.",
     catatanUnduh: "Download as Markdown",
     catatanMemuat: "Loading your saved Notes…",
+
+    ekspor: "Export",
+    eksporRingkasan:
+      "Take out what you have worked on: all your Notes as one Markdown file, and the " +
+      "facts worth memorising as a CSV that can be imported into Anki.",
+    eksporCatatan: "Download all Notes (Markdown)",
+    eksporAnki: "Download CSV for Anki",
+    eksporMemuat: "Preparing…",
+    eksporAnkiKeterangan:
+      "The CSV is already in Anki's import format — open Anki, choose File → Import, " +
+      "and pick the file. Nothing needs editing.",
+    eksporKompleksitasWaktu: "Time complexity",
+    eksporKompleksitasRuang: "Space complexity",
+    eksporDefinisi: "Definition",
+    eksporPasanganIstilah: "Term",
+    eksporJudulCatatan: "All Notes",
 
     tema: "Theme",
     temaSistem: "System",

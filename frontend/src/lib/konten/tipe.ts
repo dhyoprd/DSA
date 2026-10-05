@@ -81,6 +81,56 @@ export interface SoalKode {
 export type Soal = Kuis | SoalKode;
 
 /**
+ * Kompleksitas satu operasi pada sebuah struktur.
+ *
+ * `waktu` adalah kompleksitas waktu operasi ini (mis. `O(1)`, `O(n)`). Nilainya teks
+ * apa adanya — notasinya sama di kedua bahasa, jadi menyimpannya sebagai `{ id, en }`
+ * hanya akan menghasilkan dua salinan yang bisa menyimpang tanpa menambah informasi.
+ */
+export interface OperasiKompleksitas {
+  /** Nama operasi, mis. "Tambah elemen (push)". */
+  nama: TeksDwibahasa;
+  /** Kompleksitas waktu operasi, mis. `O(1)`. */
+  waktu: string;
+}
+
+/**
+ * Kompleksitas sebuah struktur data dalam satu Topik.
+ *
+ * **Kenapa terstruktur, bukan hanya tabel Markdown di Materi.** Tabel kompleksitas
+ * sudah ada di dalam prosa Materi, tetapi bentuknya untuk dibaca manusia — kolomnya
+ * bisa berubah, dan mengurainya saat build berarti bergantung pada bentuk teks. Bentuk
+ * terstruktur inilah sumber yang dipakai menyusun CSV untuk Anki (ticket #14), sehingga
+ * berkasnya tidak bisa rusak hanya karena tabelnya dirapikan.
+ *
+ * `ruang` ada sekali per struktur, sedangkan `waktu` ada per operasi: "berapa ruangnya"
+ * dijawab sekali untuk sebuah struktur, "berapa waktunya" dijawab per operasi.
+ */
+export interface KompleksitasStruktur {
+  /** Nama struktur, mis. "Stack (array)". */
+  struktur: TeksDwibahasa;
+  /** Kompleksitas ruang struktur, mis. `O(n)`. */
+  ruang: string;
+  /** Operasi yang kompleksitas waktunya layak dihafal. Tidak boleh kosong. */
+  operasi: OperasiKompleksitas[];
+}
+
+/**
+ * Satu istilah beserta definisinya.
+ *
+ * `istilah` adalah pasangan Indonesia–English (mis. "Tumpukan" ↔ "Stack"). Istilah
+ * teknis yang tidak punya padanan Indonesia — mis. "LIFO" — mengisi kedua bahasa dengan
+ * teks yang sama; pasangan seperti itu **tidak** menghasilkan kartu, karena "LIFO → LIFO"
+ * tidak menguji apa pun. Definisi tetap dihasilkan untuknya.
+ */
+export interface Istilah {
+  /** Pasangan istilah Indonesia–English. */
+  istilah: TeksDwibahasa;
+  /** Definisi istilah, di kedua bahasa. */
+  definisi: TeksDwibahasa;
+}
+
+/**
  * Status Progres sebuah Topik.
  *
  * Ini satu-satunya bagian bentuk data di modul ini yang **bukan** berasal dari
@@ -101,6 +151,11 @@ export type StatusProgres = "belum" | "sedang" | "selesai";
  * Field `nomor`, `slug`, `judul`, dan `prasyarat` juga ada di `jalur.yaml`; nilainya
  * wajib sama. Duplikasi ini disengaja dan dijaga oleh validator — lihat
  * `docs/adr/0008-jalur-manifest-di-content.md`.
+ *
+ * `kompleksitas` dan `istilah` ditambahkan ticket #14 sebagai sumber terstruktur untuk
+ * ekspor CSV/Anki. Keduanya wajib: CSV yang isinya bergantung pada Topik mana yang
+ * sudah punya berkas akan diam-diam kehilangan baris begitu Topik kedua ditulis. Lihat
+ * `docs/adr/0019-...`.
  */
 export interface Topik {
   nomor: number;
@@ -108,6 +163,10 @@ export interface Topik {
   judul: TeksDwibahasa;
   prasyarat: number[];
   materi: TeksDwibahasa;
+  /** Kompleksitas struktur data Topik ini, untuk ekspor CSV. */
+  kompleksitas: KompleksitasStruktur[];
+  /** Istilah dan definisinya, untuk ekspor CSV. */
+  istilah: Istilah[];
   soal: Soal[];
 }
 
