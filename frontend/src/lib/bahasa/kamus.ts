@@ -82,6 +82,28 @@ export interface Kamus {
   /** Akhiran `sr-only` pada opsi salah, supaya pembaca layar tahu opsi mana. */
   jawabanSalah: string;
 
+  // --- Kotak Penjelasan (ticket #8) --------------------------------------------
+  /** Judul Kotak Penjelasan. */
+  kotakPenjelasan: string;
+  /** Satu kalimat penjelas di bawah judul Kotak Penjelasan. */
+  kotakPenjelasanRingkasan: string;
+  /** Label kotak isian, terbaca pembaca layar dan terlihat sebagai label. */
+  kotakPenjelasanLabel: string;
+  /** Placeholder kotak isian. */
+  kotakPenjelasanPlaceholder: string;
+  /** Tombol menyimpan tulisan. */
+  kotakPenjelasanSimpan: string;
+  /** Status saat tulisan sedang disimpan. */
+  kotakPenjelasanMenyimpan: string;
+  /** Konfirmasi tulisan sudah tersimpan. */
+  kotakPenjelasanTersimpan: string;
+  /** Tombol membuka Pembahasan untuk dibandingkan. */
+  kotakPenjelasanBandingkan: string;
+  /** Keterangan bahwa tulisan ini tidak dinilai otomatis. */
+  kotakPenjelasanTanpaNilai: string;
+  /** Status saat tulisan tersimpan sedang dimuat. */
+  kotakPenjelasanMemuat: string;
+
   // --- Pengalih tema -----------------------------------------------------------
   /** `aria-label` grup tombol tema. */
   tema: string;
@@ -182,12 +204,27 @@ export const KAMUS: Record<Bahasa, Kamus> = {
 
     kuis: "Kuis",
     kuisDari: "dari",
-    kuisRingkasan: "Jawaban salah boleh dicoba lagi. Pembahasan terbuka setelah jawaban benar.",
+    kuisRingkasan:
+      "Jawaban salah boleh dicoba lagi. Setelah jawaban benar, tulis dulu alasanmu, " +
+      "baru buka Pembahasan.",
     pembahasan: "Pembahasan",
     belumTepat: "Belum tepat. Coba lagi.",
     benar: "Benar.",
     percobaan: "Percobaan",
     jawabanSalah: " — jawaban salah",
+
+    kotakPenjelasan: "Kotak Penjelasan",
+    kotakPenjelasanRingkasan:
+      "Tulis alasan jawabanmu dengan kata sendiri. Ini tidak dinilai otomatis — " +
+      "yang penting kamu merumuskannya, bukan menjawab benar lagi.",
+    kotakPenjelasanLabel: "Alasan jawabanmu",
+    kotakPenjelasanPlaceholder: "Menurut saya jawabannya ini karena…",
+    kotakPenjelasanSimpan: "Simpan",
+    kotakPenjelasanMenyimpan: "Menyimpan…",
+    kotakPenjelasanTersimpan: "Tersimpan.",
+    kotakPenjelasanBandingkan: "Bandingkan dengan Pembahasan",
+    kotakPenjelasanTanpaNilai: "Tulisan ini tidak dinilai otomatis.",
+    kotakPenjelasanMemuat: "Memuat tulisan tersimpan…",
 
     tema: "Tema",
     temaSistem: "Sistem",
@@ -250,12 +287,27 @@ export const KAMUS: Record<Bahasa, Kamus> = {
 
     kuis: "Quiz",
     kuisDari: "of",
-    kuisRingkasan: "Wrong answers can be retried. The Explanation opens after a correct answer.",
+    kuisRingkasan:
+      "Wrong answers can be retried. After a correct answer, write your reasoning " +
+      "first, then open the Explanation.",
     pembahasan: "Explanation",
     belumTepat: "Not quite. Try again.",
     benar: "Correct.",
     percobaan: "Attempts",
     jawabanSalah: " — wrong answer",
+
+    kotakPenjelasan: "Explanation Box",
+    kotakPenjelasanRingkasan:
+      "Write why you answered that way, in your own words. This is not graded — " +
+      "what matters is that you put it into words, not that you are right again.",
+    kotakPenjelasanLabel: "Your reasoning",
+    kotakPenjelasanPlaceholder: "I think the answer is this because…",
+    kotakPenjelasanSimpan: "Save",
+    kotakPenjelasanMenyimpan: "Saving…",
+    kotakPenjelasanTersimpan: "Saved.",
+    kotakPenjelasanBandingkan: "Compare with the Explanation",
+    kotakPenjelasanTanpaNilai: "This writing is not graded automatically.",
+    kotakPenjelasanMemuat: "Loading your saved writing…",
 
     tema: "Theme",
     temaSistem: "System",

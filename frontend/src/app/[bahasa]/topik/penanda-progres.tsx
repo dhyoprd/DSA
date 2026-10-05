@@ -14,9 +14,11 @@ import type { StatusProgres } from "@/lib/konten/tipe.ts";
  * antarmuka hidup di satu tempat. Yang tetap di sini hanyalah lambangnya, karena
  * lambang tidak diterjemahkan.
  *
- * Progres belum punya sumber data: endpoint-nya dibangun di ticket #7 dan disambung
- * ke tampilan di ticket #8. Sampai saat itu pemanggil memberi `"belum"`, dan
- * komponen ini tidak perlu berubah saat datanya tiba.
+ * Progres belum punya sumber data di tampilan: endpoint-nya dibangun di ticket #7,
+ * tetapi **menyambungkannya ke sidebar belum dikerjakan**. Ticket #8 sempat disangka
+ * yang mengerjakannya, dan itu keliru — #8 mengerjakan Kotak Penjelasan. Sampai ada
+ * ticket yang menyambungkan Progres, pemanggil memberi `"belum"`, dan komponen ini
+ * tidak perlu berubah saat datanya tiba.
  */
 
 /** Lambang untuk setiap status. Urutannya tetap: belum → sedang → selesai. */

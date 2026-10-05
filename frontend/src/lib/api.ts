@@ -29,6 +29,21 @@ export interface BarisProgres {
 }
 
 /**
+ * Satu Kotak Penjelasan dari backend.
+ *
+ * `diperbarui` `null` berarti Soal ini belum pernah ditulis. Bentuknya sengaja sama
+ * untuk Soal yang sudah ditulis maupun belum, sehingga antarmuka hanya punya satu
+ * bentuk untuk ditangani — dan "belum pernah menulis" tidak perlu dibedakan dari
+ * "menulis kosong" sebagai galat.
+ */
+export interface BarisPenjelasan {
+  topik_slug: string;
+  soal_indeks: number;
+  isi: string;
+  diperbarui: string | null;
+}
+
+/**
  * Ambil status kesehatan backend.
  *
  * Melempar kalau backend tidak menjawab, supaya pemanggil bisa membedakan
@@ -106,6 +121,67 @@ export async function unduhProgres(kamus: Kamus): Promise<void> {
   // URL objek menahan blob di memori sampai dilepas; tanpa ini unduhan besar
   // meninggalkan memori yang tidak kembali sampai halaman ditutup.
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Baca tulisan Kotak Penjelasan sebuah Soal.
+ *
+ * Soal yang belum pernah ditulis dibalas `200` dengan isi kosong oleh backend, jadi
+ * fungsi ini tidak pernah melempar untuk "belum pernah menulis" — ia hanya melempar
+ * untuk galat sungguhan (token salah, backend mati). Itu disengaja: "belum menulis"
+ * adalah keadaan normal, dan memperlakukannya sebagai galat akan memaksa pemanggil
+ * menampilkan pesan gagal kepada pemelajar yang hanya belum menulis apa-apa.
+ */
+export async function ambilPenjelasan(
+  slugTopik: string,
+  indeksSoal: number,
+  kamus: Kamus,
+): Promise<BarisPenjelasan> {
+  const response = await fetch(
+    `/api/penjelasan/${encodeURIComponent(slugTopik)}/${String(indeksSoal)}`,
+    { cache: "no-store", headers: headerToken() },
+  );
+
+  if (!response.ok) {
+    throw new Error(pesanGalat(response.status, kamus));
+  }
+
+  return response.json() as Promise<BarisPenjelasan>;
+}
+
+/**
+ * Simpan tulisan Kotak Penjelasan sebuah Soal.
+ *
+ * `PUT`, bukan `POST` — sama dengan backend: permintaannya mengganti seluruh isi satu
+ * kotak yang alamatnya pasti, jadi mengirim dua kali menghasilkan keadaan yang sama.
+ *
+ * Mengembalikan baris hasil simpan supaya bentuknya sejajar dengan endpoint tulis
+ * Progres (`POST /api/progres/...` juga mengembalikan barisnya). Pemanggil saat ini
+ * belum memakai nilai kembaliannya — `KotakPenjelasan` hanya menandai "Tersimpan" —
+ * jadi ia sengaja tidak menampilkan waktu penyimpanan. Kalau nanti mau, waktunya sudah
+ * ada di sini tanpa permintaan kedua.
+ */
+export async function simpanPenjelasan(
+  slugTopik: string,
+  indeksSoal: number,
+  isi: string,
+  kamus: Kamus,
+): Promise<BarisPenjelasan> {
+  const response = await fetch(
+    `/api/penjelasan/${encodeURIComponent(slugTopik)}/${String(indeksSoal)}`,
+    {
+      method: "PUT",
+      cache: "no-store",
+      headers: { ...headerToken(), "Content-Type": "application/json" },
+      body: JSON.stringify({ isi }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(pesanGalat(response.status, kamus));
+  }
+
+  return response.json() as Promise<BarisPenjelasan>;
 }
 
 /** Nama berkas dari header `Content-Disposition`, atau `null` kalau tidak ada. */
