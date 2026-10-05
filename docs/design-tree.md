@@ -103,6 +103,18 @@ tanpa bahasa dialihkan `proxy.ts`. Materi tetap halaman statis per bahasa. Lihat
 3. Export ke Anki.
 4. Editor Catatan di situs.
 
+**Status rantai inti per 2026-10-05** (ticket #8): Materi (#4), Kuis (#6), Progres
+(#7, backend saja), token (#7), Kotak Penjelasan (#8), dan pengalih bahasa (#12) sudah
+ada. **Yang belum**: Soal Kode (#10, terkunci oleh #9). **Catatan penting**: Progres
+sudah punya endpoint tetapi **belum tersambung ke tampilan** — status ○◐● di sidebar
+masih selalu ○. Beberapa komentar di kode menyebut #8 sebagai yang menyambungkannya;
+itu keliru, dan sudah dikoreksi. Lihat [ADR-0017](adr/0017-kotak-penjelasan-dan-pembahasan-di-balik-tombol.md).
+
+**Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
+→ pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini
+memenuhi user story 49 ("Pembahasan tersembunyi di balik tombol") yang sebelumnya
+bertabrakan dengan perilaku #6 (Pembahasan terbuka otomatis).
+
 **Menyusul setelah Fase 1**:
 - Visualisasi, untuk 12 Topik (dijanjikan, belum dikerjakan).
 - Dry-run tabel dan cari bug sebagai format Kuis.

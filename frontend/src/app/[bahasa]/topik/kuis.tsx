@@ -1,24 +1,31 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 
+import { ambilPenjelasan } from "@/lib/api.ts";
 import type { Kamus } from "@/lib/bahasa/kamus.ts";
 import { benihOpsi, urutanTeracak } from "@/lib/kuis/acak.ts";
 import {
+  bukaPembahasan,
   keadaanAwal,
+  keadaanDariTulisanTersimpan,
+  kotakPenjelasanTampil,
   nilaiJawaban,
   pembahasanTerbuka,
   type KeadaanKuis,
 } from "@/lib/kuis/penilaian.ts";
 import { idSesiKlien, idSesiServer, langgananIdSesi } from "@/lib/kuis/sesi.ts";
 
+import { KotakPenjelasan } from "./kotak-penjelasan.tsx";
+
 /**
- * Satu Kuis: skenario, opsi yang sudah diacak, dan Pembahasan yang terkunci.
+ * Satu Kuis: skenario, opsi yang sudah diacak, Kotak Penjelasan, dan Pembahasan.
  *
- * Komponen ini klien karena dua hal hanya ada di peramban: id sesi (untuk benih
- * pengacakan) dan keadaan jawaban. Halaman yang memuatnya tetap statis — yang
- * dirender server hanyalah kerangkanya.
+ * Komponen ini klien karena tiga hal hanya ada di peramban: id sesi (untuk benih
+ * pengacakan), keadaan jawaban, dan tulisan Kotak Penjelasan yang tersimpan di
+ * backend. Halaman yang memuatnya tetap statis — yang dirender server hanyalah
+ * kerangkanya.
  *
  * **Yang tidak dikerjakan di sini, dan itu disengaja.** Seluruh aturan penilaian dan
  * pengacakan hidup di `src/lib/kuis/` sebagai fungsi murni. Komponen ini hanya
@@ -26,8 +33,15 @@ import { idSesiKlien, idSesiServer, langgananIdSesi } from "@/lib/kuis/sesi.ts";
  * bisa diuji dengan merender React — dan justru bug senyap di penilaian yang paling
  * perlu diuji tanpa render.
  *
- * **Progres tidak dikirim ke backend.** Ticket #8 yang menyambungkannya. Di sini
- * jumlah percobaan hanya dihitung dan ditampilkan.
+ * **Urutan setelah jawaban benar** (ticket #8): Kotak Penjelasan muncul, pemelajar
+ * menulis alasannya, lalu Pembahasan terbuka setelah tombolnya ditekan. Urutan itu
+ * ditegakkan oleh `penilaian.ts` (`kotakPenjelasanTampil`, `pembahasanTerbuka`), bukan
+ * oleh urutan JSX di sini.
+ *
+ * **Progres masih tidak dikirim ke backend.** Ticket #8 hanya menghubungkan Kotak
+ * Penjelasan; Progres (status Topik di sidebar, jumlah percobaan yang bertahan antar
+ * halaman) belum tersambung ke tampilan. Jumlah percobaan di sini tetap hanya dihitung
+ * dan ditampilkan selama halaman terbuka.
  *
  * **Teks sudah jadi ReactNode, bukan teks Markdown.** Skenario, opsi, dan Pembahasan
  * ditulis Markdown (backtick untuk istilah teknis, bintang untuk penekanan), dan
@@ -107,6 +121,54 @@ export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik, kamus }: Props
 
   const [keadaan, setKeadaan] = useState<KeadaanKuis>(keadaanAwal);
 
+  /*
+   * Tulisan Kotak Penjelasan yang tersimpan di backend: `null` selama belum selesai
+   * dimuat, string (boleh kosong) setelahnya.
+   *
+   * Dimuat di sini, bukan di `KotakPenjelasan`, karena kotaknya hanya dirender
+   * setelah jawaban benar — sedangkan tulisan tersimpan harus ketemu **sebelum** itu,
+   * supaya setelah halaman dimuat ulang pemelajar bisa melihat bahwa jawabannya sudah
+   * pernah benar dan tulisannya masih ada. Pemuatannya terjadi sekali per Kuis.
+   */
+  const [tulisanTersimpan, setTulisanTersimpan] = useState<string | null>(null);
+
+  useEffect(() => {
+    let masihDipakai = true;
+
+    ambilPenjelasan(slugTopik, indeksSoal, kamus)
+      .then((baris) => {
+        if (!masihDipakai) return;
+        setTulisanTersimpan(baris.isi);
+
+        /*
+         * Tulisan yang ada berarti Soal ini sudah pernah dijawab benar — Kotak
+         * Penjelasan tidak mungkin terisi tanpanya. Itulah yang memulihkan keadaan
+         * setelah muat ulang; `percobaan` sengaja tidak diarang, karena angka
+         * sebenarnya ada di Progres yang belum tersambung ke tampilan.
+         */
+        if (baris.diperbarui !== null) {
+          setKeadaan((sebelumnya) =>
+            sebelumnya.benar ? sebelumnya : keadaanDariTulisanTersimpan(),
+          );
+        }
+      })
+      .catch(() => {
+        // Backend mati atau token belum diisi. Kuis tetap bisa dikerjakan — Materi
+        // dan Soal memang tetap terbaca tanpa backend (user story 62) — tetapi
+        // tulisan lama tidak bisa dimuat, dan itu tidak dijadikan galat di sini:
+        // pemelajar yang belum mengisi token akan melihat galat itu di setiap Kuis,
+        // padahal ia hanya belum mengisi token sekali.
+        //
+        // Ditandai sebagai string kosong, bukan dibiarkan `null`, supaya kotaknya
+        // berhenti menampilkan "memuat" dan bisa dipakai menulis.
+        if (masihDipakai) setTulisanTersimpan("");
+      });
+
+    return () => {
+      masihDipakai = false;
+    };
+  }, [slugTopik, indeksSoal, kamus]);
+
   const indeksBenar = kuis.opsi.findIndex((opsi) => opsi.benar);
 
   /*
@@ -121,9 +183,14 @@ export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik, kamus }: Props
     benihOpsi(slugTopik, indeksSoal, idSesi ?? "belum-diketahui"),
   );
   const terbuka = pembahasanTerbuka(keadaan);
+  const kotakTampil = kotakPenjelasanTampil(keadaan);
 
   function jawab(indeksAsli: number) {
     setKeadaan((sebelumnya) => nilaiJawaban(sebelumnya, indeksAsli, indeksBenar));
+  }
+
+  function bandingkan() {
+    setKeadaan(bukaPembahasan);
   }
 
   return (
@@ -173,7 +240,13 @@ export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik, kamus }: Props
                 // Terkunci sebelum urutan sungguhan diketahui: menekan opsi yang
                 // belum tentu di posisi itu akan menilai pilihan yang salah.
                 // Setelah benar juga terkunci — tidak ada lagi yang bisa dijawab.
-                disabled={!idSesiSiap || terbuka}
+                //
+                // Syaratnya `keadaan.benar`, **bukan** `terbuka`: sejak ticket #8
+                // Pembahasan tidak lagi terbuka tepat saat jawaban benar, jadi memakai
+                // `terbuka` akan membiarkan opsi tetap bisa diklik setelah dijawab
+                // benar — dan `nilaiJawaban` mengabaikannya, sehingga tombolnya diam
+                // tanpa penjelasan.
+                disabled={!idSesiSiap || keadaan.benar}
                 /*
                  * Opsi salah terakhir ditandai supaya pemelajar melihat *pilihan mana*
                  * yang salah, bukan sekadar bahwa ada yang salah.
@@ -226,12 +299,19 @@ export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik, kamus }: Props
         dua live region bersaing.
       */}
       <div role="status" className="mt-4 min-h-6">
-        {keadaan.percobaan > 0 && !terbuka && (
+        {/*
+          Syaratnya `!keadaan.benar`, **bukan** `!terbuka`. Sebelum ticket #8 keduanya
+          sama, karena Pembahasan terbuka persis saat jawaban benar. Sekarang tidak:
+          setelah jawaban benar Pembahasan masih tertutup sampai tombolnya ditekan, dan
+          memakai `!terbuka` akan menampilkan "Belum tepat" kepada jawaban yang justru
+          sudah benar — tepat setelah pemelajar melihat tombol "Bandingkan" muncul.
+        */}
+        {keadaan.percobaan > 0 && !keadaan.benar && (
           <p className="text-sm" style={{ color: "var(--color-accent)" }}>
             {kamus.belumTepat}
           </p>
         )}
-        {terbuka && (
+        {keadaan.benar && (
           <p className="text-sm font-medium" style={{ color: "var(--color-accent)" }}>
             {kamus.benar}
           </p>
@@ -246,9 +326,26 @@ export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik, kamus }: Props
       )}
 
       {/*
-        Pembahasan. User story 22 dan keputusan `design-tree.md`: baru terbuka setelah
-        jawaban benar. Syaratnya dibaca dari `pembahasanTerbuka`, bukan ditulis ulang
-        di sini, supaya tidak ada tempat kedua yang bisa lupa.
+        Kotak Penjelasan — user story 26. Muncul tepat setelah jawaban benar, dan
+        **sebelum** Pembahasan: pemelajar merumuskan alasannya dulu, baru membandingkan.
+        Syaratnya dibaca dari `kotakPenjelasanTampil`, bukan ditulis ulang di sini.
+      */}
+      {kotakTampil && (
+        <KotakPenjelasan
+          slugTopik={slugTopik}
+          indeksSoal={indeksSoal}
+          kamus={kamus}
+          tulisanAwal={tulisanTersimpan}
+          onBandingkan={bandingkan}
+        />
+      )}
+
+      {/*
+        Pembahasan. User story 22 dan keputusan `design-tree.md`: tidak terbuka sebelum
+        jawaban benar. User story 49 dan ticket #8 menambah syarat kedua: ia baru
+        terbuka setelah tombol di Kotak Penjelasan ditekan. Kedua syaratnya dibaca dari
+        `pembahasanTerbuka`, bukan ditulis ulang di sini, supaya tidak ada tempat kedua
+        yang bisa lupa.
       */}
       {terbuka && (
         <div

@@ -14,9 +14,10 @@ use sqlx::SqlitePool;
 ///
 /// Ini status per Soal, bukan per Topik. User story 51 meminta status per Topik
 /// (belum / sedang / selesai); aturan penggabungan Soal menjadi satu status Topik
-/// belum ditetapkan di sini, karena yang menggambar sidebar adalah #8. Yang
-/// disediakan modul ini adalah bahan mentahnya: `percobaan` dan `benar_terakhir`
-/// per Soal.
+/// belum ditetapkan di sini, karena belum ada ticket yang menggambar status Topik di
+/// sidebar. (Ticket #8 sempat disangka yang mengerjakannya; #8 mengerjakan Kotak
+/// Penjelasan.) Yang disediakan modul ini adalah bahan mentahnya: `percobaan` dan
+/// `benar_terakhir` per Soal.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Status {

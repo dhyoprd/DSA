@@ -77,6 +77,11 @@ tidak ada pergeseran tata letak — CLS terukur 0.
   komponen, jadi ia kembali 0 saat halaman dimuat ulang. Menyimpannya adalah lingkup
   ticket #8 (Progres di backend); di sini ia dihitung dan ditampilkan saja, sesuai
   pembatasan ticket #6.
+  > **Dikoreksi 2026-10-05.** Kalimat di atas menyebut ticket #8 sebagai yang
+  > menyimpan `percobaan` ke Progres. Itu **keliru** — #8 mengerjakan Kotak
+  > Penjelasan, bukan Progres. Progres tetap backend-saja sampai ada ticket yang
+  > menyambungkannya ke tampilan. Keadaan `percobaan` di komponen masih seperti yang
+  > dijelaskan di sini; yang salah hanya penunjukan ticket-nya. Lihat ADR-0017.
 - **Tanpa JavaScript, opsi tidak tampil.** Materi tetap terbaca (keputusan issue #1),
   skenario dan kerangka kelima Kuis tetap tampil, Pembahasan tetap tertutup, tetapi
   kotak opsinya kosong dan terkunci. Ini diterima: Kuis memang butuh JavaScript untuk

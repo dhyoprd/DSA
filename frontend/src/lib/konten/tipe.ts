@@ -87,10 +87,11 @@ export type Soal = Kuis | SoalKode;
  * berkas YAML: Progres hidup di database backend (ADR-0003). Tipenya ada di sini
  * karena ia kosakata yang dipakai bersama oleh sidebar dan, nanti, backend.
  *
- * Belum ada data yang mengisinya. Ticket #7 membangun endpoint Progres dan #8
- * menyambungkannya ke tampilan; sampai saat itu seluruh Topik tampil `"belum"`.
- * Nilainya sengaja hanya tiga, sesuai `docs/design-tree.md` (○ belum, ◐ sedang,
- * ● selesai).
+ * Belum ada data yang mengisinya. Ticket #7 membangun endpoint Progres, tetapi belum
+ * ada ticket yang menyambungkannya ke tampilan — ticket #8 sempat disangka yang
+ * mengerjakannya, dan itu keliru (#8 mengerjakan Kotak Penjelasan). Sampai saat itu
+ * seluruh Topik tampil `"belum"`. Nilainya sengaja hanya tiga, sesuai
+ * `docs/design-tree.md` (○ belum, ◐ sedang, ● selesai).
  */
 export type StatusProgres = "belum" | "sedang" | "selesai";
 

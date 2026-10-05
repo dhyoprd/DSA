@@ -44,7 +44,9 @@ interface Props {
   /**
    * Status Progres per slug. Slug yang tidak ada di sini dianggap `"belum"`.
    *
-   * Kosong sampai ticket #8 menyambungkan endpoint Progres dari #7.
+   * Kosong sampai ada ticket yang menyambungkan endpoint Progres dari #7 ke tampilan.
+   * Ticket #8 sempat disangka yang mengerjakannya, dan itu keliru — #8 mengerjakan
+   * Kotak Penjelasan.
    */
   status?: Record<string, StatusProgres>;
 }
