@@ -64,6 +64,22 @@ export function Sidebar({ baris, slugAktif, bahasa, kamus, status = {} }: Props)
         {kamus.jalur} · {baris.length} {kamus.topikJamak}
       </p>
 
+      {/*
+        Tautan ke pencarian (ticket #13). Diletakkan di atas daftar Topik, bukan di
+        bawahnya: saat sedang membaca Topik ke-8 dan lupa di mana suatu istilah
+        dibahas, tautan ini yang dicari — dan ia harus terlihat sebelum 12 baris
+        Jalur menggulirnya ke luar layar. Di HP ia berada **di luar** pita Jalur yang
+        menggulir mendatar, jadi ia tidak ikut tergulir: selalu terlihat, apa pun
+        posisi geser pita.
+      */}
+      <Link
+        href={`/${bahasa}/pencarian`}
+        className="mt-2 block text-sm font-medium underline underline-offset-4"
+        style={{ color: "var(--color-accent)" }}
+      >
+        {kamus.pencarianBuka}
+      </Link>
+
       <ul
         className="mt-3 flex gap-2 overflow-x-auto pb-2 lg:mt-4 lg:flex-col lg:gap-0.5 lg:overflow-x-visible lg:pb-0"
         // Pita mendatar di HP: gulir dengan gesek, tanpa memotong baris.

@@ -148,6 +148,28 @@ export interface Kamus {
   /** Judul heading berkas gabungan seluruh Catatan. */
   eksporJudulCatatan: string;
 
+  // --- Pencarian (ticket #13) --------------------------------------------------
+  /** Judul halaman dan nama fitur pencarian. */
+  pencarian: string;
+  /** Satu kalimat penjelas di bawah judul pencarian. */
+  pencarianRingkasan: string;
+  /** Label kotak isian pencarian, terbaca pembaca layar dan terlihat sebagai label. */
+  pencarianLabel: string;
+  /** Placeholder kotak isian pencarian. */
+  pencarianPlaceholder: string;
+  /** Tautan ke halaman pencarian dari beranda dan sidebar. */
+  pencarianBuka: string;
+  /** Ajakan mengetik, ditampilkan saat kotak masih kosong. */
+  pencarianMulai: string;
+  /** Keterangan jumlah hasil, diikuti angkanya. */
+  pencarianJumlah: string;
+  /** Keadaan saat tidak ada bagian Materi yang cocok. */
+  pencarianKosong: string;
+  /** Keterangan bahwa pencarian berjalan di peramban tanpa mengirim apa pun. */
+  pencarianTanpaKirim: string;
+  /** Label bagian Materi yang jadi tempat hasil ditemukan. */
+  pencarianBagian: string;
+
   // --- Pengalih tema -----------------------------------------------------------
   /** `aria-label` grup tombol tema. */
   tema: string;
@@ -299,6 +321,19 @@ export const KAMUS: Record<Bahasa, Kamus> = {
     eksporPasanganIstilah: "Istilah",
     eksporJudulCatatan: "Seluruh Catatan",
 
+    pencarian: "Pencarian",
+    pencarianRingkasan:
+      "Cari istilah di seluruh Materi. Hasilnya menunjuk Topik dan bagian tempat " +
+      "istilah itu muncul, sehingga tidak perlu menebak di mana ia dibahas.",
+    pencarianLabel: "Cari istilah",
+    pencarianPlaceholder: "mis. LIFO, amortized, deque…",
+    pencarianBuka: "Cari di Materi",
+    pencarianMulai: "Ketik untuk mencari di seluruh Materi.",
+    pencarianJumlah: "hasil",
+    pencarianKosong: "Tidak ada bagian Materi yang cocok. Coba kata lain.",
+    pencarianTanpaKirim: "Pencarian berjalan di peramban — tidak ada yang dikirim ke mana pun.",
+    pencarianBagian: "Bagian",
+
     tema: "Tema",
     temaSistem: "Sistem",
     temaTerang: "Terang",
@@ -410,6 +445,19 @@ export const KAMUS: Record<Bahasa, Kamus> = {
     eksporDefinisi: "Definition",
     eksporPasanganIstilah: "Term",
     eksporJudulCatatan: "All Notes",
+
+    pencarian: "Search",
+    pencarianRingkasan:
+      "Search for a term across all Material. Results point to the Topic and the " +
+      "section where the term appears, so you do not have to guess where it is discussed.",
+    pencarianLabel: "Search for a term",
+    pencarianPlaceholder: "e.g. LIFO, amortized, deque…",
+    pencarianBuka: "Search the Material",
+    pencarianMulai: "Type to search across all Material.",
+    pencarianJumlah: "results",
+    pencarianKosong: "No section matches. Try another word.",
+    pencarianTanpaKirim: "Search runs in the browser — nothing is sent anywhere.",
+    pencarianBagian: "Section",
 
     tema: "Theme",
     temaSistem: "System",

@@ -56,3 +56,7 @@ _Avoid_: Tracking, riwayat, history
 Kosakata sebuah Topik yang layak dihafal, beserta definisinya di kedua bahasa dan pasangan Indonesia–English-nya. Tersimpan di berkas Topik, dipakai menyusun ekspor CSV.
 _Avoid_: Glosarium, glossary, kamus, vocabulary
 
+**Pencarian**:
+Fitur mencari istilah di seluruh Materi. Hasilnya menunjuk Topik dan bagian Materi tempat istilah itu muncul.
+_Avoid_: Searching, query, find, search bar
+
