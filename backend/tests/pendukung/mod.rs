@@ -15,11 +15,13 @@
 #![allow(dead_code)]
 
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use axum::Router;
 use dsa_backend::db;
+use dsa_backend::eksekusi::{hasil::Hasil, jalan::PenjalanPalsu, Status as StatusEksekusi};
 use dsa_backend::{app, AppState};
 use tower::ServiceExt;
 
@@ -38,6 +40,8 @@ pub struct AplikasiUji {
     router: Router,
     /// Berkas database uji, dihapus saat struct ini dibuang.
     berkas: std::path::PathBuf,
+    /// Penjalan palsu yang dipasang, supaya uji bisa memeriksa berapa kali ia dipanggil.
+    penjalan: Arc<PenjalanPalsu>,
 }
 
 impl Drop for AplikasiUji {
@@ -50,7 +54,18 @@ impl Drop for AplikasiUji {
 
 impl AplikasiUji {
     /// Siapkan database sementara, jalankan migrasi, lalu rakit aplikasinya.
+    ///
+    /// Memakai [`PenjalanPalsu`], bukan Docker: uji ini memeriksa kontrak HTTP, dan
+    /// menjalankan kontainer sungguhan akan membuat setiap uji route lambat sekaligus
+    /// bergantung pada Docker yang hidup. Yang benar-benar menjalankan kode diuji di
+    /// `runner/` (uji Python) dan di gerbang `npm run verifikasi-soal`.
     pub async fn baru() -> Self {
+        Self::dengan_hasil_eksekusi(Hasil::tanpa_eksekusi(StatusEksekusi::Ok, "")).await
+    }
+
+    /// Sama seperti [`baru`](Self::baru), tetapi penjalan palsunya mengembalikan
+    /// hasil eksekusi yang ditentukan.
+    pub async fn dengan_hasil_eksekusi(hasil: Hasil) -> Self {
         let urutan = URUTAN.fetch_add(1, Ordering::Relaxed);
         let berkas = std::env::temp_dir().join(format!(
             "dsa-uji-{}-{urutan}.db",
@@ -61,11 +76,13 @@ impl AplikasiUji {
             .await
             .expect("database uji harus bisa dibuka");
 
-        let state = AppState::baru(TOKEN.to_string(), pool);
+        let penjalan = Arc::new(PenjalanPalsu::mengembalikan(hasil));
+        let state = AppState::dengan_penjalan(TOKEN.to_string(), pool, penjalan.clone());
 
         AplikasiUji {
             router: app(state),
             berkas,
+            penjalan,
         }
     }
 
@@ -77,6 +94,14 @@ impl AplikasiUji {
     /// Berkas database uji, untuk uji yang perlu membukanya ulang.
     pub fn berkas(&self) -> &std::path::Path {
         &self.berkas
+    }
+
+    /// Berapa kali penjalan palsu dipanggil. Dipakai membuktikan jalur batas ukuran
+    /// dan batas laju **tidak** sampai menjalankan kode.
+    pub fn jumlah_eksekusi(&self) -> usize {
+        self.penjalan
+            .jumlah_panggilan
+            .load(Ordering::Relaxed)
     }
 
     /// Kirim satu permintaan dengan token yang benar.
@@ -93,6 +118,19 @@ pub fn dengan_token(mut request: Request<Body>) -> Request<Body> {
         format!("Bearer {TOKEN}").parse().unwrap(),
     );
     request
+}
+
+/// Rakit aplikasi di atas pool yang sudah ada, memakai penjalan palsu.
+///
+/// Dipakai uji yang membuka ulang database untuk meniru backend yang dimatikan lalu
+/// dinyalakan lagi. Penjalannya palsu dengan alasan yang sama seperti
+/// [`AplikasiUji::baru`]: uji ini memeriksa data yang bertahan, bukan eksekusi kode.
+pub fn app_dari_pool(pool: sqlx::SqlitePool) -> Router {
+    let penjalan = Arc::new(PenjalanPalsu::mengembalikan(Hasil::tanpa_eksekusi(
+        StatusEksekusi::Ok,
+        "",
+    )));
+    app(AppState::dengan_penjalan(TOKEN.to_string(), pool, penjalan))
 }
 
 /// Bangun permintaan `POST` dengan badan JSON.

@@ -8,6 +8,7 @@
 //! keputusan yang diulang di setiap modul endpoint.
 
 pub mod catatan;
+pub mod eksekusi;
 pub mod health;
 pub mod penjelasan;
 pub mod progres;
@@ -38,6 +39,7 @@ pub fn router(state: AppState) -> Router {
         .merge(progres::routes())
         .merge(penjelasan::routes())
         .merge(catatan::routes())
+        .merge(eksekusi::routes())
         .route_layer(middleware::from_fn_with_state(state.clone(), auth::wajib_token));
 
     publik.merge(terlindungi).with_state(state)

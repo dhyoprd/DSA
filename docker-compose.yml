@@ -1,9 +1,19 @@
 # Menyalakan antarmuka dan backend dengan satu perintah: `docker compose up`.
 #
-# Catatan tentang eksekusi kode: di lokal, Eksekusi Kode tidak lewat Docker —
-# runner dijalankan langsung sebagai proses Python dengan batas waktu, tanpa sandbox.
-# Itu keputusan di docs/design-tree.md, bukan kelalaian. Compose ini hanya untuk
-# antarmuka dan backend.
+# Catatan tentang eksekusi kode: **DIPERBARUI ticket #10.** Versi sebelumnya di sini
+# menulis "di lokal, Eksekusi Kode tidak lewat Docker — runner dijalankan langsung
+# sebagai proses Python". Itu keputusan `docs/design-tree.md` yang **diubah** oleh
+# pemilik proyek: runner sekarang dijalankan di kontainer sekali pakai, sama seperti di
+# produksi. Alasannya ada di
+# `docs/adr/0022-eksekusi-kode-lokal-lewat-docker.md`.
+#
+# Konsekuensinya untuk Compose ini: backend perlu bisa memanggil Docker di host. Itu
+# sebabnya `/var/run/docker.sock` dipasang di service backend di bawah — tanpa itu,
+# backend di dalam container tidak bisa membuat kontainer runner.
+#
+# Image runner dibangun terpisah dan **tidak** didefinisikan sebagai service di sini:
+# ia bukan layanan yang hidup terus, melainkan image yang dipanggil berkali-kali dan
+# selalu dibuang. Bangun dulu dengan `docker build -t dsa-runner:lokal runner`.
 
 services:
   backend:
@@ -24,6 +34,9 @@ services:
       # direktori kode, supaya `docker compose restart` tidak menghapusnya dan isinya
       # tidak tercampur berkas dari host.
       DATABASE_PATH: "/data/dsa.db"
+      # Image runner yang dipakai menjalankan kode pemelajar. Namanya harus sama
+      # dengan yang dibangun di host (`docker build -t dsa-runner:lokal runner`).
+      RUNNER_IMAGE: "${RUNNER_IMAGE:-dsa-runner:lokal}"
     volumes:
       # Kode di-bind supaya perubahan langsung terpakai.
       - ./backend:/app
@@ -33,6 +46,11 @@ services:
       # Database bertahan antar restart. Di produksi, berkas ini hidup di Fly Volume
       # dan direplikasi LiteFS (ADR-0010); di lokal cukup volume biasa.
       - data-db:/data
+      # Socket Docker, supaya backend di dalam container bisa membuat kontainer runner
+      # (ADR-0022). Ini memberi backend hak yang besar di mesin host — konsekuensi yang
+      # diterima sadar untuk pengembangan lokal, dan **tidak** berlaku di produksi
+      # (di sana runner dijalankan sebagai Machine, bukan kontainer lokal).
+      - /var/run/docker.sock:/var/run/docker.sock
 
   frontend:
     build:

@@ -11,6 +11,7 @@ import { nomorDuaDigit } from "@/lib/konten/nomor.ts";
 
 import { DaftarIsi } from "../daftar-isi.tsx";
 import { DaftarKuis } from "../daftar-kuis.tsx";
+import { DaftarSoalKode } from "../daftar-soal-kode.tsx";
 import { DaftarVisualisasi } from "../daftar-visualisasi.tsx";
 import { Catatan } from "../catatan.tsx";
 import { PengalihBahasa } from "../../pengalih-bahasa.tsx";
@@ -191,6 +192,22 @@ export default async function HalamanTopik({
           */}
           <div className="max-w-[68ch]">
             <DaftarKuis topik={topik} bahasa={b} kamus={kamus} />
+          </div>
+
+          {/*
+            Soal Kode diletakkan **setelah** Kuis: Kuis menguji pemahaman konsepnya,
+            Soal Kode baru meminta menulis strukturnya. Urutan itu mengikuti
+            `design-tree.md` — Kuis skenario dulu ("tebak output"), implementasi dari
+            nol menyusul. Kalau dibalik, pemelajar yang belum paham konsepnya akan
+            langsung dihadapkan pada editor kosong.
+
+            Komponennya yang memutuskan apakah ia menampilkan apa pun, sehingga Topik
+            tanpa Soal Kode tidak menampilkan judul bagian yang menggantung.
+            Halaman tetap statis: yang dirender server adalah skenario dan kerangka
+            editornya, dan yang interaktif baru hidup setelah React mengambil alih.
+          */}
+          <div className="max-w-[68ch]">
+            <DaftarSoalKode topik={topik} bahasa={b} kamus={kamus} />
           </div>
         </main>
 

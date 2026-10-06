@@ -38,8 +38,17 @@ Hasil sesi grilling. Setiap keputusan di bawah sudah dipilih sadar, bukan diasum
 **Penyimpanan Kotak Penjelasan**: database backend.
 **Autentikasi**: satu token rahasia di environment. Tanpa akun, tanpa halaman login.
 **Eksekusi Kode**: backend Rust membuat satu Machine Firecracker sekali pakai per submission (di produksi). Di lokal, runner dijalankan langsung sebagai proses Python dengan batas waktu — tanpa sandbox, karena kode yang dijalankan adalah kode sendiri.
+> **DIKOREKSI ticket #10 (2026-10-06).** Kalimat di atas **diganti**: di lokal, runner
+> sekarang dijalankan di **kontainer sekali pakai**, bukan proses Python langsung —
+> dan endpoint eksekusi diletakkan di belakang token, bukan publik. Alasan lamanya
+> ("kode sendiri") tidak lagi berlaku begitu situs dipublikasikan (ADR-0002). Bentuk
+> produksinya tetap Machine Firecracker. Lihat
+> [ADR-0022](adr/0022-eksekusi-kode-lokal-lewat-docker.md).
 **Deploy**: frontend ke Vercel, backend ke Fly.io.
 **Dev loop**: Docker Compose untuk Next.js dan backend Rust. Eksekusi kode di lokal tidak lewat Docker.
+> **DIKOREKSI ticket #10 (2026-10-06).** Kalimat terakhir **diganti**: eksekusi kode di
+> lokal **justru lewat Docker**. Lihat
+> [ADR-0022](adr/0022-eksekusi-kode-lokal-lewat-docker.md).
 **Testing**: validasi konten saat build + integrasi API di batas backend. Tanpa unit test UI.
 
 ## Cabang 3 — Keamanan (risiko diterima sadar)
@@ -103,13 +112,25 @@ tanpa bahasa dialihkan `proxy.ts`. Materi tetap halaman statis per bahasa. Lihat
 3. Export ke Anki.
 4. Editor Catatan di situs.
 
-**Status rantai inti per 2026-10-05** (ticket #11): Materi (#4), Kuis (#6), Progres
-(#7, backend saja), token (#7), Kotak Penjelasan (#8), pengalih bahasa (#12), dan
-Catatan (#11) sudah ada. **Yang belum**: Soal Kode (#10, terkunci oleh #9), dan ekspor
-gabungan Progres + Catatan (#14). **Catatan penting**: Progres
-sudah punya endpoint tetapi **belum tersambung ke tampilan** — status ○◐● di sidebar
-masih selalu ○. Beberapa komentar di kode menyebut #8 sebagai yang menyambungkannya;
-itu keliru, dan sudah dikoreksi. Lihat [ADR-0017](adr/0017-kotak-penjelasan-dan-pembahasan-di-balik-tombol.md).
+**Status rantai inti per 2026-10-06** (ticket #10): Materi (#4), Kuis (#6), Progres
+(#7, backend saja), token (#7), Kotak Penjelasan (#8), Catatan (#11), pengalih bahasa
+(#12), **Eksekusi Kode + 1 Soal Kode Stack (#10)**, dan ekspor gabungan Progres +
+Catatan (#14) sudah ada. **Rantai Stack kini lengkap ujung ke ujung.** **Catatan
+penting**: Progres sudah punya endpoint tetapi **belum tersambung ke tampilan** —
+status ○◐● di sidebar masih selalu ○. Beberapa komentar di kode menyebut #8 sebagai
+yang menyambungkannya; itu keliru, dan sudah dikoreksi. Lihat
+[ADR-0017](adr/0017-kotak-penjelasan-dan-pembahasan-di-balik-tombol.md).
+
+**Eksekusi Kode (#10) selesai.** Soal Kode Stack tampil di halaman Topik **setelah
+Kuis**: pemelajar menulis Python dari nol di editor, menjalankannya, dan melihat hasil
+**per test case** — input, hasil yang dihasilkan, hasil yang diharapkan, dan mana yang
+lulus. Kode dijalankan di **kontainer sekali pakai** (image `runner/`), dengan batas
+waktu 5 detik, memori 256 MB, 1 CPU, 32 test case, ukuran kode 16 KB, jaringan ditolak,
+filesystem read-only, dan proses non-root. Pesan lewat-waktu dibedakan dari pesan galat
+sintaks. Endpoint `POST /api/eksekusi` ada **di belakang token**. Gerbang "solusi
+referensi lulus test case-nya sendiri" (issue #1) dijalankan lewat perintah terpisah
+`npm run verifikasi-soal`. Lihat
+[ADR-0022](adr/0022-eksekusi-kode-lokal-lewat-docker.md).
 
 **Catatan (#11) selesai sebagian rantai Fase 1.** Editor Catatan per Topik ada di
 bawah Materi, tersimpan di backend, dan bisa diunduh sebagai Markdown **per Topik**.

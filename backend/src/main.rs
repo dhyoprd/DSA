@@ -1,8 +1,11 @@
 //! Titik masuk proses backend.
 //!
 //! Hanya menangani siklus hidup: baca konfigurasi, siapkan logging, buka database,
-//! bind, sajikan. Seluruh bentuk aplikasi ada di `lib.rs`.
+//! rakit mesin Eksekusi Kode, bind, sajikan. Seluruh bentuk aplikasi ada di `lib.rs`.
 
+use std::sync::Arc;
+
+use dsa_backend::eksekusi::{Image, PenjalanDocker};
 use dsa_backend::{app, config::Config, db, AppState};
 
 #[tokio::main]
@@ -26,7 +29,12 @@ async fn main() {
 
     tracing::info!(path = %config.database_path.display(), "database siap");
 
-    let state = AppState::baru(config.api_token.clone(), pool);
+    // Penjalan sungguhan: satu kontainer sekali pakai per eksekusi. Image-nya dibaca
+    // dari konfigurasi supaya versinya bisa dinaikkan tanpa menyentuh kode.
+    let penjalan = Arc::new(PenjalanDocker::baru(Image(config.runner_image.clone())));
+    tracing::info!(image = %config.runner_image, "mesin Eksekusi Kode siap");
+
+    let state = AppState::dengan_penjalan(config.api_token.clone(), pool, penjalan);
 
     let listener = tokio::net::TcpListener::bind(config.addr)
         .await

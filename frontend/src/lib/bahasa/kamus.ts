@@ -214,6 +214,64 @@ export interface Kamus {
   /** Keterangan bahwa urutan langkahnya sama untuk kedua struktur. */
   visualisasiBandingkan: string;
 
+  // --- Soal Kode (ticket #10) --------------------------------------------------
+  /** Judul bagian Soal Kode. */
+  soalKode: string;
+  /** Satu kalimat penjelas di bawah judul bagian Soal Kode. */
+  soalKodeRingkasan: string;
+  /** Label editor kode. */
+  soalKodeLabel: string;
+  /** Keterangan nama fungsi yang dipanggil test case, diikuti namanya. */
+  soalKodeFungsi: string;
+  /** Tombol menjalankan kode. */
+  soalKodeJalankan: string;
+  /** Tombol saat kode sedang dijalankan. */
+  soalKodeMenjalankan: string;
+  /** Tombol mengembalikan editor ke kode awalnya. */
+  soalKodeKembalikan: string;
+  /** Tombol menyalin kode awal ke editor, saat draf kosong. */
+  soalKodeMulai: string;
+  /** Kalimat saat kode awal dimuat ke editor untuk pertama kali. */
+  soalKodePetunjuk: string;
+  /** Judul daftar hasil per test case. */
+  soalKodeHasil: string;
+  /** Kalimat saat semua test case lulus. */
+  soalKodeSemuaLulus: string;
+  /** Ringkasan jumlah kasus lulus; `{lulus}` dan `{total}` diisi komponen. */
+  soalKodeJumlahLulus: string;
+  /** Kalimat sebab saat kode tidak bisa dikompilasi. */
+  soalKodeGalatSintaks: string;
+  /** Kalimat sebab saat kode gagal dijalankan. */
+  soalKodeGalatJalan: string;
+  /** Kalimat sebab saat kode berjalan terlalu lama. */
+  soalKodeLewatWaktu: string;
+  /** Kalimat sebab saat kode berhenti tanpa hasil, biasanya kehabisan memori. */
+  soalKodeKontainerGagal: string;
+  /** Kalimat saat layanan eksekusinya sendiri yang bermasalah. */
+  soalKodeGalatLayanan: string;
+  /** Teks pengganti nilai yang tidak bisa ditampilkan. */
+  soalKodeNilaiTidakAda: string;
+  /** Label masukan sebuah test case. */
+  soalKodeMasukan: string;
+  /** Label hasil yang dihasilkan kode. */
+  soalKodeHasilDihasilkan: string;
+  /** Label hasil yang diharapkan test case. */
+  soalKodeHasilDiharapkan: string;
+  /** Label keluaran yang dicetak kode. */
+  soalKodeCetakan: string;
+  /** Penanda test case lulus. */
+  soalKodeLulus: string;
+  /** Penanda test case gagal. */
+  soalKodeGagal: string;
+  /** Label nomor test case, diikuti nomornya. */
+  soalKodeKasus: string;
+  /** Kalimat saat kode kosong sehingga tidak dijalankan. */
+  soalKodeKosong: string;
+  /** Kalimat saat kode terlalu panjang untuk dikirim. */
+  soalKodeTerlaluPanjang: string;
+  /** Kalimat saat terlalu banyak eksekusi dalam waktu singkat. */
+  soalKodeTerlaluSering: string;
+
   // --- Pengalih tema -----------------------------------------------------------
   /** `aria-label` grup tombol tema. */
   tema: string;
@@ -400,6 +458,42 @@ export const KAMUS: Record<Bahasa, Kamus> = {
     visualisasiJeda: "Jeda",
     visualisasiBandingkan: "Urutan langkahnya sama untuk Stack dan Queue.",
 
+    soalKode: "Soal Kode",
+    soalKodeRingkasan:
+      "Tulis kode Python dari nol, lalu jalankan. Hasilnya tampil per test case, " +
+      "sehingga terlihat kasus mana yang lulus dan mana yang belum.",
+    soalKodeLabel: "Kode kamu",
+    soalKodeFungsi: "Fungsi yang dipanggil test case:",
+    soalKodeJalankan: "Jalankan",
+    soalKodeMenjalankan: "Menjalankan…",
+    soalKodeKembalikan: "Kembalikan kode awal",
+    soalKodeMulai: "Mulai dari kode awal",
+    soalKodePetunjuk:
+      "Editor ini mulai dari kerangka kosong. Tekan “Mulai dari kode awal” untuk " +
+      "memuat kerangka yang perlu kamu lengkapi.",
+    soalKodeHasil: "Hasil",
+    soalKodeSemuaLulus: "Semua test case lulus.",
+    soalKodeJumlahLulus: "{lulus} dari {total} test case lulus.",
+    soalKodeGalatSintaks: "Kodenya belum bisa dijalankan karena ada kesalahan penulisan.",
+    soalKodeGalatJalan: "Kodenya berhenti karena terjadi kesalahan saat dijalankan.",
+    soalKodeLewatWaktu: "Kodenya berjalan terlalu lama lalu dihentikan.",
+    soalKodeKontainerGagal:
+      "Kodenya berhenti tanpa hasil. Biasanya ini karena memori yang dipakai terlalu besar.",
+    soalKodeGalatLayanan:
+      "Layanan eksekusi sedang bermasalah. Coba lagi sebentar lagi — ini bukan " +
+      "kesalahan kodemu.",
+    soalKodeNilaiTidakAda: "tidak ada nilai",
+    soalKodeMasukan: "Masukan",
+    soalKodeHasilDihasilkan: "Dihasilkan",
+    soalKodeHasilDiharapkan: "Diharapkan",
+    soalKodeCetakan: "Cetakan",
+    soalKodeLulus: "lulus",
+    soalKodeGagal: "gagal",
+    soalKodeKasus: "Test case",
+    soalKodeKosong: "Kodenya masih kosong.",
+    soalKodeTerlaluPanjang: "Kodenya terlalu panjang untuk dikirim.",
+    soalKodeTerlaluSering: "Terlalu sering dijalankan. Tunggu sebentar lalu coba lagi.",
+
     tema: "Tema",
     temaSistem: "Sistem",
     temaTerang: "Terang",
@@ -546,6 +640,43 @@ export const KAMUS: Record<Bahasa, Kamus> = {
     visualisasiPutar: "Play",
     visualisasiJeda: "Pause",
     visualisasiBandingkan: "The step order is the same for Stack and Queue.",
+
+    soalKode: "Code Problem",
+    soalKodeRingkasan:
+      "Write Python from scratch, then run it. The result appears per test case, so " +
+      "you can see which ones pass and which do not yet.",
+    soalKodeLabel: "Your code",
+    soalKodeFungsi: "Function called by the test cases:",
+    soalKodeJalankan: "Run",
+    soalKodeMenjalankan: "Running…",
+    soalKodeKembalikan: "Restore starting code",
+    soalKodeMulai: "Load the starting code",
+    soalKodePetunjuk:
+      "This editor starts empty. Press “Load the starting code” to get the skeleton " +
+      "you need to complete.",
+    soalKodeHasil: "Result",
+    soalKodeSemuaLulus: "All test cases passed.",
+    soalKodeJumlahLulus: "{lulus} of {total} test cases passed.",
+    soalKodeGalatSintaks: "The code cannot run yet because of a syntax error.",
+    soalKodeGalatJalan: "The code stopped because an error occurred while running.",
+    soalKodeLewatWaktu: "The code ran too long and was stopped.",
+    soalKodeKontainerGagal:
+      "The code stopped without producing a result. This is usually because it used " +
+      "too much memory.",
+    soalKodeGalatLayanan:
+      "The execution service is having trouble. Try again in a moment — this is not " +
+      "a problem with your code.",
+    soalKodeNilaiTidakAda: "no value",
+    soalKodeMasukan: "Input",
+    soalKodeHasilDihasilkan: "Returned",
+    soalKodeHasilDiharapkan: "Expected",
+    soalKodeCetakan: "Printed",
+    soalKodeLulus: "passed",
+    soalKodeGagal: "failed",
+    soalKodeKasus: "Test case",
+    soalKodeKosong: "The code is still empty.",
+    soalKodeTerlaluPanjang: "The code is too long to send.",
+    soalKodeTerlaluSering: "Run too often. Wait a moment and try again.",
 
     tema: "Theme",
     temaSistem: "System",

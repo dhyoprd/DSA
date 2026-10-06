@@ -12,11 +12,13 @@
 //! - `auth` — bagaimana token diperiksa.
 //! - `galat` — bagaimana galat menjadi balasan HTTP.
 //! - `store` — bagaimana data dibaca dan ditulis.
+//! - `eksekusi` — bagaimana kode pemelajar dijalankan dan dinilai.
 //! - `routes` — endpoint apa saja yang ada dan apa balasannya.
 
 pub mod auth;
 pub mod config;
 pub mod db;
+pub mod eksekusi;
 pub mod galat;
 pub mod routes;
 pub mod state;
