@@ -1,0 +1,1473 @@
+# Topik 5 — Hash Table.
+#
+# Topik kelima di Jalur, `prasyarat: [2, 4]` (Array & String, Stack & Queue). Materi di
+# sini memakai dua hal yang diajarkan Topik sebelumnya: gagasan "alamat bisa dihitung
+# dari nomor" dari Array (#17), dan gagasan "satu slot menyimpan banyak nilai" dari
+# Stack & Queue (#4). Itu sebabnya keduanya jadi prasyarat.
+#
+# **Tidak ada penyimpangan yang perlu dicatat.** `docs/design-tree.md` menetapkan Soal
+# Kode berbentuk "implementasi struktur data dari nol". Hash table **adalah** struktur
+# data, jadi bentuk itu bisa dipakai apa adanya di sini — sama seperti Array & String
+# (#17) dan Linked List (#18), dan berbeda dari Big-O (#16), yang bukan struktur data
+# dan karena itu butuh ADR-0023. Berkas ini tidak menuntut ADR baru.
+#
+# **Pembahasan hanya untuk kelima Kuis.** Soal Kode di sini tidak punya Pembahasan,
+# karena skema di issue #1 — dan `frontend/src/lib/konten/tipe.ts` — tidak punya field
+# `penjelasan` pada `SoalKode`. Pemilik sudah memutuskan (2026-10-06) bahwa cukup 5
+# Pembahasan per Topik, sama seperti #10, #16, #17, dan #18.
+#
+# Semua Soal dan Pembahasan di sini ditulis original, sesuai ADR-0005. Tidak ada teks
+# LeetCode yang disalin maupun diterjemahkan.
+#
+# **Setiap angka di berkas ini sudah dijalankan, bukan dibaca.** Yang diperiksa dengan
+# menjalankan Python: hasil `isi_slot(["abc", "d", "b"], 4)` = `[1, 0, 2, 0]`; jumlah
+# pemeriksaan saat `ambil("z")` pada rantai berisi empat kunci = 4; dan kelima test case
+# Soal Kode. Jebakan 78 dari handoff #18 memperingatkan bahwa gerbang yang ada tidak
+# menangkap tiga kelas cacat — rumus yang salah, pengecoh yang ternyata juga benar, dan
+# kartu yang mengajarkan di luar Materi. Karena itu berkas ini ditulis berdampingan
+# dengan skrip pemeriksa mandiri, dan **setiap pengecoh sudah dipastikan benar-benar
+# salah** (bukan sekadar terlihat salah).
+#
+# `nomor`, `slug`, `judul`, dan `prasyarat` harus sama dengan content/jalur.yaml —
+# validator menolak build kalau berbeda.
+
+nomor: 5
+slug: hash-table
+judul:
+  id: Hash Table
+  en: Hash Table
+prasyarat: [2, 4]
+
+# Sumber terstruktur untuk ekspor CSV/Anki (ticket #14). Isinya struktur data Topik ini
+# beserta biaya operasinya. `waktu` dan `ruang` memakai notasi O(...) apa adanya —
+# notasi itu sama di kedua bahasa, jadi menerjemahkannya hanya menghasilkan dua salinan
+# yang bisa menyimpang tanpa menambah informasi.
+#
+# **Kata "rata-rata" sengaja diletakkan di `nama`, bukan di `waktu`.** `nama` memang
+# dwibahasa, sedangkan `waktu` tidak — menulis "O(1) rata-rata" di `waktu` akan
+# menyelipkan kata Indonesia ke kartu English. Karena itu `waktu` tetap murni `O(1)`
+# dan `O(n)`, dan keterangannya ikut di nama operasinya.
+#
+# **Nilai yang memuat koma WAJIB dikutip.** Dalam pemetaan alir YAML (`{ ... }`), koma
+# memisahkan entri — jadi `{ id: Tambah kunci, rata-rata, en: ... }` menghasilkan
+# `id: "Tambah kunci"` plus kunci liar `rata-rata: null`, dan kata "rata-rata" hilang
+# dari kartu tanpa error apa pun. Gerbang konten tidak menangkapnya: validator hanya
+# memeriksa `id` dan `en` terisi, bukan bahwa tidak ada kunci lain. Yang menemukannya
+# adalah skrip pemeriksa mandiri (jebakan 78). Kutipan di bawah bukan hiasan.
+#
+# **Nilai di sini wajib sama dengan tabel di bagian "Tabel kompleksitas" di Materi.**
+# ADR-0019 mencatat bahwa keduanya memang bisa menyimpang dan tidak ada gerbang yang
+# membandingkannya — yang menjaganya adalah disiplin saat menyunting.
+kompleksitas:
+  - struktur:
+      id: Tabel hash (rantai)
+      en: Hash table (chaining)
+    ruang: O(n)
+    operasi:
+      - nama: { id: "Tambah atau perbarui satu kunci, rata-rata", en: "Add or update one key, on average" }
+        waktu: O(1)
+      - nama: { id: "Ambil nilai satu kunci, rata-rata", en: "Read the value of one key, on average" }
+        waktu: O(1)
+      - nama: { id: "Hapus satu kunci, rata-rata", en: "Remove one key, on average" }
+        waktu: O(1)
+      - nama: { id: Tambah atau ambil saat semua kunci bertabrakan, en: Add or read when every key collides }
+        waktu: O(n)
+      - nama: { id: Tampilkan seluruh kunci, en: List every key }
+        waktu: O(n)
+
+  - struktur:
+      id: Tabel hash (alamat terbuka)
+      en: Hash table (open addressing)
+    ruang: O(n)
+    operasi:
+      - nama: { id: "Tambah atau ambil, rata-rata", en: "Add or read, on average" }
+        waktu: O(1)
+      - nama: { id: Tambah saat slot terisi berderet, en: Add when slots are filled in a run }
+        waktu: O(n)
+
+# Istilah yang layak dihafal. `istilah` adalah pasangan Indonesia–English; `definisi`
+# menjelaskannya di kedua bahasa. Setiap pasangan di bawah ini berbeda antara kedua
+# bahasa, jadi setiap istilah menghasilkan dua kartu: definisinya, dan pasangannya.
+#
+# **Setiap kartu di sini mengajarkan sesuatu yang memang ada di Materi.** Itu kelas cacat
+# yang ditemukan di #17 dan #18 (kartu `Ekor`/`Tail` mengajarkan penunjuk ekor yang nol
+# kali disebut di Materi). Kedelapan istilah di bawah muncul di Materi, bukan hanya di
+# sini.
+istilah:
+  - istilah: { id: Tabel hash, en: Hash table }
+    definisi:
+      id: Struktur data yang menyimpan pasangan kunci dan nilai, dan menemukan kembali sebuah kunci dengan mengubahnya lebih dulu menjadi nomor slot. Nomor itulah yang membuat pencarian selesai tanpa memeriksa seluruh isi.
+      en: A data structure that stores key-value pairs and finds a key again by first turning it into a slot number. That number is what lets a lookup finish without examining the whole contents.
+  - istilah: { id: Fungsi hash, en: Hash function }
+    definisi:
+      id: Fungsi yang mengubah sebuah kunci menjadi nomor. Nomor itu dipakai untuk menentukan slot tempat nilainya disimpan. Fungsi yang baik menyebar kunci secara merata, supaya tidak banyak kunci menumpuk di satu slot.
+      en: A function that turns a key into a number. That number decides the slot where its value is stored. A good one spreads keys evenly, so that few keys pile up in one slot.
+  - istilah: { id: Kunci, en: Key }
+    definisi:
+      id: Penanda yang kamu pakai untuk menyimpan dan mengambil sebuah nilai, misalnya nama pengguna atau nomor halaman. Kunci inilah yang diubah fungsi hash menjadi nomor slot.
+      en: The label you use to store and fetch a value, such as a username or a page number. It is the key that the hash function turns into a slot number.
+  - istilah: { id: Nilai, en: Value }
+    definisi:
+      id: Data yang disimpan di bawah sebuah kunci. Di dalam tabel hash, yang dicari adalah kuncinya; nilainya ikut terbawa begitu kuncinya ditemukan.
+      en: The data stored under a key. Inside a hash table, the key is what gets looked up; the value comes along once the key is found.
+  - istilah: { id: Tabrakan, en: Collision }
+    definisi:
+      id: Keadaan ketika dua kunci yang berbeda menghasilkan nomor slot yang sama. Ini tidak bisa dihindari sepenuhnya — jumlah slot selalu terbatas, sedangkan jumlah kunci yang mungkin tidak. Tabrakan harus ditangani, bukan dicegah.
+      en: The situation where two different keys produce the same slot number. It cannot be avoided entirely — the number of slots is always limited, while the number of possible keys is not. Collisions must be handled, not prevented.
+  - istilah: { id: Rantai, en: Chaining }
+    definisi:
+      id: Cara menangani tabrakan dengan membiarkan satu slot menampung banyak pasangan sekaligus, biasanya sebagai daftar. Kunci yang bertabrakan ditaruh berurutan di slot yang sama, lalu diperiksa satu per satu saat dicari.
+      en: A way to handle collisions by letting one slot hold many pairs at once, usually as a list. Keys that collide are placed one after another in the same slot, then checked one by one when looked up.
+  - istilah: { id: Faktor beban, en: Load factor }
+    definisi:
+      id: Perbandingan antara banyaknya kunci yang tersimpan dan banyaknya slot yang tersedia. Makin tinggi nilainya, makin panjang rantai rata-ratanya, dan makin melambat pencariannya. Karena itu tabel diperbesar sebelum nilainya terlalu tinggi.
+      en: The ratio between the number of keys stored and the number of slots available. The higher it is, the longer the average chain, and the slower lookups become. That is why a table is enlarged before it gets too high.
+  - istilah: { id: Alamat terbuka, en: Open addressing }
+    definisi:
+      id: Cara menangani tabrakan tanpa daftar di dalam slot. Kalau slot yang dituju sudah terisi, kunci baru mencari slot kosong berikutnya. Konsekuensinya, penghapusan tidak boleh mengosongkan slot begitu saja, karena itu memutus jalur pencarian kunci lain.
+      en: A way to handle collisions without a list inside the slot. If the target slot is taken, the new key looks for the next free slot. As a consequence, removal must not simply empty a slot, because that would break the search path of other keys.
+
+materi:
+  id: |
+    ## Kenapa mencari satu nilai itu mahal
+
+    Di Topik 2 dan Topik 3 kamu bertemu dua cara menyimpan data, dan keduanya punya
+    kelemahan yang sama begitu harus mencari. Pada array, mencari satu nilai berarti
+    memeriksa elemen satu per satu dari awal — `O(n)`. Pada linked list sama saja: kamu
+    harus berjalan dari kepala — `O(n)`. Untuk sejuta data, itu sejuta pemeriksaan.
+
+    Pertanyaannya: bisakah pencarian selesai dalam satu langkah, tanpa memeriksa yang
+    lain?
+
+    Array sudah bisa melakukan itu untuk satu hal: mengambil elemen **ke-i**. Karena
+    alamatnya bisa dihitung dari nomornya, `data[5000]` langsung sampai. Yang tidak bisa
+    dilakukan array adalah melakukan hal yang sama untuk **nilai**: "di mana elemen yang
+    bernilai 42?" tetap butuh menelusuri, karena 42 tidak memberi tahu di nomor berapa
+    ia disimpan.
+
+    Hash table menutup celah itu dengan satu gagasan: **ubah dulu kuncinya menjadi
+    nomor**, lalu pakai nomor itu seperti indeks array.
+
+    ## Fungsi hash: kunci menjadi nomor
+
+    Sebuah **tabel hash** (*hash table*) menyimpan pasangan **kunci** (*key*) dan
+    **nilai** (*value*). Kuncinya adalah penanda yang kamu pakai untuk mengambil kembali
+    nilainya — misalnya nama pengguna, nomor halaman, atau kode barang.
+
+    Yang mengubah kunci menjadi nomor adalah **fungsi hash** (*hash function*). Bentuknya
+    bisa sesederhana ini:
+
+    ```python
+    def kode_hash(kunci):
+        total = 0
+        for huruf in kunci:
+            total += ord(huruf)      # ord("a") = 97, ord("b") = 98, ...
+        return total
+
+
+    def indeks_slot(kunci, jumlah_slot):
+        return kode_hash(kunci) % jumlah_slot
+    ```
+
+    `%` adalah sisa bagi, dan gunanya di sini satu: memastikan nomornya selalu jatuh di
+    antara `0` dan `jumlah_slot - 1`. Berapa pun besar hasil `kode_hash`, `%` memotongnya
+    ke dalam rentang yang sah.
+
+    Untuk tabel berisi 4 slot, kunci `"d"` menghasilkan `100 % 4 = 0`, jadi nilainya
+    disimpan di slot 0. Kunci `"abc"` menghasilkan `294 % 4 = 2`, jadi ke slot 2.
+    Menyimpan dan mengambil sama-sama memakai perhitungan yang sama, sehingga keduanya
+    bisa langsung menuju slot yang benar.
+
+    Perhatikan satu hal penting: fungsi hash **tidak** perlu menghasilkan nomor yang
+    unik untuk setiap kunci. Ia hanya perlu menghasilkan nomor yang **sama** setiap kali
+    kunci yang sama di-hash. Kestabilan itulah yang membuat pencarian bekerja.
+
+    ## Tabrakan: dua kunci, satu slot
+
+    Kalau fungsi hash tidak perlu unik, apa yang terjadi kalau dua kunci menghasilkan
+    nomor yang sama? Itulah **tabrakan** (*collision*).
+
+    Contohnya kunci `"abc"` dan `"cba"`. Keduanya berisi huruf yang sama, hanya berbeda
+    urutan, sehingga jumlah `ord`-nya sama-sama 294 — dan `294 % 4` sama-sama 2. Kedua
+    kunci itu menuju slot yang sama.
+
+    Tabrakan **tidak bisa dihindari sepenuhnya**, dan alasannya bukan karena fungsi
+    hash-nya kurang bagus. Jumlah slot selalu terbatas (4, 100, atau sejuta), sedangkan
+    jumlah kunci yang mungkin tidak terbatas. Kalau kunci lebih banyak daripada slot,
+    ada dua kunci yang pasti berbagi slot — itu kepastian matematis, bukan kebetulan.
+
+    Karena itu pertanyaan yang benar bukan "bagaimana mencegah tabrakan", melainkan
+    **"bagaimana menanganinya"**. Ada dua cara yang lazim, dan keduanya dibahas di sini.
+
+    ## Rantai: menumpuk yang bertabrakan
+
+    Cara pertama bernama **rantai** (*chaining*). Idenya: satu slot tidak menyimpan satu
+    nilai, melainkan **daftar** nilai.
+
+    ```
+    slot 0 → [ ("d", 100) ]
+    slot 1 → [ ]
+    slot 2 → [ ("abc", 1), ("b", 2) ]     ← dua kunci bertabrakan di sini
+    slot 3 → [ ]
+    ```
+
+    Menambah sebuah pasangan berarti: hitung slotnya, lalu tambahkan pasangan itu ke
+    daftar di slot tersebut. Kalau kuncinya sudah ada di daftar itu, nilainya
+    **diperbarui**, bukan ditambahkan lagi.
+
+    ```python
+    JUMLAH_SLOT = 4
+
+
+    class TabelHash:
+        def __init__(self):
+            self.slot = [[] for _ in range(JUMLAH_SLOT)]
+            self.ukuran = 0
+
+        def tambah(self, kunci, nilai):
+            rantai = self.slot[indeks_slot(kunci, JUMLAH_SLOT)]
+            for posisi in range(len(rantai)):
+                if rantai[posisi][0] == kunci:
+                    rantai[posisi] = (kunci, nilai)     # perbarui
+                    return
+            rantai.append((kunci, nilai))               # kunci baru
+            self.ukuran += 1
+    ```
+
+    Mengambil sebuah nilai berarti: hitung slotnya, lalu periksa daftar di slot itu satu
+    per satu sampai kuncinya ketemu. Kalau tidak ada, hasilnya `None`.
+
+    ```python
+    def ambil(self, kunci):
+        for k, nilai in self.slot[indeks_slot(kunci, JUMLAH_SLOT)]:
+            if k == kunci:
+                return nilai
+        return None
+    ```
+
+    Perhatikan bahwa pemeriksaan `k == kunci` tetap perlu walaupun slotnya sudah benar.
+    Slot yang benar hanya mempersempit tempat mencari; ia tidak menjamin bahwa yang ada
+    di situ adalah kunci yang dicari.
+
+    ## Kenapa rata-ratanya O(1)
+
+    Kalau setiap slot hanya berisi satu pasangan, mengambil satu nilai berarti: satu
+    perhitungan hash, satu kali menuju slot, selesai. Tidak peduli tabelnya berisi
+    seratus atau sejuta pasangan — jumlah langkahnya tetap. Itu `O(1)`.
+
+    Yang membuatnya menjadi lambat adalah rantai yang panjang. Kalau semua kunci
+    bertabrakan ke satu slot, tabelnya berubah menjadi linked list biasa, dan
+    pencariannya kembali `O(n)`.
+
+    Seberapa panjang rantai rata-ratanya ditentukan oleh **faktor beban** (*load
+    factor*): perbandingan antara banyaknya kunci yang tersimpan dan banyaknya slot.
+
+    ```
+    faktor beban = jumlah kunci / jumlah slot
+    ```
+
+    Selama faktor bebannya tetap kecil (praktik yang lazim: dijaga di bawah sekitar
+    0,7), rantai rata-ratanya pendek dan biayanya tetap `O(1)`. Begitu faktor bebannya
+    mendekati 1 atau lebih, rantainya memanjang dan biayanya naik.
+
+    Jadi jawaban jujurnya: **`O(1)` rata-rata, `O(n)` pada kasus terburuk.** Rata-rata
+    karena kunci yang baik menyebar merata; terburuk karena selalu ada kemungkinan semua
+    kunci menumpuk di satu slot. Yang pertama berlaku untuk pemakaian sehari-hari, yang
+    kedua berlaku untuk fungsi hash yang buruk atau penyerang yang sengaja memilih kunci
+    yang bertabrakan.
+
+    ## Memperbesar tabel
+
+    Kalau faktor bebannya sudah terlalu tinggi, memperpanjang rantai bukan jawabannya.
+    Yang dilakukan adalah **memperbesar tabel**: jumlah slot dinaikkan, biasanya dua
+    kali lipat, lalu **seluruh kunci yang sudah ada dihitung ulang** tempatnya.
+
+    Penghitungan ulang itu perlu karena indeks slotnya bergantung pada `% jumlah_slot`.
+    Begitu jumlah slotnya berubah dari 4 menjadi 8, `294 % 4 = 2` tidak lagi sama dengan
+    `294 % 8 = 6`. Semua pasangan harus dipindahkan ke slot yang baru.
+
+    ```python
+    def perbesar(self):
+        lama = self.slot
+        self.slot = [[] for _ in range(len(lama) * 2)]
+        for rantai in lama:
+            for kunci, nilai in rantai:
+                self.slot[indeks_slot(kunci, len(self.slot))].append((kunci, nilai))
+    ```
+
+    Memperbesar tabel memang memakan waktu `O(n)`, tetapi ia jarang terjadi: sesekali
+    untuk setiap beberapa penambahan. Sama seperti pertumbuhan array dinamis di Topik 2,
+    biaya mahalnya **dibagi** ke banyak operasi lain, sehingga rata-ratanya tetap
+    `O(1)`. Yang penting, memperbesar tabel membuat rantai kembali pendek — itu tujuan
+    sebenarnya, bukan sekadar menambah ruang.
+
+    ## Alamat terbuka: mencari slot lain
+
+    Cara kedua menangani tabrakan bernama **alamat terbuka** (*open addressing*). Di sini
+    tidak ada daftar di dalam slot. Satu slot berisi tepat satu pasangan.
+
+    Kalau slot yang dituju sudah terisi, kunci baru tidak menumpuk di situ. Ia mencari
+    **slot kosong berikutnya**, berjalan maju satu per satu sampai menemukan yang
+    kosong. Cara ini disebut *linear probing*.
+
+    ```
+    Ingin menaruh "b" di slot 2, tetapi slot 2 sudah terisi:
+    slot 0 → kosong
+    slot 1 → kosong
+    slot 2 → ("abc", 1)          ← terisi
+    slot 3 → ("b", 2)            ← terpaksa menempati slot berikutnya
+    ```
+
+    Perhatikan bahwa tidak ada tanda kurung siku di gambar ini — berbeda dari gambar
+    rantai di atas. Pada alamat terbuka, **satu slot berisi satu pasangan saja**, bukan
+    daftar. Itu perbedaan yang paling mudah tertukar antara kedua cara ini.
+
+    Konsekuensinya, saat mengambil sebuah kunci, kamu tidak boleh berhenti begitu
+    menemukan slot kosong sebelum kuncinya ketemu — kamu harus terus maju, karena kunci
+    itu mungkin terlempar lebih jauh lagi.
+
+    Dari situlah muncul satu jebakan yang khas: **menghapus tidak boleh mengosongkan
+    slot begitu saja**. Kalau slot yang dihapus menjadi benar-benar kosong, pencarian
+    kunci lain yang tadinya terlempar melewatinya akan berhenti di situ dan menyimpulkan
+    kuncinya tidak ada — padahal ada. Solusinya adalah menandai slot itu sebagai
+    **batu nisan** (*tombstone*): penanda "pernah terisi, sekarang tidak dipakai", yang
+    tetap dilewati saat mencari tetapi boleh dipakai ulang saat menambah.
+
+    ## Tabel kompleksitas
+
+    | Operasi | Waktu | Kenapa |
+    |---|---|---|
+    | Tambah atau perbarui satu kunci (rantai) | O(1) rata-rata | Satu perhitungan hash, lalu rantai rata-ratanya pendek |
+    | Ambil nilai satu kunci (rantai) | O(1) rata-rata | Sama: langsung menuju slotnya |
+    | Hapus satu kunci (rantai) | O(1) rata-rata | Cari di rantai yang pendek, lalu putus |
+    | Tambah atau ambil saat semua kunci bertabrakan | O(n) | Rantainya sepanjang seluruh isi tabel |
+    | Tampilkan seluruh kunci | O(n) | Setiap pasangan harus dikunjungi sekali |
+    | Tambah atau ambil (alamat terbuka) | O(1) rata-rata | Selama tabelnya belum padat, jarang perlu melompat jauh |
+    | Tambah saat slot terisi berderet (alamat terbuka) | O(n) | Deretan slot terisi memaksa lompatan panjang |
+
+    ## Jebakan yang sering terjadi
+
+    **Mengira tabel hash selalu `O(1)`.** Ia `O(1)` **rata-rata**, dan itu bergantung pada
+    fungsi hash yang menyebar merata serta faktor beban yang dijaga. Fungsi hash yang
+    buruk — misalnya `len(kunci)` — membuat hampir semua kunci berbagi sedikit slot, dan
+    tabelnya merosot menjadi linked list.
+
+    **Memakai kunci yang isinya berubah.** Kalau kunci diubah setelah disimpan, hasil
+    hash-nya berubah, dan nilainya tidak bisa ditemukan lagi di slot lamanya. Kunci
+    harus tetap sama selama pasangannya ada di tabel.
+
+    **Mengira satu slot berarti satu kunci.** Dengan rantai, satu slot boleh berisi
+    banyak kunci. Yang menentukan di slot mana sebuah kunci berada hanyalah hasil fungsi
+    hash, bukan urutan pemasukan.
+
+    **Membandingkan tanpa memeriksa kuncinya.** Karena beberapa kunci bisa berbagi slot,
+    menemukan sesuatu di slot yang benar belum berarti itu kuncinya. Perbandingan
+    `k == kunci` tetap wajib.
+
+    **Menghapus dengan mengosongkan slot pada alamat terbuka.** Sudah dibahas di atas:
+    itu memutus jalur pencarian kunci lain. Pakai batu nisan.
+
+    **Menganggap urutan penyimpanan terjaga.** Tabel hash tidak menyimpan urutan apa
+    pun. Kalau kamu butuh hasil yang berurutan, urutkan sendiri setelahnya — seperti
+    yang dilakukan perintah `kunci` pada Soal Kode di Topik ini.
+
+  en: |
+    ## Why finding a single value is expensive
+
+    In Topic 2 and Topic 3 you met two ways of storing data, and both share the same
+    weakness the moment a search is needed. In an array, finding one value means
+    checking elements one by one from the start — `O(n)`. In a linked list it is the
+    same: you must walk from the head — `O(n)`. For a million items, that is a million
+    checks.
+
+    The question is: can a search finish in one step, without examining the rest?
+
+    An array can already do that for one thing: reading the element **at position i**.
+    Because its address can be computed from its number, `data[5000]` goes straight
+    there. What an array cannot do is the same thing for a **value**: "where is the
+    element whose value is 42?" still requires a walk, because 42 does not say at which
+    position it is stored.
+
+    A hash table closes that gap with a single idea: **turn the key into a number
+    first**, then use that number like an array index.
+
+    ## Hash function: a key becomes a number
+
+    A **hash table** stores **key**–**value** pairs. The key is the label you use to get
+    the value back — a username, a page number, or a product code, for instance.
+
+    What turns a key into a number is the **hash function**. It can be as simple as
+    this:
+
+    ```python
+    def kode_hash(kunci):
+        total = 0
+        for huruf in kunci:
+            total += ord(huruf)      # ord("a") = 97, ord("b") = 98, ...
+        return total
+
+
+    def indeks_slot(kunci, jumlah_slot):
+        return kode_hash(kunci) % jumlah_slot
+    ```
+
+    `%` is the remainder, and its job here is single: to make sure the number always
+    falls between `0` and `jumlah_slot - 1`. However large `kode_hash` gets, `%` cuts it
+    down into the valid range.
+
+    For a table with 4 slots, the key `"d"` gives `100 % 4 = 0`, so its value is stored
+    in slot 0. The key `"abc"` gives `294 % 4 = 2`, so it goes to slot 2. Storing and
+    reading both use the same computation, so both can head straight for the right slot.
+
+    Notice one important thing: the hash function does **not** need to produce a unique
+    number for every key. It only needs to produce the **same** number every time the
+    same key is hashed. That stability is what makes lookups work.
+
+    ## Collisions: two keys, one slot
+
+    If the hash function need not be unique, what happens when two keys produce the same
+    number? That is a **collision**.
+
+    For example the keys `"abc"` and `"cba"`. They hold the same letters, only in a
+    different order, so their `ord` sums are both 294 — and `294 % 4` is 2 for both.
+    Both keys head for the same slot.
+
+    Collisions **cannot be avoided entirely**, and not because the hash function is not
+    good enough. The number of slots is always limited (4, 100, or a million), while the
+    number of possible keys is not. If there are more keys than slots, two keys are
+    certain to share a slot — that is a mathematical certainty, not an accident.
+
+    So the right question is not "how do we prevent collisions", but **"how do we handle
+    them"**. There are two common ways, and both are covered here.
+
+    ## Chaining: stacking what collides
+
+    The first way is called **chaining**. The idea: one slot does not hold a single
+    value, but a **list** of values.
+
+    ```
+    slot 0 → [ ("d", 100) ]
+    slot 1 → [ ]
+    slot 2 → [ ("abc", 1), ("b", 2) ]     ← two keys collide here
+    slot 3 → [ ]
+    ```
+
+    Adding a pair means: compute its slot, then append the pair to the list in that
+    slot. If the key is already in that list, its value is **updated** rather than added
+    again.
+
+    ```python
+    JUMLAH_SLOT = 4
+
+
+    class TabelHash:
+        def __init__(self):
+            self.slot = [[] for _ in range(JUMLAH_SLOT)]
+            self.ukuran = 0
+
+        def tambah(self, kunci, nilai):
+            rantai = self.slot[indeks_slot(kunci, JUMLAH_SLOT)]
+            for posisi in range(len(rantai)):
+                if rantai[posisi][0] == kunci:
+                    rantai[posisi] = (kunci, nilai)     # update
+                    return
+            rantai.append((kunci, nilai))               # new key
+            self.ukuran += 1
+    ```
+
+    Reading a value means: compute its slot, then check the list in that slot one by one
+    until the key is found. If it is not there, the result is `None`.
+
+    ```python
+    def ambil(self, kunci):
+        for k, nilai in self.slot[indeks_slot(kunci, JUMLAH_SLOT)]:
+            if k == kunci:
+                return nilai
+        return None
+    ```
+
+    Note that the `k == kunci` check is still needed even though the slot is right. The
+    right slot only narrows down where to look; it does not guarantee that what sits
+    there is the key you want.
+
+    ## Why the average is O(1)
+
+    If every slot holds a single pair, reading a value means: one hash computation, one
+    step to the slot, done. It makes no difference whether the table holds a hundred
+    pairs or a million — the number of steps stays the same. That is `O(1)`.
+
+    What makes it slow is a long chain. If every key collides into one slot, the table
+    turns into an ordinary linked list, and lookups go back to `O(n)`.
+
+    How long the average chain is depends on the **load factor**: the ratio between the
+    number of keys stored and the number of slots.
+
+    ```
+    load factor = number of keys / number of slots
+    ```
+
+    As long as the load factor stays small (a common practice is to keep it below about
+    0.7), the average chain is short and the cost stays `O(1)`. Once the load factor
+    approaches 1 or more, the chains grow and the cost rises.
+
+    So the honest answer is: **`O(1)` on average, `O(n)` in the worst case.** Average,
+    because good keys spread evenly; worst case, because there is always a chance that
+    every key piles into one slot. The first holds for everyday use, the second holds
+    for a poor hash function or an attacker who deliberately picks colliding keys.
+
+    ## Enlarging the table
+
+    If the load factor has grown too high, making the chains longer is not the answer.
+    What you do is **enlarge the table**: the number of slots goes up, usually doubled,
+    and then **every existing key is recomputed** into its new place.
+
+    That recomputation is necessary because the slot index depends on `% jumlah_slot`.
+    Once the number of slots changes from 4 to 8, `294 % 4 = 2` is no longer the same as
+    `294 % 8 = 6`. Every pair must move to its new slot.
+
+    ```python
+    def perbesar(self):
+        lama = self.slot
+        self.slot = [[] for _ in range(len(lama) * 2)]
+        for rantai in lama:
+            for kunci, nilai in rantai:
+                self.slot[indeks_slot(kunci, len(self.slot))].append((kunci, nilai))
+    ```
+
+    Enlarging the table does cost `O(n)` time, but it happens rarely: once every so many
+    additions. Just like the growth of a dynamic array in Topic 2, the expensive part is
+    **spread** across many other operations, so the average stays `O(1)`. Importantly,
+    enlarging the table makes the chains short again — that is the real goal, not merely
+    adding room.
+
+    ## Open addressing: looking for another slot
+
+    The second way to handle collisions is called **open addressing**. Here there is no
+    list inside a slot. One slot holds exactly one pair.
+
+    If the target slot is taken, the new key does not pile up there. It looks for the
+    **next free slot**, stepping forward one at a time until it finds an empty one. This
+    is called *linear probing*.
+
+    ```
+    "b" wants slot 2, but slot 2 is taken:
+    slot 0 → empty
+    slot 1 → empty
+    slot 2 → ("abc", 1)          ← taken
+    slot 3 → ("b", 2)            ← forced into the next slot
+    ```
+
+    Notice there are no square brackets in this picture — unlike the chaining picture
+    above. Under open addressing, **one slot holds a single pair**, not a list. That is
+    the easiest thing to mix up between the two approaches.
+
+    As a consequence, when reading a key you must not stop at the first empty slot
+    before the key is found — you have to keep going, because the key may have been
+    pushed further along.
+
+    That is where a characteristic trap comes from: **removal must not simply empty a
+    slot**. If the removed slot becomes truly empty, a lookup for another key that had
+    been pushed past it will stop there and conclude the key is absent — even though it
+    is present. The fix is to mark that slot as a **tombstone**: a marker saying "was
+    occupied, is now unused", which lookups still step over but additions may reuse.
+
+    ## Complexity table
+
+    | Operation | Time | Why |
+    |---|---|---|
+    | Add or update one key (chaining) | O(1) on average | One hash computation, then a short average chain |
+    | Read the value of one key (chaining) | O(1) on average | Same: head straight for its slot |
+    | Remove one key (chaining) | O(1) on average | Search a short chain, then unlink |
+    | Add or read when every key collides | O(n) | The chain is as long as the whole table's contents |
+    | List every key | O(n) | Every pair must be visited once |
+    | Add or read (open addressing) | O(1) on average | While the table is not crowded, long jumps are rare |
+    | Add when slots are filled in a run (open addressing) | O(n) | A run of occupied slots forces a long jump |
+
+    ## Traps that catch people
+
+    **Assuming a hash table is always `O(1)`.** It is `O(1)` **on average**, and that
+    depends on a hash function that spreads evenly and a load factor that is kept in
+    check. A poor hash function — `len(kunci)`, say — makes nearly all keys share a few
+    slots, and the table slides back into a linked list.
+
+    **Using a key whose contents change.** If the key is modified after being stored,
+    its hash changes, and its value can no longer be found in the old slot. A key must
+    stay the same for as long as its pair is in the table.
+
+    **Assuming one slot means one key.** With chaining, a slot may hold many keys. The
+    only thing deciding which slot a key sits in is the hash function's result, not the
+    order of insertion.
+
+    **Comparing without checking the key.** Since several keys may share a slot, finding
+    something in the right slot does not yet mean it is your key. The `k == kunci`
+    comparison is still required.
+
+    **Removing by emptying the slot under open addressing.** Covered above: that breaks
+    the search path of other keys. Use a tombstone.
+
+    **Expecting the storage order to be kept.** A hash table keeps no order at all. If
+    you need ordered output, sort it yourself afterwards — as the `kunci` command in
+    this Topic's Code Problem does.
+
+soal:
+  # --- Kuis 1: baca isi slot dari fungsi hash sederhana ---------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi berikut menyimpan setiap kunci ke dalam slot yang dihitung dari jumlah
+        `ord` huruf-hurufnya. Ia lalu melaporkan **berapa isi tiap slot**. Berapa nilai
+        yang dicetak?
+      en: |
+        The function below stores each key in the slot computed from the sum of its
+        letters' `ord` values. It then reports **how full each slot is**. What value is
+        printed?
+    kode: |
+      def kode_hash(kunci):
+          total = 0
+          for huruf in kunci:
+              total += ord(huruf)
+          return total
+
+
+      def indeks_slot(kunci, jumlah_slot):
+          return kode_hash(kunci) % jumlah_slot
+
+
+      def isi_slot(kunci_kunci, jumlah_slot):
+          slot = [[] for _ in range(jumlah_slot)]
+          for kunci in kunci_kunci:
+              slot[indeks_slot(kunci, jumlah_slot)].append(kunci)
+          return [len(rantai) for rantai in slot]
+
+
+      print(isi_slot(["abc", "d", "b"], 4))
+    opsi:
+      - teks:
+          id: "[1, 0, 2, 0]"
+          en: "[1, 0, 2, 0]"
+        benar: true
+      - teks:
+          id: "[1, 0, 1, 0]"
+          en: "[1, 0, 1, 0]"
+        benar: false
+      - teks:
+          id: "[1, 1, 1, 0]"
+          en: "[1, 1, 1, 0]"
+        benar: false
+      - teks:
+          id: "[3, 0, 0, 0]"
+          en: "[3, 0, 0, 0]"
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Hitung indeks setiap kunci satu per satu, lalu lihat ke slot mana
+        masing-masing pergi.
+
+        - `"abc"`: `ord("a") + ord("b") + ord("c")` = 97 + 98 + 99 = 294. Lalu
+          `294 % 4 = 2`. Jadi `"abc"` masuk slot 2.
+        - `"d"`: 100. Lalu `100 % 4 = 0`. Jadi `"d"` masuk slot 0.
+        - `"b"`: 98. Lalu `98 % 4 = 2`. Jadi `"b"` masuk slot 2.
+
+        Slot 2 menerima dua kunci, `"abc"` dan `"b"` — itulah tabrakan. Karena slot
+        menyimpan **daftar**, keduanya tetap ada, berurutan. Isi tiap slot jadi:
+        slot 0 berisi 1, slot 1 berisi 0, slot 2 berisi 2, slot 3 berisi 0 — yaitu
+        `[1, 0, 2, 0]`.
+
+        **Kompleksitas.** Untuk setiap kunci, biayanya satu perhitungan hash (yang
+        melewati tiap huruf kunci, jadi `O(panjang kunci)`) dan satu penambahan ke
+        daftar di slotnya, `O(1)`. Untuk n kunci dengan panjang rata-rata m, seluruhnya
+        `O(n × m)` — di sini hanya tiga kunci pendek, jadi praktis seketika.
+
+        **Kode referensi.**
+
+        ```python
+        def isi_slot(kunci_kunci, jumlah_slot):
+            slot = [[] for _ in range(jumlah_slot)]
+            for kunci in kunci_kunci:
+                slot[indeks_slot(kunci, jumlah_slot)].append(kunci)
+            return [len(rantai) for rantai in slot]
+        ```
+
+        **Jebakan umum.** Jawaban `[1, 0, 1, 0]` mengira kunci kedua yang bertabrakan
+        **menimpa** yang pertama — padahal pada rantai keduanya tetap disimpan. Jawaban
+        `[1, 1, 1, 0]` mengira tiga kunci pasti menempati tiga slot berbeda, padahal
+        `"abc"` dan `"b"` sama-sama menghasilkan 2. Jawaban `[3, 0, 0, 0]` mengira `%`
+        tidak mengubah apa pun sehingga semua menumpuk di slot 0 — padahal justru `%`
+        inilah yang menyebarkan kunci ke beberapa slot.
+      en: |
+        **Approach.** Compute each key's index one at a time, then see which slot each
+        one goes to.
+
+        - `"abc"`: `ord("a") + ord("b") + ord("c")` = 97 + 98 + 99 = 294. Then
+          `294 % 4 = 2`. So `"abc"` goes to slot 2.
+        - `"d"`: 100. Then `100 % 4 = 0`. So `"d"` goes to slot 0.
+        - `"b"`: 98. Then `98 % 4 = 2`. So `"b"` goes to slot 2.
+
+        Slot 2 receives two keys, `"abc"` and `"b"` — that is the collision. Because a
+        slot holds a **list**, both remain, in order. The contents per slot become:
+        slot 0 holds 1, slot 1 holds 0, slot 2 holds 2, slot 3 holds 0 — that is
+        `[1, 0, 2, 0]`.
+
+        **Complexity.** For each key, the cost is one hash computation (which walks each
+        letter of the key, so `O(key length)`) and one append to the list in its slot,
+        `O(1)`. For n keys of average length m, the whole thing is `O(n × m)` — here
+        just three short keys, so practically instant.
+
+        **Reference code.**
+
+        ```python
+        def isi_slot(kunci_kunci, jumlah_slot):
+            slot = [[] for _ in range(jumlah_slot)]
+            for kunci in kunci_kunci:
+                slot[indeks_slot(kunci, jumlah_slot)].append(kunci)
+            return [len(rantai) for rantai in slot]
+        ```
+
+        **Common trap.** The answer `[1, 0, 1, 0]` assumes the second colliding key
+        **overwrites** the first — but with chaining both are kept. The answer
+        `[1, 1, 1, 0]` assumes three keys must land in three different slots, but `"abc"`
+        and `"b"` both produce 2. The answer `[3, 0, 0, 0]` assumes `%` changes nothing
+        so everything piles into slot 0 — but `%` is exactly what spreads keys across
+        slots.
+
+  # --- Kuis 2: kenapa rata-rata O(1) tetapi terburuk O(n) ------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah tabel hash berisi 100.000 slot dan sudah dipakai menyimpan 50.000
+        pasangan. Selama fungsi hash-nya menyebar kunci dengan merata, mengambil satu
+        nilai terasa seketika — tidak berbeda dari saat tabelnya baru berisi sepuluh
+        pasangan. Tetapi pada data tertentu, pencarian yang sama bisa berjalan selama
+        memeriksa rantai berisi 50.000 kunci. Kenapa tabel yang sama bisa sesekali
+        `O(1)` dan sesekali `O(n)`?
+      en: |
+        A hash table with 100,000 slots has been used to store 50,000 pairs. As long as
+        its hash function spreads keys evenly, reading one value feels instant — no
+        different from when the table held only ten pairs. But on certain data, the same
+        lookup can take as long as checking a chain of 50,000 keys. Why can the same
+        table be `O(1)` at times and `O(n)` at others?
+    opsi:
+      - teks:
+          id: Karena fungsi hash langsung menunjuk slot yang benar sehingga rantai rata-ratanya pendek, tetapi kalau banyak kunci jatuh ke slot yang sama rantainya memanjang dan pencariannya berubah menjadi menelusuri daftar
+          en: Because the hash function points straight at the right slot so the average chain is short, but if many keys fall into the same slot the chain grows long and the lookup turns into walking a list
+        benar: true
+      - teks:
+          id: Karena tabel hash menyimpan kuncinya dalam keadaan terurut, sehingga bisa memakai pencarian biner yang cepat
+          en: Because a hash table keeps its keys in sorted order, so it can use a fast binary search
+        benar: false
+      - teks:
+          id: Karena tabel hash hanya menyimpan sebagian kuncinya di memori, sehingga yang perlu diperiksa selalu lebih sedikit daripada array
+          en: Because a hash table keeps only part of its keys in memory, so there is always less to check than in an array
+        benar: false
+      - teks:
+          id: Karena pencariannya selalu satu langkah, dan angka O(n) itu hanya berlaku saat tabelnya masih kosong
+          en: Because a lookup is always a single step, and the `O(n)` figure only applies while the table is still empty
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Pisahkan dua hal yang sering tertukar: **rata-rata** dan
+        **terburuk**.
+
+        Yang membuat rata-ratanya cepat adalah fungsi hash. Untuk mengambil satu nilai,
+        tabel tidak menelusuri seluruh isinya — ia menghitung nomor slot kuncinya, lalu
+        langsung ke sana. Kalau fungsi hash menyebar merata, rata-rata setiap slot
+        berisi sangat sedikit pasangan, sehingga pemeriksaan di dalam slot itu selesai
+        hampir seketika. Jumlah langkahnya tidak tumbuh seiring bertambahnya data:
+        itulah `O(1)`.
+
+        Yang membuat terburuknya lambat adalah rantai yang panjang. Kalau kebetulan
+        banyak kunci menghasilkan nomor slot yang sama — karena fungsi hash-nya buruk,
+        atau karena datanya sengaja dipilih begitu — semua kunci itu menumpuk di satu
+        rantai. Mencari yang ada di ujung rantai berarti memeriksa seluruh rantai, dan
+        rantai itu bisa sepanjang seluruh isi tabel: `O(n)`.
+
+        Keduanya benar sekaligus. Yang pertama menggambarkan pemakaian sehari-hari; yang
+        kedua menggambarkan batas yang harus kamu sadari. Faktor beban adalah alat untuk
+        menjaga yang kedua tetap jarang terjadi.
+
+        **Kompleksitas.** `O(1)` rata-rata, `O(n)` kasus terburuk. Perhatikan bahwa
+        keduanya adalah pernyataan tentang **jumlah kunci yang harus diperiksa di dalam
+        satu slot**, bukan tentang besar tabelnya.
+
+        **Kode referensi.**
+
+        ```python
+        # Rata-rata: rantai pendek, jadi perulangan ini hanya berputar sedikit kali
+        def ambil(self, kunci):
+            for k, nilai in self.slot[indeks_slot(kunci, JUMLAH_SLOT)]:
+                if k == kunci:
+                    return nilai
+            return None
+        ```
+
+        Kalau semua kunci bertabrakan, `self.slot[indeks_slot(...)]` berisi seluruh isi
+        tabel, dan perulangan di atas berputar n kali.
+
+        **Jebakan umum.** Jawaban "menyimpan kunci dalam keadaan terurut" membawa
+        kebiasaan dari array terurut dan pencarian biner — tabel hash **tidak** menjaga
+        urutan apa pun, dan itulah sebabnya ia cepat untuk pencarian tetapi tidak bisa
+        dipakai untuk hal yang butuh urutan. Jawaban "hanya menyimpan sebagian kunci"
+        keliru karena tabel hash menyimpan seluruh pasangan; yang membuatnya cepat
+        bukan jumlah yang disimpan, melainkan cara menemukan tempatnya. Jawaban
+        "selalu satu langkah" menukar rata-rata dengan jaminan — justru inti Topik ini
+        adalah bahwa `O(1)` itu **rata-rata**, bukan janji.
+      en: |
+        **Approach.** Separate two things that are often confused: **average** and
+        **worst case**.
+
+        What makes the average fast is the hash function. To read one value, the table
+        does not walk its whole contents — it computes the key's slot number, then goes
+        straight there. If the hash function spreads evenly, the average slot holds very
+        few pairs, so the check inside that slot finishes almost instantly. The number
+        of steps does not grow as the data grows: that is `O(1)`.
+
+        What makes the worst case slow is a long chain. If many keys happen to produce
+        the same slot number — because the hash function is poor, or because the data
+        was chosen that way on purpose — all those keys pile into one chain. Finding the
+        one at the end of the chain means checking the whole chain, and that chain can be
+        as long as the table's entire contents: `O(n)`.
+
+        Both are true at once. The first describes everyday use; the second describes a
+        limit you must be aware of. The load factor is the tool for keeping the second
+        rare.
+
+        **Complexity.** `O(1)` on average, `O(n)` in the worst case. Note that both are
+        statements about **how many keys must be checked inside one slot**, not about how
+        large the table is.
+
+        **Reference code.**
+
+        ```python
+        # On average: a short chain, so this loop turns only a few times
+        def ambil(self, kunci):
+            for k, nilai in self.slot[indeks_slot(kunci, JUMLAH_SLOT)]:
+                if k == kunci:
+                    return nilai
+            return None
+        ```
+
+        If every key collides, `self.slot[indeks_slot(...)]` holds the table's entire
+        contents, and the loop above turns n times.
+
+        **Common trap.** The answer "keeps its keys in sorted order" carries over the
+        habit of a sorted array and binary search — a hash table keeps **no** order at
+        all, and that is precisely why it is fast for lookups yet unusable for anything
+        needing order. The answer "keeps only part of its keys" is wrong because a hash
+        table stores every pair; what makes it fast is not how little it stores, but how
+        it finds the place. The answer "always a single step" swaps the average for a
+        guarantee — the whole point of this Topic is that `O(1)` is an **average**, not
+        a promise.
+
+  # --- Kuis 3: menghitung pemeriksaan saat kunci tidak ada ------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Tabel hash berikut memakai rantai. Fungsi `ambil` mengembalikan pasangan
+        *(hasil, jumlah pemeriksaan)*. Sebelum pemanggilan terakhir, empat kunci sudah
+        dimasukkan sehingga keempatnya menempati slot yang sama. Berapa nilai yang
+        dicetak?
+      en: |
+        The hash table below uses chaining. The `ambil` function returns the pair
+        *(result, number of checks)*. Before the final call, four keys have been inserted
+        so that all four occupy the same slot. What value is printed?
+    kode: |
+      def kode_hash(kunci):
+          total = 0
+          for huruf in kunci:
+              total += ord(huruf)
+          return total
+
+
+      def indeks_slot(kunci, jumlah_slot):
+          return kode_hash(kunci) % jumlah_slot
+
+
+      JUMLAH_SLOT = 4
+      slot = [[] for _ in range(JUMLAH_SLOT)]
+
+      for kunci in ["b", "f", "j", "n"]:
+          slot[indeks_slot(kunci, JUMLAH_SLOT)].append(kunci)
+
+
+      def ambil(kunci):
+          diperiksa = 0
+          for k in slot[indeks_slot(kunci, JUMLAH_SLOT)]:
+              diperiksa += 1
+              if k == kunci:
+                  return ("ketemu", diperiksa)
+          return (None, diperiksa)
+
+
+      print(ambil("z")[1])
+    opsi:
+      - teks:
+          id: "4"
+          en: "4"
+        benar: true
+      - teks:
+          id: "0"
+          en: "0"
+        benar: false
+      - teks:
+          id: "1"
+          en: "1"
+        benar: false
+      - teks:
+          id: "2"
+          en: "2"
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Tentukan dulu ke slot mana `"z"` pergi, lalu lihat isi slot itu.
+
+        `ord("b")` = 98, `ord("f")` = 102, `ord("j")` = 106, `ord("n")` = 110.
+        Keempatnya habis dibagi 4 tanpa sisa (`98 % 4 = 2`, `102 % 4 = 2`, `106 % 4 = 2`,
+        `110 % 4 = 2`), jadi keempatnya menempati slot 2. Slot 2 berisi
+        `["b", "f", "j", "n"]`.
+
+        Kunci `"z"` bernilai `ord("z")` = 122, dan `122 % 4 = 2` — juga slot 2. Jadi
+        perulangannya masuk ke rantai yang berisi empat kunci itu, dan memeriksa satu
+        per satu: `"b"` (tidak sama), `"f"` (tidak sama), `"j"` (tidak sama), `"n"`
+        (tidak sama). Perulangannya habis tanpa menemukan apa pun, lalu mengembalikan
+        `(None, 4)`. Nilai yang dicetak adalah `4`.
+
+        **Kompleksitas.** Inilah kasus terburuk yang dijelaskan Kuis 2. Keempat kunci
+        bertabrakan, jadi satu pencarian harus memeriksa seluruh rantai — `O(n)` untuk
+        rantai sepanjang itu. Perhatikan bahwa fungsi hash-nya **bukan** yang membuat ini
+        lambat; yang membuatnya lambat adalah semua kunci kebetulan menghasilkan sisa
+        bagi yang sama. Fungsi hash yang menyebar lebih baik akan memecah keempat kunci
+        itu ke slot berbeda.
+
+        **Kode referensi.**
+
+        ```python
+        def ambil(kunci):
+            diperiksa = 0
+            for k in slot[indeks_slot(kunci, JUMLAH_SLOT)]:
+                diperiksa += 1
+                if k == kunci:
+                    return ("ketemu", diperiksa)
+            return (None, diperiksa)
+        ```
+
+        **Jebakan umum.** Jawaban `0` mengira kunci yang tidak ada berarti tidak ada yang
+        diperiksa — padahal pemeriksaan justru terjadi, dan itulah cara tabel tahu
+        kuncinya tidak ada. Jawaban `1` mengira tabel hash selalu selesai dalam satu
+        pemeriksaan, yaitu menukar rata-rata dengan jaminan. Jawaban `2` tertukar antara
+        **nomor slot** dan **jumlah pemeriksaan**: `"z"` memang menuju slot 2, tetapi
+        yang dicetak bukan nomor slotnya — yang dicetak adalah berapa kunci yang
+        diperiksa **di dalam** slot itu.
+      en: |
+        **Approach.** First determine which slot `"z"` goes to, then look at that slot's
+        contents.
+
+        `ord("b")` = 98, `ord("f")` = 102, `ord("j")` = 106, `ord("n")` = 110. All four
+        are divisible by 4 with remainder 2 (`98 % 4 = 2`, `102 % 4 = 2`, `106 % 4 = 2`,
+        `110 % 4 = 2`), so all four occupy slot 2. Slot 2 holds `["b", "f", "j", "n"]`.
+
+        The key `"z"` is `ord("z")` = 122, and `122 % 4 = 2` — also slot 2. So the loop
+        enters that chain of four keys and checks them one by one: `"b"` (not equal),
+        `"f"` (not equal), `"j"` (not equal), `"n"` (not equal). The loop runs out
+        without finding anything, then returns `(None, 4)`. The value printed is `4`.
+
+        **Complexity.** This is the worst case described in Quiz 2. All four keys
+        collide, so a single lookup must check the whole chain — `O(n)` for a chain that
+        long. Note that the hash function is **not** what makes this slow; what makes it
+        slow is that all the keys happen to produce the same remainder. A hash function
+        that spreads better would split those four keys across different slots.
+
+        **Reference code.**
+
+        ```python
+        def ambil(kunci):
+            diperiksa = 0
+            for k in slot[indeks_slot(kunci, JUMLAH_SLOT)]:
+                diperiksa += 1
+                if k == kunci:
+                    return ("ketemu", diperiksa)
+            return (None, diperiksa)
+        ```
+
+        **Common trap.** The answer `0` assumes a missing key means nothing was checked —
+        but the checks do happen, and that is exactly how the table learns the key is
+        absent. The answer `1` assumes a hash table always finishes in one check, which
+        swaps the average for a guarantee. The answer `2` confuses the **slot number**
+        with the **number of checks**: `"z"` does head for slot 2, but what is printed is
+        not its slot number — it is how many keys were checked **inside** that slot.
+
+  # --- Kuis 4: memperbesar tabel saat faktor beban tinggi -------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah tabel hash berisi 4 slot dan menyimpan 6 pasangan. Fungsi hash-nya
+        menyebar kunci dengan cukup merata, sehingga isinya terbagi 2, 2, 1, 1 — dua
+        slot berisi dua kunci, dua slot berisi satu. Tabelnya sudah terasa melambat.
+        Apa yang sebaiknya dilakukan, dan kenapa?
+      en: |
+        A hash table with 4 slots holds 6 pairs. Its hash function spreads keys fairly
+        evenly, so the contents split 2, 2, 1, 1 — two slots hold two keys, two slots
+        hold one. The table already feels slow. What should be done, and why?
+    opsi:
+      - teks:
+          id: Memperbesar tabel — menambah jumlah slot, lalu menghitung ulang tempat setiap kunci yang sudah ada — supaya rantainya kembali pendek dan biaya rata-ratanya kembali O(1)
+          en: Enlarge the table — add more slots, then recompute the place of every existing key — so the chains become short again and the average cost returns to O(1)
+        benar: true
+      - teks:
+          id: Menambah jumlah slot tanpa memindahkan kunci yang sudah ada, karena nomor slot sebuah kunci tidak berubah ketika jumlah slotnya bertambah
+          en: Add more slots without moving the existing keys, because a key's slot number does not change when the number of slots grows
+        benar: false
+      - teks:
+          id: Mengganti fungsi hash dengan yang tidak pernah menghasilkan tabrakan
+          en: Replace the hash function with one that never produces a collision
+        benar: false
+      - teks:
+          id: Mengurangi jumlah slot, karena tabel yang lebih kecil selalu lebih cepat diakses dan lebih hemat memori
+          en: Reduce the number of slots, because a smaller table is always faster to access and uses less memory
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Yang membuat pencarian melambat bukan jumlah pasangannya
+        sendiri, melainkan **faktor beban** — perbandingan antara jumlah kunci (6) dan
+        jumlah slot (4). Di sini faktor bebannya 1,5, artinya rata-rata setiap slot
+        berisi satu setengah kunci. Karena itu memperbaiki kecepatannya berarti
+        **menurunkan faktor beban**, dan caranya adalah menambah jumlah slot.
+
+        Menambah slot saja tidak cukup. Indeks slot dihitung dari `% jumlah_slot`, jadi
+        begitu jumlah slotnya berubah dari 4 menjadi 8, hampir semua kunci berpindah
+        tempat. Contohnya kunci `"abc"` yang tadi ada di slot `294 % 4 = 2` sekarang
+        harus ke slot `294 % 8 = 6`. Karena itu seluruh kunci yang sudah ada harus
+        **dihitung ulang** dan dipindahkan ke slot barunya.
+
+        Sesudahnya, 6 kunci tersebar di 8 slot — faktor bebannya turun menjadi 0,75, dan
+        rata-rata setiap slot berisi kurang dari satu kunci. Pencariannya kembali
+        `O(1)`.
+
+        **Kompleksitas.** Memperbesar tabel memakan waktu `O(n)`, karena setiap pasangan
+        harus dipindahkan sekali. Tetapi ia jarang terjadi — hanya sesekali, saat faktor
+        bebannya melewati batas. Sama seperti pertumbuhan array dinamis di Topik 2,
+        biaya mahal itu dibagi ke banyak penambahan, sehingga rata-ratanya tetap `O(1)`.
+        Yang penting, memperbesar tabel **memperbaiki penyebabnya** (rantai panjang),
+        bukan hanya menambah ruang.
+
+        **Kode referensi.**
+
+        ```python
+        def perbesar(self):
+            lama = self.slot
+            self.slot = [[] for _ in range(len(lama) * 2)]
+            for rantai in lama:
+                for kunci, nilai in rantai:
+                    self.slot[indeks_slot(kunci, len(self.slot))].append((kunci, nilai))
+        ```
+
+        **Jebakan umum.** Jawaban "menambah jumlah slot tanpa memindahkan kunci"
+        mengabaikan bahwa indeks slot dihitung dari `% jumlah_slot`, jadi begitu jumlah
+        slotnya berubah, hampir semua kunci berpindah tempat — `294 % 4 = 2` menjadi
+        `294 % 8 = 6`. Jawaban "mengganti fungsi hash supaya tidak pernah bertabrakan"
+        mengejar hal yang mustahil: jumlah slot selalu terbatas, sedangkan jumlah kunci
+        yang mungkin tidak, jadi tabrakan pasti terjadi dan yang perlu dilakukan adalah
+        **menanganinya**, bukan mengharapkannya hilang. Jawaban "mengurangi jumlah
+        slot" justru memperburuk keadaannya: dengan slot lebih sedikit, faktor bebannya
+        **naik**, rantainya makin panjang, dan pencariannya makin lambat — kebalikan
+        dari yang dibutuhkan.
+      en: |
+        **Approach.** What slows lookups is not the number of pairs by itself, but the
+        **load factor** — the ratio between the number of keys (6) and the number of
+        slots (4). Here the load factor is 1.5, meaning each slot holds one and a half
+        keys on average. So improving speed means **lowering the load factor**, and the
+        way to do that is to add slots.
+
+        Adding slots alone is not enough. The slot index is computed from
+        `% jumlah_slot`, so once the number of slots changes from 4 to 8, nearly every
+        key changes place. For example the key `"abc"`, which was at slot `294 % 4 = 2`,
+        must now go to slot `294 % 8 = 6`. So every existing key must be **recomputed**
+        and moved to its new slot.
+
+        Afterwards, 6 keys are spread across 8 slots — the load factor drops to 0.75,
+        and the average slot holds less than one key. Lookups are `O(1)` again.
+
+        **Complexity.** Enlarging the table costs `O(n)` time, because every pair must be
+        moved once. But it happens rarely — only occasionally, when the load factor
+        crosses a threshold. Just like the growth of a dynamic array in Topic 2, that
+        expensive cost is spread across many additions, so the average stays `O(1)`.
+        Importantly, enlarging the table **fixes the cause** (long chains), not merely
+        adding room.
+
+        **Reference code.**
+
+        ```python
+        def perbesar(self):
+            lama = self.slot
+            self.slot = [[] for _ in range(len(lama) * 2)]
+            for rantai in lama:
+                for kunci, nilai in rantai:
+                    self.slot[indeks_slot(kunci, len(self.slot))].append((kunci, nilai))
+        ```
+
+        **Common trap.** The answer "add more slots without moving the keys" overlooks
+        that the slot index is computed from `% jumlah_slot`, so once the number of slots
+        changes, nearly every key changes place — `294 % 4 = 2` becomes `294 % 8 = 6`.
+        The answer "replace the hash function so it never collides" chases something
+        impossible: the number of slots is always limited while the number of possible
+        keys is not, so collisions are certain and what is needed is to **handle** them,
+        not to hope they vanish. The answer "reduce the number of slots" makes things
+        worse: with fewer slots the load factor **rises**, the chains grow longer, and
+        lookups get slower — the opposite of what is needed.
+
+  # --- Kuis 5: penghapusan pada alamat terbuka -----------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah tabel hash memakai **alamat terbuka**: kalau slot yang dituju sudah
+        terisi, kunci baru menempati slot kosong berikutnya. Sebuah kunci dihapus, dan
+        slotnya dikosongkan sepenuhnya. Setelah itu, pencarian kunci lain yang tadinya
+        menempati slot **setelah** slot yang dikosongkan itu gagal — padahal kunci itu
+        masih ada di tabel. Kenapa?
+      en: |
+        A hash table uses **open addressing**: if the target slot is taken, the new key
+        occupies the next free slot. A key is removed and its slot is emptied
+        completely. Afterwards, a lookup for another key that had been placed in a slot
+        **after** the emptied one fails — even though that key is still in the table.
+        Why?
+    opsi:
+      - teks:
+          id: Karena slot kosong itu menghentikan penelusuran lebih awal — pencarian menyimpulkan kuncinya tidak ada begitu menemukan slot kosong, sehingga penghapusan harus meninggalkan penanda batu nisan, bukan slot yang benar-benar kosong
+          en: Because the empty slot ends the probe early — the lookup concludes the key is absent as soon as it meets an empty slot, so removal must leave a tombstone marker rather than a truly empty slot
+        benar: true
+      - teks:
+          id: Karena fungsi hash ikut berubah setiap kali ada kunci yang dihapus
+          en: Because the hash function changes every time a key is removed
+        benar: false
+      - teks:
+          id: Karena rantai tempat kunci itu berada ikut terputus saat slot di sebelahnya dikosongkan
+          en: Because the chain holding that key is broken when the neighbouring slot is emptied
+        benar: false
+      - teks:
+          id: Karena menghapus satu kunci selalu menuntut seluruh tabel dihitung ulang lebih dulu
+          en: Because removing one key always requires the whole table to be recomputed first
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Ingat dulu kenapa pencarian pada alamat terbuka bisa berhenti di
+        tengah jalan. Saat mencari sebuah kunci, kamu mulai dari slot hasil hash-nya.
+        Kalau slot itu bukan kunci yang dicari, kamu maju ke slot berikutnya, dan
+        seterusnya. Pertanyaannya: kapan boleh berhenti?
+
+        Jawaban yang lazim dan masuk akal: berhenti begitu menemukan slot **kosong**.
+        Alasannya, kalau slotnya kosong, berarti kunci itu tidak pernah terlempar lebih
+        jauh lagi. Aturan itu benar — **selama tidak ada penghapusan**.
+
+        Penghapusan merusaknya. Misalkan kunci A ada di slot 2, dan kunci B yang
+        seharusnya juga ke slot 2 terpaksa menempati slot 3. Kalau A dihapus dan slot 2
+        dikosongkan, pencarian B akan mulai dari slot 2, menemukan slot kosong, dan
+        langsung menyimpulkan B tidak ada — padahal B ada di slot 3. Satu slot kosong
+        palsu memutus jalur pencarian semua kunci yang pernah terlempar melewatinya.
+
+        Solusinya adalah **batu nisan**: slot yang dihapus ditandai "pernah terisi,
+        sekarang tidak dipakai". Penelusuran tetap **melewatinya** seperti slot terisi,
+        sehingga tidak berhenti lebih awal, tetapi penambahan baru boleh memakai
+        kembali slot itu.
+
+        **Kompleksitas.** Penghapusan dengan batu nisan sendiri tetap `O(1)` rata-rata —
+        ia hanya menandai satu slot. Yang berubah hanyalah arti penanda "kosong": ada
+        dua macam, yaitu "belum pernah terisi" (boleh menghentikan pencarian) dan
+        "pernah terisi lalu dihapus" (tidak boleh). Kalau batu nisan dibiarkan menumpuk,
+        tabelnya bisa penuh oleh penanda dan perlu diperbesar — itu sebabnya batu nisan
+        yang terlalu banyak adalah tanda untuk memperbesar tabel, sama seperti faktor
+        beban yang terlalu tinggi.
+
+        **Kode referensi.**
+
+        ```python
+        # Salah: memutus jalur pencarian kunci lain
+        def hapus_salah(self, kunci):
+            self.slot[indeks_slot(kunci, self.jumlah_slot)] = None
+
+
+        # Benar: berhenti HANYA di slot yang belum pernah terisi. Batu nisan
+        # dilewati, bukan dianggap ujung.
+        BATU_NISAN = object()
+
+
+        def hapus(self, kunci):
+            posisi = indeks_slot(kunci, self.jumlah_slot)
+            while self.slot[posisi] is not None:
+                if self.slot[posisi] is not BATU_NISAN and self.slot[posisi][0] == kunci:
+                    self.slot[posisi] = BATU_NISAN
+                    return True
+                posisi = (posisi + 1) % self.jumlah_slot
+            return False
+        ```
+
+        Perhatikan syarat perulangannya: `while self.slot[posisi] is not None` —
+        **bukan** `while ... is not None and ... is not BATU_NISAN`. Kalau batu nisan
+        ikut menghentikan perulangan, penghapusan akan gagal menemukan kunci yang
+        berada setelahnya, dan itu persis kesalahan yang sedang dijelaskan di sini.
+
+        **Jebakan umum.** Jawaban "fungsi hash ikut berubah" keliru: fungsi hash hanya
+        bergantung pada kuncinya, bukan pada isi tabel — hasilnya untuk kunci yang sama
+        selalu sama. Jawaban "rantai ikut terputus" membawa cara berpikir dari
+        **rantai** ke dalam **alamat terbuka**: di alamat terbuka tidak ada rantai sama
+        sekali, yang ada hanya urutan slot, dan itulah yang terganggu. Jawaban "harus
+        dihitung ulang lebih dulu" mencampur penghapusan dengan memperbesar tabel:
+        memperbesar memang menghitung ulang seluruh kunci, tetapi menghapus satu kunci
+        tidak.
+      en: |
+        **Approach.** First recall why a lookup under open addressing may stop partway.
+        When looking for a key, you start at its hash slot. If that slot does not hold
+        the key, you step to the next slot, and so on. The question is: when may you
+        stop?
+
+        The usual, sensible answer: stop as soon as you meet an **empty** slot. The
+        reasoning is that an empty slot means the key could never have been pushed
+        further. That rule is correct — **as long as nothing is ever removed**.
+
+        Removal breaks it. Suppose key A sits in slot 2, and key B, which also wants
+        slot 2, was forced into slot 3. If A is removed and slot 2 is emptied, the lookup
+        for B starts at slot 2, finds an empty slot, and immediately concludes B is
+        absent — even though B is in slot 3. One false empty slot cuts the search path of
+        every key that had ever been pushed past it.
+
+        The fix is a **tombstone**: a removed slot is marked "was occupied, is now
+        unused". Lookups still **step over** it like an occupied slot, so they do not
+        stop early, while new additions may reuse that slot.
+
+        **Complexity.** Removal with a tombstone is itself still `O(1)` on average — it
+        only marks one slot. What changes is the meaning of the "empty" marker: there are
+        now two kinds, "never occupied" (may stop a lookup) and "occupied then removed"
+        (must not). If tombstones are allowed to pile up, the table can fill with
+        markers and needs enlarging — which is why too many tombstones are a signal to
+        enlarge the table, just like a load factor that is too high.
+
+        **Reference code.**
+
+        ```python
+        # Wrong: cuts the search path of other keys
+        def hapus_salah(self, kunci):
+            self.slot[indeks_slot(kunci, self.jumlah_slot)] = None
+
+
+        # Right: stop ONLY at a slot that was never occupied. A tombstone is
+        # stepped over, not treated as the end.
+        BATU_NISAN = object()
+
+
+        def hapus(self, kunci):
+            posisi = indeks_slot(kunci, self.jumlah_slot)
+            while self.slot[posisi] is not None:
+                if self.slot[posisi] is not BATU_NISAN and self.slot[posisi][0] == kunci:
+                    self.slot[posisi] = BATU_NISAN
+                    return True
+                posisi = (posisi + 1) % self.jumlah_slot
+            return False
+        ```
+
+        Note the loop condition: `while self.slot[posisi] is not None` — **not**
+        `while ... is not None and ... is not BATU_NISAN`. If a tombstone also stopped
+        the loop, removal would fail to find a key sitting after it, which is exactly
+        the mistake being described here.
+
+        **Common trap.** The answer "the hash function changes" is wrong: a hash function
+        depends only on the key, not on the table's contents — it always gives the same
+        result for the same key. The answer "the chain is broken" carries **chaining**
+        thinking into **open addressing**: under open addressing there is no chain at
+        all, only a sequence of slots, and that is what gets disturbed. The answer "must
+        be recomputed first" mixes removal up with enlarging the table: enlarging does
+        recompute every key, but removing one key does not.
+
+  # --- Soal Kode: tabel hash dengan rantai, dari nol -----------------------------
+  - tipe: soal-kode
+    skenario:
+      id: |
+        Tulis dari nol sebuah tabel hash yang menangani tabrakan dengan **rantai** —
+        sebuah kelas yang menyimpan pasangan kunci–nilai di dalam slot, dan menyediakan
+        operasi dasarnya sendiri. Kamu menerima daftar perintah, dan harus mengembalikan
+        daftar hasil untuk setiap perintah yang menghasilkan nilai.
+
+        Tabelnya punya tepat **4 slot**. Fungsi hash-nya sudah ditetapkan supaya
+        hasilnya bisa diperiksa: jumlahkan `ord()` setiap huruf kunci, lalu ambil sisa
+        baginya dengan 4. Contohnya `"abc"` → 97 + 98 + 99 = 294 → `294 % 4 = 2`, jadi
+        `"abc"` berada di slot 2.
+
+        Setiap perintah adalah daftar:
+
+        - `["tambah", kunci, nilai]` menyimpan pasangan itu. Kalau kuncinya sudah ada,
+          nilainya **diperbarui** dan ukurannya tidak bertambah. Tidak menghasilkan
+          nilai.
+        - `["ambil", kunci]` mengembalikan nilai kunci itu, atau `None` kalau tidak ada.
+        - `["hapus", kunci]` membuang pasangan itu dan mengembalikan `True` kalau ada
+          yang dibuang, `False` kalau tidak ada.
+        - `["ukuran"]` mengembalikan banyaknya pasangan yang tersimpan.
+        - `["slot", kunci]` mengembalikan nomor slot kunci itu (0 sampai 3).
+        - `["kunci"]` mengembalikan seluruh kunci yang tersimpan, **terurut menaik**
+          (pakai `sorted`), supaya hasilnya selalu sama urutannya.
+
+        Untuk perintah yang tidak menghasilkan nilai, catat `None`.
+
+        Jangan memakai `dict` sebagai pengganti kelasnya untuk menyimpan data —
+        implementasikan sendiri `tambah`, `ambil`, `hapus`, `ukuran`, `slot`, dan `kunci`,
+        supaya kamu merasakan mekanisme slot dan rantainya. Kamu boleh memakai `list`
+        biasa untuk slot, untuk rantai di dalamnya, dan untuk mengumpulkan hasil perintah.
+
+        Ingat bahwa satu slot boleh berisi **lebih dari satu** pasangan, jadi saat
+        mengambil atau menghapus kamu harus memeriksa isi rantainya satu per satu — dan
+        membandingkan kuncinya, bukan hanya menemukan slotnya.
+      en: |
+        Write from scratch a hash table that handles collisions with **chaining** — a
+        class that stores key–value pairs inside slots, and provides its own basic
+        operations. You receive a list of commands, and must return a list of results for
+        each command that produces a value.
+
+        The table has exactly **4 slots**. Its hash function is fixed so that results can
+        be checked: add the `ord()` of every letter of the key, then take the remainder
+        modulo 4. For example `"abc"` → 97 + 98 + 99 = 294 → `294 % 4 = 2`, so `"abc"`
+        lives in slot 2.
+
+        Each command is a list:
+
+        - `["tambah", kunci, nilai]` stores that pair. If the key already exists, its
+          value is **updated** and the size does not grow. Produces no value.
+        - `["ambil", kunci]` returns that key's value, or `None` if there is none.
+        - `["hapus", kunci]` removes that pair and returns `True` if something was
+          removed, `False` if not.
+        - `["ukuran"]` returns how many pairs are stored.
+        - `["slot", kunci]` returns that key's slot number (0 through 3).
+        - `["kunci"]` returns every stored key, **sorted ascending** (use `sorted`), so
+          the order is always the same.
+
+        For commands that produce no value, record `None`.
+
+        Do not use `dict` in place of the class to store the data — implement `tambah`,
+        `ambil`, `hapus`, `ukuran`, `slot`, and `kunci` yourself, so that you feel the
+        slot and chain mechanism. You may use a plain `list` for the slots, for the chain
+        inside each, and to collect the command results.
+
+        Remember that one slot may hold **more than one** pair, so when reading or
+        removing you must check that chain's contents one by one — and compare the keys,
+        not merely find the slot.
+    fungsi: proses
+    test_case:
+      # Kasus 1 — tambah lalu ambil; kunci berbeda tetap terpisah.
+      - argumen:
+          - - ["tambah", "a", 1]
+            - ["tambah", "b", 2]
+            - ["ambil", "a"]
+            - ["ambil", "b"]
+            - ["ukuran"]
+        diharapkan: [null, null, 1, 2, 2]
+      # Kasus 2 — memperbarui kunci yang sudah ada menimpa nilainya, ukuran tetap.
+      - argumen:
+          - - ["tambah", "x", 1]
+            - ["tambah", "x", 2]
+            - ["ambil", "x"]
+            - ["ukuran"]
+        diharapkan: [null, null, 2, 1]
+      # Kasus 3 — tabrakan: "b", "f", "j" semuanya ke slot 2; "d" ke slot 0.
+      - argumen:
+          - - ["tambah", "b", 1]
+            - ["tambah", "f", 2]
+            - ["tambah", "j", 3]
+            - ["tambah", "d", 4]
+            - ["slot", "b"]
+            - ["slot", "d"]
+            - ["kunci"]
+            - ["ukuran"]
+        diharapkan: [null, null, null, null, 2, 0, ["b", "d", "f", "j"], 4]
+      # Kasus 4 — kunci yang tidak ada: ambil -> None, hapus -> False.
+      - argumen:
+          - - ["tambah", "a", 1]
+            - ["ambil", "z"]
+            - ["hapus", "z"]
+            - ["ukuran"]
+        diharapkan: [null, null, false, 1]
+      # Kasus 5 — hapus di tengah rantai, lalu tambah lagi kunci yang sama.
+      - argumen:
+          - - ["tambah", "b", 1]
+            - ["tambah", "f", 2]
+            - ["tambah", "j", 3]
+            - ["hapus", "f"]
+            - ["kunci"]
+            - ["ukuran"]
+            - ["ambil", "j"]
+            - ["tambah", "f", 9]
+            - ["kunci"]
+        diharapkan: [null, null, null, true, ["b", "j"], 2, 3, null, ["b", "f", "j"]]
+    solusi_referensi: |
+      JUMLAH_SLOT = 4
+
+
+      def kode_hash(kunci):
+          total = 0
+          for huruf in kunci:
+              total += ord(huruf)
+          return total
+
+
+      def indeks_slot(kunci):
+          return kode_hash(kunci) % JUMLAH_SLOT
+
+
+      class TabelHash:
+          def __init__(self):
+              # Satu slot berisi daftar pasangan (kunci, nilai) — inilah rantainya.
+              self.slot = [[] for _ in range(JUMLAH_SLOT)]
+              self._ukuran = 0
+
+          def tambah(self, kunci, nilai):
+              rantai = self.slot[indeks_slot(kunci)]
+              for posisi in range(len(rantai)):
+                  if rantai[posisi][0] == kunci:
+                      rantai[posisi] = (kunci, nilai)   # perbarui, bukan tambah
+                      return
+              rantai.append((kunci, nilai))
+              self._ukuran += 1
+
+          def ambil(self, kunci):
+              # Slot yang benar hanya mempersempit tempat; kuncinya tetap harus diperiksa.
+              for k, nilai in self.slot[indeks_slot(kunci)]:
+                  if k == kunci:
+                      return nilai
+              return None
+
+          def hapus(self, kunci):
+              rantai = self.slot[indeks_slot(kunci)]
+              for posisi in range(len(rantai)):
+                  if rantai[posisi][0] == kunci:
+                      rantai.pop(posisi)
+                      self._ukuran -= 1
+                      return True
+              return False
+
+          def ukuran(self):
+              return self._ukuran
+
+          def slot_dari(self, kunci):
+              return indeks_slot(kunci)
+
+          def semua_kunci(self):
+              hasil = []
+              for rantai in self.slot:
+                  for k, nilai in rantai:
+                      hasil.append(k)
+              return sorted(hasil)
+
+
+      def proses(perintah):
+          tabel = TabelHash()
+          hasil = []
+          for satu in perintah:
+              operasi = satu[0]
+              if operasi == "tambah":
+                  tabel.tambah(satu[1], satu[2])
+                  hasil.append(None)
+              elif operasi == "ambil":
+                  hasil.append(tabel.ambil(satu[1]))
+              elif operasi == "hapus":
+                  hasil.append(tabel.hapus(satu[1]))
+              elif operasi == "ukuran":
+                  hasil.append(tabel.ukuran())
+              elif operasi == "slot":
+                  hasil.append(tabel.slot_dari(satu[1]))
+              elif operasi == "kunci":
+                  hasil.append(tabel.semua_kunci())
+          return hasil
