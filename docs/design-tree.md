@@ -24,6 +24,11 @@ Hasil sesi grilling. Setiap keputusan di bawah sudah dipilih sadar, bukan diasum
 > O(log n) terasa sebagai angka. Bentuk "implementasi struktur data dari nol" tetap
 > berlaku untuk Topik yang memang punya struktur. Lihat
 > [ADR-0023](adr/0023-bentuk-soal-kode-big-o-dan-kompleksitas-algoritma.md).
+> **Diperluas ticket #20 (2026-10-06).** Untuk Topik **Rekursi** — yang juga bukan
+> struktur data — bentuk ini kembali tidak bisa dipakai apa adanya. Soal Kodenya
+> menjadi **menulis dua fungsi rekursif dari nol dan mengembalikan jumlah
+> pemanggilannya**, sehingga kedalaman rekursi dan laju pertumbuhannya terasa sebagai
+> angka. Lihat [ADR-0025](adr/0025-bentuk-soal-kode-rekursi.md).
 **Batas keras**: tidak ada soal bergaya LeetCode. Semua Soal dan Pembahasan ditulis original. Soal LeetCode boleh ditautkan, tidak boleh disalin.
 **Pembahasan**: penuh, tersembunyi, terbuka setelah jawaban benar. Berisi pendekatan, kompleksitas, kode referensi, jebakan umum.
 **Kotak Penjelasan**: ada. Kamu menulis alasan dengan kata sendiri, tidak dinilai otomatis, lalu membandingkan dengan penjelasan referensi.
@@ -229,9 +234,10 @@ pun. Satu cacat isi juga ditemukan saat meninjau ulang: satu pengecoh di Kuis 4
 sebenarnya **juga benar** (perulangan memang memeriksa `sekarang.berikutnya`, sehingga
 simpul pertama tidak pernah jadi kandidat), dan diganti supaya hanya ada satu jawaban
 yang bisa dipertahankan.
-**Catatan tentang "6 Pembahasan"**: ticket #16, #17, #18, dan #19 sama-sama menyebut 6
-Pembahasan, tetapi skema di issue #1 tidak memberi field `penjelasan` pada `SoalKode` —
-hanya `Kuis` yang punya. Tiap Topik karena itu berisi **5 Pembahasan**, satu per Kuis.
+**Catatan tentang "6 Pembahasan"**: ticket #16, #17, #18, #19, dan #20 sama-sama
+menyebut 6 Pembahasan, tetapi skema di issue #1 tidak memberi field `penjelasan` pada
+`SoalKode` — hanya `Kuis` yang punya. Tiap Topik karena itu berisi **5 Pembahasan**,
+satu per Kuis.
 Pemilik memutuskan (2026-10-06) untuk tidak menambah field itu, sehingga Soal Kode tidak
 punya Pembahasan sampai ada keputusan lain. Angka "Pembahasan 72" di tabel "Angka scope"
 di bawah karena itu perlu dibaca sebagai 60 Pembahasan Kuis + 12 tanpa bentuknya.
@@ -255,6 +261,26 @@ menemukannya skrip pemeriksa mandiri. (b) Dua pengecoh di Kuis 4 masing-masing t
 bisa dipertahankan (mengurutkan rantai memang memungkinkan pencarian biner; menghapus
 pasangan memang menurunkan faktor beban), dan diganti supaya hanya ada satu jawaban yang
 bisa dipertahankan.
+
+**Topik Rekursi (#20) selesai — Topik keenam yang punya berkas.** Materi dua bahasa,
+5 Kuis skenario, 1 Soal Kode, dan 5 Pembahasan, semuanya tulisan asli. Topik ini
+**menyimpang lagi** dari bentuk Soal Kode yang ditetapkan dokumen ini — **bukan**
+implementasi struktur data dari nol — karena rekursi bukan struktur data, sama seperti
+Big-O (#16) dan berbeda dari Array & String (#17), Linked List (#18), dan Hash Table
+(#19) yang memang struktur data. Soalnya menjadi **menulis dua fungsi rekursif dari nol
+dan mengembalikan jumlah pemanggilannya**, supaya kedalaman rekursi terasa sebagai
+angka; field `kompleksitas` juga diisi algoritma yang dianalisis. Keduanya dicatat di
+[ADR-0025](adr/0025-bentuk-soal-kode-rekursi.md).
+**Tidak ada baris kode aplikasi yang berubah**: Topik ini masuk sebagai berkas
+`content/rekursi.yaml`. Dua cacat ditemukan dengan **menjalankan dan meninjau ulang**,
+bukan membaca — sama seperti #16, #17, #18, dan #19: (a) Materi mula-mula mengklaim
+`turun(999)` aman dan `turun(1000)` gagal, meniru bentuk contoh dari dokumentasi,
+padahal di Python 3.14 `turun(999)` di tingkat modul sudah gagal karena batas tepatnya
+bergantung pada kedalaman pemanggilnya — klaim itu diganti dengan angka yang jauh dari
+batas (`turun(900)` aman, `turun(2000)` gagal); (b) diagram pohon rekursi `fib(5)`
+mula-mula menggambar 13 simpul karena satu `fib(2)` terdalam tidak dikembangkan,
+padahal prosanya menyebut 15 pemanggilan — diagram diganti dengan pohon lengkap 15
+simpul, dan prosanya kini menyebut perhitungannya (1 + 2 + 4 + 6 + 2).
 
 **Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
 → pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini
