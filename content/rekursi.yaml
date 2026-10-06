@@ -1,0 +1,1296 @@
+# Topik 6 — Rekursi.
+#
+# Topik keenam di Jalur, `prasyarat: [3, 4]` (Linked List, Stack & Queue). Materi di
+# sini memakai dua hal dari Topik sebelumnya: gagasan "simpul yang menunjuk ke simpul
+# lain" dari Linked List (#18), dan gagasan "tumpukan yang menyimpan jejak" dari
+# Stack & Queue (#4). Rekursi memakai keduanya sekaligus — pemanggilan fungsi yang
+# bersarang menumpuk seperti Stack, dan itulah yang membuat keduanya jadi prasyarat.
+#
+# **ADA penyimpangan yang dicatat.** `docs/design-tree.md` menetapkan Soal Kode
+# berbentuk "implementasi struktur data dari nol". Rekursi **bukan** struktur data,
+# jadi bentuk itu tidak bisa dipakai apa adanya di sini — persis situasi Big-O (#16),
+# yang menyimpang lewat ADR-0023. Soal Kode Topik ini menjadi **menulis dua fungsi
+# rekursif dari nol dan mengembalikan jumlah pemanggilannya**, supaya kedalaman
+# rekursi dan pertumbuhan pemanggilan terasa sebagai angka yang bisa diperiksa test
+# case. Field `kompleksitas` juga diisi **algoritma yang dianalisis**, bukan struktur
+# data — sama seperti #16. Kedua penyimpangan itu diputuskan pemilik dan dicatat di
+# `docs/adr/0025-bentuk-soal-kode-rekursi.md`.
+#
+# **Pembahasan hanya untuk kelima Kuis.** Soal Kode di sini tidak punya Pembahasan,
+# karena skema di issue #1 — dan `frontend/src/lib/konten/tipe.ts` — tidak punya field
+# `penjelasan` pada `SoalKode`. Pemilik sudah memutuskan (2026-10-06) bahwa cukup 5
+# Pembahasan per Topik, sama seperti #10, #16, #17, #18, dan #19.
+#
+# Semua Soal dan Pembahasan di sini ditulis original, sesuai ADR-0005. Tidak ada teks
+# LeetCode yang disalin maupun diterjemahkan.
+#
+# **Setiap angka di berkas ini sudah dijalankan, bukan dibaca.** Yang diperiksa dengan
+# menjalankan Python: jumlah pemanggilan `fib(5)` = 15 (dan diagram pohonnya digambar
+# lengkap 15 simpul); jumlah pemanggilan `fib(30)` naif = 2.692.537 sedangkan versi
+# memoisasi = 59; urutan cetak sebelum dan sesudah rekursi; `RecursionError` pada
+# `n = 2000` sedangkan `n = 900` masih aman; dan kelima test case Soal Kode. Angka
+# batasnya sengaja 900/2000, bukan 999/1000: titik gagal yang persis bergantung pada
+# kedalaman pemanggilnya, dan klaim "999 aman" yang mula-mula ditulis di sini **salah**
+# — lihat ADR-0025. Jebakan 78 dari handoff #18 memperingatkan
+# bahwa gerbang yang ada tidak menangkap kelas cacat isi — rumus yang salah, pengecoh
+# yang ternyata juga benar, dan kartu yang mengajarkan di luar Materi. Karena itu berkas
+# ini ditulis
+# berdampingan dengan skrip pemeriksa mandiri, dan **setiap pengecoh sudah dipastikan
+# benar-benar salah** (bukan sekadar terlihat salah).
+#
+# `nomor`, `slug`, `judul`, dan `prasyarat` harus sama dengan content/jalur.yaml —
+# validator menolak build kalau berbeda.
+
+nomor: 6
+slug: rekursi
+judul:
+  id: Rekursi
+  en: Recursion
+prasyarat: [3, 4]
+
+# Sumber terstruktur untuk ekspor CSV/Anki (ticket #14). Karena rekursi bukan struktur
+# data, isinya **algoritma yang dianalisis** — sama seperti Big-O (#16) dan sesuai
+# ADR-0023. Nama field tetap `struktur`; yang berbeda isinya. Mengganti nama field itu
+# akan menyentuh `tipe.ts`, validator, penyusun kartu, dan uji-ujinya demi satu Topik —
+# dan aturan repo ini adalah abstraksi diubah saat ada kebutuhan kedua yang nyata.
+#
+# `waktu` dan `ruang` memakai notasi O(...) apa adanya — notasi itu sama di kedua
+# bahasa, jadi menerjemahkannya hanya menghasilkan dua salinan yang bisa menyimpang.
+#
+# **Nilai yang memuat koma WAJIB dikutip.** Dalam pemetaan alir YAML (`{ ... }`), koma
+# memisahkan entri — jadi `{ id: A, B, en: ... }` menghasilkan `id: "A"` plus kunci
+# liar `B: null`, dan kata itu hilang dari kartu tanpa error apa pun. Gerbang konten
+# tidak menangkapnya (jebakan 80). Kutipan di bawah bukan hiasan.
+#
+# **Nilai di sini wajib sama dengan tabel di bagian "Tabel kompleksitas" di Materi.**
+# ADR-0019 mencatat bahwa keduanya memang bisa menyimpang dan tidak ada gerbang yang
+# membandingkannya — yang menjaganya adalah disiplin saat menyunting, dan skrip
+# pemeriksa mandiri Topik ini.
+kompleksitas:
+  - struktur:
+      id: Rekursi sederhana
+      en: Simple recursion
+    ruang: O(n)
+    operasi:
+      - nama: { id: Satu pemanggilan fungsi, en: One function call }
+        waktu: O(1)
+      - nama: { id: Telusuri n tingkat, en: Walk n levels }
+        waktu: O(n)
+
+  - struktur:
+      id: Fibonacci naif
+      en: Naive Fibonacci
+    ruang: O(n)
+    operasi:
+      - nama: { id: Hitung Fibonacci ke-n, en: Compute the n-th Fibonacci }
+        waktu: O(2^n)
+
+  - struktur:
+      id: Fibonacci dengan memoisasi
+      en: Fibonacci with memoisation
+    ruang: O(n)
+    operasi:
+      - nama: { id: Hitung Fibonacci ke-n, en: Compute the n-th Fibonacci }
+        waktu: O(n)
+
+# Istilah yang layak dihafal. `istilah` adalah pasangan Indonesia–English; `definisi`
+# menjelaskannya di kedua bahasa. Setiap pasangan di bawah ini berbeda antara kedua
+# bahasa, jadi setiap istilah menghasilkan dua kartu: definisinya, dan pasangannya.
+# Satu pengecualian: "RecursionError" sama di kedua bahasa, jadi ia hanya menghasilkan
+# kartu definisi — pasangan "RecursionError → RecursionError" tidak menguji apa pun.
+#
+# **Setiap kartu di sini mengajarkan sesuatu yang memang ada di Materi.** Itu kelas
+# cacat yang ditemukan di #17 dan #18 (kartu yang mengajarkan hal yang nol kali disebut
+# di Materi). Kesembilan istilah di bawah muncul di Materi, bukan hanya di sini.
+istilah:
+  - istilah: { id: Rekursi, en: Recursion }
+    definisi:
+      id: Teknik menulis fungsi yang memanggil dirinya sendiri, dengan persoalan yang lebih kecil setiap kali, sampai mencapai kasus dasar yang menghentikannya.
+      en: A technique of writing a function that calls itself, with a smaller problem each time, until it reaches a base case that stops it.
+  - istilah: { id: Kasus dasar, en: Base case }
+    definisi:
+      id: Keadaan paling sederhana yang jawabannya sudah diketahui tanpa memanggil fungsi lagi. Inilah yang menghentikan rekursi — tanpa kasus dasar, pemanggilan tidak pernah berhenti.
+      en: The simplest state whose answer is already known without calling the function again. This is what stops the recursion — without a base case, the calls never end.
+  - istilah: { id: Langkah rekursif, en: Recursive step }
+    definisi:
+      id: Bagian fungsi yang memanggil dirinya sendiri, tetapi dengan persoalan yang lebih kecil. Setiap langkah rekursif harus mendekati kasus dasar, kalau tidak rekursinya tidak pernah berhenti.
+      en: The part of the function that calls itself, but with a smaller problem. Every recursive step must move towards the base case, otherwise the recursion never stops.
+  - istilah: { id: Tumpukan pemanggilan, en: Call stack }
+    definisi:
+      id: Tempat komputer menyimpan setiap pemanggilan fungsi yang belum selesai. Pada rekursi, tumpukan ini bertambah tinggi setiap kali fungsi memanggil dirinya sendiri, lalu memendek lagi saat pemanggilan mulai selesai.
+      en: Where the computer stores every function call that has not finished yet. In recursion this stack grows taller each time the function calls itself, then shortens again as the calls start to finish.
+  - istilah: { id: Kedalaman rekursi, en: Recursion depth }
+    definisi:
+      id: Seberapa banyak pemanggilan yang sedang menunggu selesai pada satu waktu. Ia menentukan seberapa tinggi tumpukan pemanggilan, dan itulah batas memori sebuah rekursi.
+      en: How many calls are waiting to finish at one time. It determines how tall the call stack grows, and that is the memory limit of a recursion.
+  - istilah: { id: Pohon rekursi, en: Recursion tree }
+    definisi:
+      id: Gambaran percabangan sebuah rekursi — setiap pemanggilan menjadi satu simpul, dan pemanggilan yang dilahirkannya menjadi cabang di bawahnya. Bentuknya memperlihatkan berapa banyak pemanggilan yang terjadi.
+      en: A picture of how a recursion branches — each call becomes a node, and the calls it produces become branches below it. Its shape shows how many calls happen.
+  - istilah: { id: Memoisasi, en: Memoisation }
+    definisi:
+      id: Menyimpan hasil pemanggilan yang sudah pernah dihitung, supaya pemanggilan berikutnya dengan argumen yang sama cukup membacanya kembali. Ia mengubah rekursi bercabang menjadi rekursi yang setiap persoalannya dikerjakan sekali.
+      en: Storing the result of a call that has already been computed, so that a later call with the same argument only has to read it back. It turns a branching recursion into one where each problem is solved once.
+  - istilah: { id: Bagi dan taklukkan, en: Divide and conquer }
+    definisi:
+      id: Cara memecah persoalan menjadi beberapa bagian yang lebih kecil, menyelesaikan tiap bagian dengan cara yang sama, lalu menggabungkan hasilnya. Rekursi adalah alat yang paling wajar untuk pola ini.
+      en: A way of splitting a problem into several smaller parts, solving each part the same way, then combining the results. Recursion is the most natural tool for this pattern.
+  - istilah: { id: RecursionError, en: RecursionError }
+    definisi:
+      id: Galat yang muncul saat pemanggilan rekursif menjadi terlalu dalam, biasanya karena kasus dasarnya tidak pernah tercapai. Python membatasi kedalamannya supaya tumpukan pemanggilan tidak menghabiskan seluruh memori.
+      en: The error raised when recursive calls become too deep, usually because the base case is never reached. Python caps the depth so the call stack does not exhaust all memory.
+
+materi:
+  id: |
+    ## Fungsi yang memanggil dirinya sendiri
+
+    Di Topik sebelumnya kamu menulis fungsi yang memanggil fungsi lain: `proses`
+    memanggil `tambah`, `cari` memanggil `hitung_hash`. **Rekursi** (*recursion*)
+    adalah satu langkah lebih jauh — sebuah fungsi yang memanggil **dirinya sendiri**.
+
+    Terasa aneh pada awalnya. Kalau sebuah fungsi memanggil dirinya sendiri, apa yang
+    menghentikannya? Jawabannya ada di dua bagian yang wajib dimiliki setiap rekursi:
+
+    1. **Kasus dasar** (*base case*) — keadaan paling sederhana, yang jawabannya sudah
+       diketahui tanpa memanggil apa pun lagi.
+    2. **Langkah rekursif** (*recursive step*) — bagian yang memanggil fungsi itu
+       sendiri, tetapi dengan persoalan yang **lebih kecil**.
+
+    Selama setiap langkah rekursif memperkecil persoalannya, pemanggilan itu pasti
+    sampai ke kasus dasar dan berhenti.
+
+    Contoh paling sederhana: mencetak angka dari `n` turun sampai 1.
+
+    ```python
+    def hitung_mundur(n):
+        if n == 0:              # kasus dasar
+            return
+        print(n)
+        hitung_mundur(n - 1)    # langkah rekursif
+    ```
+
+    `hitung_mundur(3)` mencetak `3`, lalu memanggil `hitung_mundur(2)` yang mencetak
+    `2`, lalu `hitung_mundur(1)` yang mencetak `1`, lalu `hitung_mundur(0)` yang
+    langsung berhenti karena `0 == 0`.
+
+    Perhatikan bahwa `n` mengecil setiap kali. Itulah yang membuatnya berhenti.
+
+    ## Kasus dasar: kapan berhenti
+
+    Kasus dasar adalah **janji** bahwa rekursinya akan berhenti. Ia menjawab
+    pertanyaan "persoalan terkecil seperti apa yang sudah aku tahu jawabannya tanpa
+    perlu memanggil apa pun?".
+
+    - Untuk "cetak angka turun sampai 1", persoalan terkecilnya adalah `n == 0` —
+      tidak ada yang perlu dicetak.
+    - Untuk "hitung faktorial n", persoalan terkecilnya adalah `n == 1` — hasilnya 1.
+    - Untuk "hitung banyak digit sebuah angka", persoalan terkecilnya adalah angka
+      yang kurang dari 10 — ia punya tepat satu digit.
+
+    **Kasus dasar harus benar-benar tercapai.** Kalau langkah rekursifnya tidak pernah
+    menghasilkan nilai yang memenuhi kasus dasar, fungsinya memanggil dirinya sendiri
+    tanpa akhir. Python menghentikannya dengan **`RecursionError`**, dan itu tanda
+    bahwa kasus dasarnya salah atau tidak pernah tersentuh — bukan tanda bahwa
+    rekursinya "terlalu banyak".
+
+    ## Langkah rekursif: mendekati kasus dasar
+
+    Langkah rekursif punya satu syarat mutlak: **ia harus mendekati kasus dasar.**
+
+    ```python
+    def faktorial(n):
+        if n <= 1:                      # kasus dasar
+            return 1
+        return n * faktorial(n - 1)     # langkah rekursif
+    ```
+
+    `faktorial(4)` memanggil `faktorial(3)`, yang memanggil `faktorial(2)`, yang
+    memanggil `faktorial(1)`. Karena `1 <= 1`, yang terakhir mengembalikan `1` tanpa
+    memanggil lagi. Hasilnya lalu dikalikan dari dalam ke luar:
+
+    `1 × 2 = 2`, lalu `2 × 3 = 6`, lalu `6 × 4 = 24`.
+
+    **Perhatikan bentuk umumnya.** Rekursi selalu begini: pecah persoalan menjadi versi
+    yang lebih kecil, selesaikan versi kecil itu dengan cara yang sama, lalu
+    **gabungkan** hasilnya dengan bagian yang tadi dilepas. Pada `faktorial`, yang
+    digabungkan adalah perkalian `n` dengan hasil `faktorial(n - 1)`.
+
+    Pola "pecah, selesaikan, gabungkan" ini punya nama: **bagi dan taklukkan**
+    (*divide and conquer*).
+
+    ## Bagaimana komputer menjalankannya: tumpukan pemanggilan
+
+    Sekarang pertanyaan yang lebih dalam: ketika `faktorial(4)` memanggil
+    `faktorial(3)`, bagaimana `faktorial(4)` tahu harus mengalikan dengan angka berapa
+    setelah pemanggilan itu selesai?
+
+    Jawabannya: komputer menyimpan setiap pemanggilan yang **belum selesai** di dalam
+    **tumpukan pemanggilan** (*call stack*). Setiap pemanggilan menaruh satu "meja
+    kerja" kecil di atas tumpukan itu — berisi nilai `n` miliknya sendiri. Pemanggilan
+    baru selalu ditumpuk di atas, dan yang paling atas selesai lebih dulu.
+
+    Untuk `faktorial(4)`, tumpukannya bertambah tinggi seperti ini:
+
+    ```
+    faktorial(4)  ->  menunggu hasil faktorial(3)
+    faktorial(3)  ->  menunggu hasil faktorial(2)
+    faktorial(2)  ->  menunggu hasil faktorial(1)
+    faktorial(1)  ->  kasus dasar: kembalikan 1
+    ```
+
+    Begitu `faktorial(1)` mengembalikan `1`, tumpukannya mulai memendek dari atas:
+    `faktorial(2)` menerima `1`, mengembalikan `2`; `faktorial(3)` menerima `2`,
+    mengembalikan `6`; `faktorial(4)` menerima `6`, mengembalikan `24`.
+
+    Inilah sebabnya Stack di Topik 4 jadi prasyarat: rekursi **adalah** sebuah
+    Stack — yang ditumpuk adalah pemanggilan fungsi yang belum selesai, bukan angka.
+
+    ## Kedalaman dan batasnya
+
+    **Kedalaman rekursi** (*recursion depth*) adalah seberapa banyak pemanggilan yang
+    sedang menunggu selesai pada satu waktu. Untuk `faktorial(4)`, kedalamannya 4 —
+    tumpukannya pernah setinggi empat meja kerja.
+
+    Setiap meja kerja memakan memori. Karena itu kedalaman rekursi punya batas, dan
+    batas itu bisa jauh lebih kecil daripada yang kamu duga. Python secara bawaan
+    menghentikan rekursi pada kedalaman sekitar **1.000**:
+
+    ```python
+    def turun(n):
+        if n == 0:
+            return
+        turun(n - 1)
+
+    turun(900)     # selesai, tidak apa-apa
+    turun(2000)    # RecursionError: maximum recursion depth exceeded
+    ```
+
+    Perhatikan bahwa `turun` di atas **sudah benar** — kasus dasarnya ada, dan `n`
+    mengecil setiap kali. Yang membuatnya gagal hanyalah kedalamannya: dua ribu meja
+    kerja sekaligus terlalu banyak untuk tumpukan bawaan Python.
+
+    Angka 1.000 itu batas Python, bukan batas konsepnya, dan tepatnya di angka berapa
+    sebuah fungsi gagal bergantung pada seberapa dalam ia sudah berada di dalam
+    tumpukan saat dipanggil. Bahasa lain punya batas lain, dan batas itu bisa
+    dinaikkan — tetapi menaikkannya berarti menyediakan lebih banyak memori, bukan
+    menghilangkan masalahnya.
+
+    ## Fibonacci: ketika rekursi bercabang
+
+    Sampai di sini setiap pemanggilan melahirkan **satu** pemanggilan baru, sehingga
+    bentuknya seperti garis lurus. Rekursi jadi jauh lebih menarik ketika satu
+    pemanggilan melahirkan **lebih dari satu**.
+
+    Bilangan Fibonacci didefinisikan seperti ini: `fib(0) = 0`, `fib(1) = 1`, dan
+    `fib(n) = fib(n - 1) + fib(n - 2)`. Definisi itu sendiri sudah rekursif:
+
+    ```python
+    def fib(n):
+        if n <= 1:                      # kasus dasar: fib(0) = 0, fib(1) = 1
+            return n
+        return fib(n - 1) + fib(n - 2)  # dua pemanggilan, bukan satu
+    ```
+
+    Kodenya singkat dan jelas. Tetapi lihat apa yang terjadi saat ia menghitung
+    `fib(5)` — bentuk percabangannya digambarkan sebagai **pohon rekursi** (*recursion
+    tree*):
+
+    ```
+                    fib(5)
+              /                \
+          fib(4)                fib(3)
+         /      \              /      \
+      fib(3)   fib(2)      fib(2)   fib(1)
+      /    \    /    \     /    \
+    fib(2) fib(1) fib(1) fib(0) fib(1) fib(0)
+     /  \
+    fib(1) fib(0)
+    ```
+
+    Perhatikan bahwa `fib(3)` muncul **dua kali**, dan `fib(2)` muncul **tiga kali**.
+    Setiap kemunculan adalah pemanggilan sungguhan yang mengerjakan ulang hal yang
+    sama persis. Hitung simpulnya tingkat demi tingkat — 1 + 2 + 4 + 6 + 2 — dan
+    jumlahnya **15 pemanggilan**, padahal hanya ada 6 nilai berbeda yang perlu dihitung
+    (`fib(0)` sampai `fib(5)`).
+
+    Semakin besar `n`, semakin parah. Untuk `fib(30)` fungsinya dipanggil
+    **2.692.537 kali**. Sebabnya: jumlah pemanggilan tumbuh mendekati `2^n`, karena
+    setiap pemanggilan bercabang menjadi dua. Ini yang diukur Topik 1: waktu kerjanya
+    `O(2^n)`, dan itu tumbuh sangat cepat.
+
+    ## Memoisasi: mengingat yang sudah dihitung
+
+    Masalah `fib` bukan pada rekursinya, melainkan pada **pekerjaan yang diulang**.
+    Kalau `fib(3)` sudah pernah dihitung, kenapa menghitungnya lagi dari nol?
+
+    **Memoisasi** (*memoisation*) menjawabnya: simpan setiap hasil yang sudah dihitung
+    di dalam sebuah catatan, dan sebelum menghitung, periksa dulu apakah hasilnya sudah
+    ada di sana.
+
+    ```python
+    def fib_cepat(n, catatan):
+        if n in catatan:                    # sudah pernah dihitung?
+            return catatan[n]
+        if n <= 1:
+            catatan[n] = n                  # simpan kasus dasar juga
+            return n
+        catatan[n] = fib_cepat(n - 1, catatan) + fib_cepat(n - 2, catatan)
+        return catatan[n]
+    ```
+
+    Dengan catatan itu, setiap nilai hanya dihitung **sekali**. Pemanggilan berikutnya
+    dengan argumen yang sama tidak menelusuri pohon lagi — ia langsung membaca
+    catatannya. Hasilnya untuk `fib(30)`: **59 pemanggilan**, bukan 2.692.537.
+
+    Bandingkan keduanya:
+
+    | | Pemanggilan `fib(30)` | Waktu |
+    |---|---|---|
+    | Tanpa memoisasi | 2.692.537 | O(2^n) |
+    | Dengan memoisasi | 59 | O(n) |
+
+    Itu selisih puluhan ribu kali, hanya karena hasilnya diingat. Catatan itu memakan
+    ruang `O(n)` — satu tempat untuk setiap nilai — dan itulah harga yang dibayar untuk
+    mengubah waktu dari `O(2^n)` menjadi `O(n)`.
+
+    ## Tabel kompleksitas
+
+    | Operasi | Waktu | Kenapa |
+    |---|---|---|
+    | Satu pemanggilan fungsi (rekursi sederhana) | O(1) | Satu kali masuk ke fungsi, tanpa melihat banyaknya data |
+    | Telusuri n tingkat (rekursi sederhana) | O(n) | Setiap tingkat memanggil tepat satu tingkat berikutnya, jadi ada n tingkat |
+    | Hitung Fibonacci ke-n (naif) | O(2^n) | Setiap pemanggilan bercabang menjadi dua, dan cabangnya mengulang pekerjaan yang sama |
+    | Hitung Fibonacci ke-n (memoisasi) | O(n) | Setiap nilai dihitung sekali, sisanya dibaca dari catatan |
+
+    Untuk ruangnya, ketiganya `O(n)`: kedalaman rekursi menentukan seberapa tinggi
+    tumpukan pemanggilan, dan memoisasi menambah catatan berisi satu tempat per nilai.
+
+    ## Jebakan yang sering terjadi
+
+    **Lupa kasus dasar.** Rekursi tanpa kasus dasar memanggil dirinya sendiri tanpa
+    akhir, sampai Python menghentikannya dengan `RecursionError`. Ini kesalahan
+    pertama yang paling sering terjadi.
+
+    **Kasus dasar ada, tetapi tidak pernah tercapai.** Ini lebih halus daripada lupa
+    kasus dasar. Fungsinya punya `if n == 0`, tetapi langkah rekursifnya memanggil
+    `n + 1` atau melewatkan angka 0 sama sekali — sehingga syarat itu tidak pernah
+    terpenuhi. Gejalanya sama (`RecursionError`), tetapi letak salahnya berbeda.
+
+    **Mengira `RecursionError` berarti rekursinya salah.** Belum tentu. `turun(2000)`
+    di atas benar-benar sah sebagai rekursi; ia hanya terlalu dalam untuk batas bawaan
+    Python. Yang perlu diperiksa: apakah kedalamannya memang harus sedalam itu, atau
+    ada bentuk perulangan yang lebih hemat.
+
+    **Mengira pemanggilan rekursif berjalan berurutan dari atas.** Yang terjadi
+    justru sebaliknya. Pada `hitung_mundur`, `print` sebelum pemanggilan mencetak
+    `3, 2, 1`; kalau `print`-nya dipindah **setelah** pemanggilan, urutannya berbalik
+    menjadi `1, 2, 3`. Tumpukan pemanggilan menyelesaikan yang paling dalam lebih
+    dulu.
+
+    **Menghitung pemanggilan dengan mengira pohonnya sama dengan nilainya.** Untuk
+    `fib(5)`, jawabannya 5 tetapi pemanggilannya 15 — karena nilai yang sama dihitung
+    berkali-kali. Kedua angka itu menjawab pertanyaan yang berbeda.
+
+    **Menambahkan memoisasi tanpa mengubah kompleksitas ruang.** Memoisasi menukar
+    waktu dengan memori. Kalau hasilnya disimpan di dalam daftar berisi satu tempat per
+    nilai, ruangnya menjadi `O(n)` — dan itu bagian dari keputusannya, bukan efek
+    samping yang bisa diabaikan.
+
+  en: |
+    ## A function that calls itself
+
+    In the previous Topics you wrote functions that call other functions: `proses`
+    calls `tambah`, `cari` calls `hitung_hash`. **Recursion** is one step further — a
+    function that calls **itself**.
+
+    It feels strange at first. If a function calls itself, what stops it? The answer
+    lies in the two parts every recursion must have:
+
+    1. **Base case** — the simplest state, whose answer is already known without
+       calling anything again.
+    2. **Recursive step** — the part that calls the function itself, but with a
+       **smaller** problem.
+
+    As long as every recursive step shrinks the problem, the calls are certain to reach
+    the base case and stop.
+
+    The simplest example: printing numbers from `n` down to 1.
+
+    ```python
+    def hitung_mundur(n):
+        if n == 0:              # base case
+            return
+        print(n)
+        hitung_mundur(n - 1)    # recursive step
+    ```
+
+    `hitung_mundur(3)` prints `3`, then calls `hitung_mundur(2)` which prints `2`, then
+    `hitung_mundur(1)` which prints `1`, then `hitung_mundur(0)` which stops at once
+    because `0 == 0`.
+
+    Notice that `n` gets smaller every time. That is what makes it stop.
+
+    ## Base case: when to stop
+
+    The base case is a **promise** that the recursion will stop. It answers the
+    question "what is the smallest problem whose answer I already know without calling
+    anything?".
+
+    - For "print numbers down to 1", the smallest problem is `n == 0` — nothing left to
+      print.
+    - For "compute the factorial of n", the smallest problem is `n == 1` — the answer
+      is 1.
+    - For "count the digits of a number", the smallest problem is a number below 10 —
+      it has exactly one digit.
+
+    **The base case must actually be reached.** If the recursive step never produces a
+    value that satisfies the base case, the function calls itself forever. Python stops
+    it with a **`RecursionError`**, and that is a sign that the base case is wrong or
+    never touched — not a sign that the recursion is "too much".
+
+    ## The recursive step: moving towards the base case
+
+    The recursive step has one absolute requirement: **it must move towards the base
+    case.**
+
+    ```python
+    def faktorial(n):
+        if n <= 1:                      # base case
+            return 1
+        return n * faktorial(n - 1)     # recursive step
+    ```
+
+    `faktorial(4)` calls `faktorial(3)`, which calls `faktorial(2)`, which calls
+    `faktorial(1)`. Since `1 <= 1`, the last one returns `1` without calling again. The
+    result is then multiplied from the inside out:
+
+    `1 × 2 = 2`, then `2 × 3 = 6`, then `6 × 4 = 24`.
+
+    **Notice the general shape.** Recursion is always like this: split the problem into
+    a smaller version, solve that smaller version the same way, then **combine** the
+    result with the part you set aside. In `faktorial`, what gets combined is the
+    multiplication of `n` with the result of `faktorial(n - 1)`.
+
+    This "split, solve, combine" pattern has a name: **divide and conquer**.
+
+    ## How the computer runs it: the call stack
+
+    Now a deeper question: when `faktorial(4)` calls `faktorial(3)`, how does
+    `faktorial(4)` know what number to multiply by once that call finishes?
+
+    The answer: the computer stores every call that has **not finished yet** in the
+    **call stack**. Each call places a small "work desk" on top of that stack — holding
+    its own value of `n`. A new call is always stacked on top, and the topmost one
+    finishes first.
+
+    For `faktorial(4)`, the stack grows like this:
+
+    ```
+    faktorial(4)  ->  waiting for the result of faktorial(3)
+    faktorial(3)  ->  waiting for the result of faktorial(2)
+    faktorial(2)  ->  waiting for the result of faktorial(1)
+    faktorial(1)  ->  base case: return 1
+    ```
+
+    Once `faktorial(1)` returns `1`, the stack starts to shorten from the top:
+    `faktorial(2)` receives `1` and returns `2`; `faktorial(3)` receives `2` and
+    returns `6`; `faktorial(4)` receives `6` and returns `24`.
+
+    This is why the Stack from Topic 4 is a prerequisite: recursion **is** a Stack —
+    what gets stacked is unfinished function calls, not numbers.
+
+    ## Depth and its limit
+
+    **Recursion depth** is how many calls are waiting to finish at one time. For
+    `faktorial(4)` the depth is 4 — the stack was once four work desks tall.
+
+    Every work desk costs memory. So recursion depth has a limit, and that limit can be
+    far smaller than you would guess. By default Python stops recursion at a depth of
+    about **1,000**:
+
+    ```python
+    def turun(n):
+        if n == 0:
+            return
+        turun(n - 1)
+
+    turun(900)     # finishes, no problem
+    turun(2000)    # RecursionError: maximum recursion depth exceeded
+    ```
+
+    Notice that `turun` above is **already correct** — the base case is there, and `n`
+    shrinks every time. All that makes it fail is the depth: two thousand work desks at
+    once is too much for Python's default stack.
+
+    That number, 1,000, is Python's limit, not the concept's, and exactly where a
+    function fails depends on how deep it already sits in the stack when it is called.
+    Other languages have other limits, and the limit can be raised — but raising it
+    means providing more memory, not removing the problem.
+
+    ## Fibonacci: when recursion branches
+
+    So far every call produced **one** new call, so the shape looked like a straight
+    line. Recursion gets far more interesting when one call produces **more than one**.
+
+    The Fibonacci numbers are defined like this: `fib(0) = 0`, `fib(1) = 1`, and
+    `fib(n) = fib(n - 1) + fib(n - 2)`. That definition is itself recursive:
+
+    ```python
+    def fib(n):
+        if n <= 1:                      # base case: fib(0) = 0, fib(1) = 1
+            return n
+        return fib(n - 1) + fib(n - 2)  # two calls, not one
+    ```
+
+    The code is short and clear. But look at what happens when it computes `fib(5)` —
+    the branching shape is drawn as a **recursion tree**:
+
+    ```
+                    fib(5)
+              /                \
+          fib(4)                fib(3)
+         /      \              /      \
+      fib(3)   fib(2)      fib(2)   fib(1)
+      /    \    /    \     /    \
+    fib(2) fib(1) fib(1) fib(0) fib(1) fib(0)
+     /  \
+    fib(1) fib(0)
+    ```
+
+    Notice that `fib(3)` appears **twice**, and `fib(2)` appears **three times**. Every
+    appearance is a real call redoing exactly the same thing. Count the nodes level by
+    level — 1 + 2 + 4 + 6 + 2 — and the total is **15 calls**, even though there are
+    only 6 different values to compute (`fib(0)` through `fib(5)`).
+
+    The larger `n` gets, the worse it becomes. For `fib(30)` the function is called
+    **2,692,537 times**. The reason: the number of calls grows towards `2^n`, because
+    every call branches into two. This is what Topic 1 measures: the running time is
+    `O(2^n)`, and that grows extremely fast.
+
+    ## Memoisation: remembering what has been computed
+
+    The problem with `fib` is not the recursion, but the **repeated work**. If `fib(3)`
+    has already been computed, why compute it again from scratch?
+
+    **Memoisation** answers that: store every result already computed in a record, and
+    before computing, check first whether the result is already there.
+
+    ```python
+    def fib_cepat(n, catatan):
+        if n in catatan:                    # already computed?
+            return catatan[n]
+        if n <= 1:
+            catatan[n] = n                  # store the base case too
+            return n
+        catatan[n] = fib_cepat(n - 1, catatan) + fib_cepat(n - 2, catatan)
+        return catatan[n]
+    ```
+
+    With that record, every value is computed **once**. A later call with the same
+    argument does not walk the tree again — it reads the record directly. The result
+    for `fib(30)`: **59 calls**, not 2,692,537.
+
+    Compare the two:
+
+    | | Calls for `fib(30)` | Time |
+    |---|---|---|
+    | Without memoisation | 2,692,537 | O(2^n) |
+    | With memoisation | 59 | O(n) |
+
+    That is a difference of tens of thousands of times, just because the results are
+    remembered. The record costs `O(n)` space — one slot for every value — and that is
+    the price paid to turn the time from `O(2^n)` into `O(n)`.
+
+    ## Complexity table
+
+    | Operation | Time | Why |
+    |---|---|---|
+    | One function call (simple recursion) | O(1) | One entry into the function, without looking at how much data there is |
+    | Walk n levels (simple recursion) | O(n) | Each level calls exactly one level below it, so there are n levels |
+    | Compute the n-th Fibonacci (naive) | O(2^n) | Every call branches into two, and the branches repeat the same work |
+    | Compute the n-th Fibonacci (memoisation) | O(n) | Every value is computed once, the rest is read from the record |
+
+    For space, all three are `O(n)`: recursion depth decides how tall the call stack
+    grows, and memoisation adds a record with one slot per value.
+
+    ## Common traps
+
+    **Forgetting the base case.** Recursion without a base case calls itself forever,
+    until Python stops it with a `RecursionError`. This is the first and most common
+    mistake.
+
+    **The base case exists but is never reached.** This is subtler than forgetting it.
+    The function has `if n == 0`, but its recursive step calls `n + 1` or skips over 0
+    entirely — so the condition is never met. The symptom is the same
+    (`RecursionError`), but the fault is in a different place.
+
+    **Assuming a `RecursionError` means the recursion is wrong.** Not necessarily.
+    `turun(2000)` above is perfectly valid as a recursion; it is merely too deep for
+    Python's default limit. What to check: whether the depth really must be that deep,
+    or whether a loop would be more economical.
+
+    **Assuming recursive calls run in order from the top.** The opposite is what
+    happens. In `hitung_mundur`, a `print` before the call prints `3, 2, 1`; if the
+    `print` is moved **after** the call, the order flips to `1, 2, 3`. The call stack
+    finishes the innermost call first.
+
+    **Counting calls by assuming the tree equals the value.** For `fib(5)` the answer
+    is 5 but the calls are 15 — because the same value is computed repeatedly. The two
+    numbers answer different questions.
+
+    **Adding memoisation without changing the space complexity.** Memoisation trades
+    time for memory. If the results are stored in a list with one slot per value, the
+    space becomes `O(n)` — and that is part of the decision, not a side effect to be
+    ignored.
+
+soal:
+  # --- Kuis 1: urutan cetak saat print SEBELUM pemanggilan rekursif --------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi berikut mencetak sebuah angka, lalu memanggil dirinya sendiri dengan
+        angka yang lebih kecil. Berapa nilai yang tercetak, dan dalam urutan apa?
+      en: |
+        The function below prints a number, then calls itself with a smaller number.
+        Which values are printed, and in what order?
+    kode: |
+      def turun(n):
+          if n == 0:
+              return
+          print(n)
+          turun(n - 1)
+
+      turun(3)
+    opsi:
+      - teks:
+          id: "3, lalu 2, lalu 1"
+          en: "3, then 2, then 1"
+        benar: true
+      - teks:
+          id: "1, lalu 2, lalu 3"
+          en: "1, then 2, then 3"
+        benar: false
+      - teks:
+          id: "3, lalu 3, lalu 3"
+          en: "3, then 3, then 3"
+        benar: false
+      - teks:
+          id: "1, lalu 1, lalu 1"
+          en: "1, then 1, then 1"
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Jalankan satu pemanggilan setiap kali, dan perhatikan bahwa
+        `print` berada **sebelum** pemanggilan rekursif.
+
+        - `turun(3)`: `3` bukan 0, jadi cetak `3`, lalu panggil `turun(2)`.
+        - `turun(2)`: cetak `2`, lalu panggil `turun(1)`.
+        - `turun(1)`: cetak `1`, lalu panggil `turun(0)`.
+        - `turun(0)`: `0 == 0`, jadi langsung berhenti tanpa mencetak apa pun.
+
+        Karena setiap angka dicetak **sebelum** fungsi memanggil dirinya sendiri,
+        urutannya persis urutan pemanggilannya: `3, 2, 1`.
+
+        **Kompleksitas.** Ada `n` pemanggilan, dan setiap pemanggilan mengerjakan
+        pekerjaan tetap — satu perbandingan dan satu `print`. Jadi waktunya `O(n)`.
+        Ruangnya juga `O(n)`, karena tumpukan pemanggilannya sedalam `n` selama
+        pencetakan berlangsung.
+
+        **Kode referensi.**
+
+        ```python
+        def turun(n):
+            if n == 0:
+                return
+            print(n)          # sebelum pemanggilan
+            turun(n - 1)
+        ```
+
+        **Jebakan umum.** Jawaban `1, 2, 3` datang dari mengira pemanggilan rekursif
+        mengerjakan bagian terdalam lebih dulu, sehingga yang terkecil tercetak paling
+        awal. Itu berlaku kalau `print`-nya dipindah **setelah** pemanggilan — bukan
+        pada kode ini. Jawaban `3, 3, 3` mengira nilai `n` tidak berubah di dalam
+        pemanggilan berikutnya, padahal setiap pemanggilan menerima `n - 1`. Jawaban
+        `1, 1, 1` mengira yang tercetak adalah nilai terkecil berulang kali, padahal
+        setiap pemanggilan mencetak nilai `n` miliknya sendiri sebelum mengecil.
+      en: |
+        **Approach.** Run one call at a time, and notice that the `print` comes
+        **before** the recursive call.
+
+        - `turun(3)`: `3` is not 0, so print `3`, then call `turun(2)`.
+        - `turun(2)`: print `2`, then call `turun(1)`.
+        - `turun(1)`: print `1`, then call `turun(0)`.
+        - `turun(0)`: `0 == 0`, so it stops at once without printing anything.
+
+        Because each number is printed **before** the function calls itself, the order
+        is exactly the order of the calls: `3, 2, 1`.
+
+        **Complexity.** There are `n` calls, and each call does a fixed amount of work —
+        one comparison and one `print`. So the time is `O(n)`. The space is also `O(n)`,
+        because the call stack is `n` deep while the printing happens.
+
+        **Reference code.**
+
+        ```python
+        def turun(n):
+            if n == 0:
+                return
+            print(n)          # before the call
+            turun(n - 1)
+        ```
+
+        **Common trap.** The answer `1, 2, 3` comes from assuming a recursive call does
+        its innermost part first, so the smallest gets printed earliest. That holds if
+        the `print` is moved **after** the call — not in this code. The answer
+        `3, 3, 3` assumes `n` does not change inside the next call, but each call
+        receives `n - 1`. The answer `1, 1, 1` assumes the smallest value is printed
+        repeatedly, but each call prints its own `n` before shrinking.
+
+  # --- Kuis 2: kasus dasar yang tidak pernah tercapai ---------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi berikut seharusnya menjumlahkan angka dari 1 sampai `n`. Kasus dasarnya
+        memeriksa `n == 1`. Tetapi ketika dipanggil dengan `jumlah(0)`, program berhenti
+        dengan `RecursionError`. Padahal kasus dasarnya sudah ditulis. Kenapa?
+      en: |
+        The function below is supposed to add the numbers from 1 to `n`. Its base case
+        checks `n == 1`. But when called with `jumlah(0)`, the program stops with a
+        `RecursionError`. The base case is already written. Why?
+    kode: |
+      def jumlah(n):
+          if n == 1:
+              return 1
+          return n + jumlah(n - 1)
+
+      print(jumlah(0))
+    opsi:
+      - teks:
+          id: Kasus dasarnya hanya menangani `n == 1`, sedangkan `jumlah(0)` memanggil `jumlah(-1)`, yang memanggil `jumlah(-2)`, dan seterusnya — `n` makin kecil tanpa pernah menyentuh 1
+          en: The base case only handles `n == 1`, while `jumlah(0)` calls `jumlah(-1)`, which calls `jumlah(-2)`, and so on — `n` keeps shrinking without ever touching 1
+        benar: true
+      - teks:
+          id: Python tidak mengizinkan fungsi memanggil dirinya sendiri sebelum didefinisikan sepenuhnya, sehingga pemanggilan pertama sudah ditolak
+          en: Python does not allow a function to call itself before it is fully defined, so the very first call is already rejected
+        benar: false
+      - teks:
+          id: Variabel `n` berubah nilainya di dalam pemanggilan rekursif, sehingga kasus dasar tidak bisa membacanya lagi
+          en: The variable `n` changes value inside the recursive call, so the base case can no longer read it
+        benar: false
+      - teks:
+          id: Rekursi hanya bisa menangani angka positif, jadi angka 0 dan negatif selalu ditolak Python sebelum fungsinya berjalan
+          en: Recursion can only handle positive numbers, so 0 and negative numbers are always rejected by Python before the function runs
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Perhatikan dua hal sekaligus: apa syarat kasus dasarnya, dan
+        bagaimana `n` berubah setiap pemanggilan.
+
+        Kasus dasarnya `n == 1`. Langkah rekursifnya memanggil `jumlah(n - 1)`. Untuk
+        `n` yang **lebih besar** dari 1, `n` akan mengecil sampai tepat menyentuh 1 —
+        aman. Tetapi untuk `n = 0`, yang terjadi adalah:
+
+        `jumlah(0)` → `jumlah(-1)` → `jumlah(-2)` → `jumlah(-3)` → …
+
+        Angka 1 tidak pernah muncul, karena `n` sudah melewatinya. Pemanggilannya terus
+        turun melewati nol, dan `RecursionError` muncul saat kedalamannya melewati batas
+        Python.
+
+        Perbaikannya: kasus dasarnya dibuat menangkap semua keadaan yang sudah tidak
+        perlu dijumlahkan lagi, misalnya `if n <= 0: return 0`.
+
+        **Kompleksitas.** Selama pemanggilannya masih benar (mis. `jumlah(5)`), ada `n`
+        pemanggilan, jadi waktunya `O(n)` dan ruangnya `O(n)` karena tumpukan
+        pemanggilannya sedalam itu. Pada kasus yang gagal ini, pemanggilannya berjalan
+        sampai batas bawaan Python — sekitar 1.000 pemanggilan — baru berhenti.
+
+        **Kode referensi.**
+
+        ```python
+        def jumlah(n):
+            if n <= 0:              # menangkap 0 dan negatif sekaligus
+                return 0
+            return n + jumlah(n - 1)
+        ```
+
+        **Jebakan umum.** Jawaban "Python tidak mengizinkan fungsi memanggil dirinya
+        sendiri" keliru: justru itulah yang dilakukan rekursi, dan `jumlah(3)`
+        mengembalikan 6 tanpa masalah. Jawaban "`n` berubah nilainya" keliru: setiap
+        pemanggilan punya nilai `n` sendiri-sendiri di meja kerjanya, dan itulah sebabnya
+        rekursi bisa bekerja sama sekali. Jawaban "angka 0 dan negatif ditolak Python"
+        keliru: Python sama sekali tidak melarang, dan fungsinya benar-benar berjalan
+        dengan angka itu — yang terjadi adalah pemanggilannya tidak pernah berhenti
+        sendiri.
+      en: |
+        **Approach.** Look at two things at once: what the base case checks, and how `n`
+        changes on every call.
+
+        The base case is `n == 1`. The recursive step calls `jumlah(n - 1)`. For `n`
+        **greater** than 1, `n` shrinks until it hits exactly 1 — safe. But for `n = 0`,
+        this happens:
+
+        `jumlah(0)` → `jumlah(-1)` → `jumlah(-2)` → `jumlah(-3)` → …
+
+        The number 1 never appears, because `n` has already passed it. The calls keep
+        descending past zero, and `RecursionError` appears once the depth passes
+        Python's limit.
+
+        The fix: make the base case catch every state that no longer needs adding, for
+        example `if n <= 0: return 0`.
+
+        **Complexity.** While the calls are still correct (say `jumlah(5)`), there are
+        `n` calls, so the time is `O(n)` and the space is `O(n)` because the call stack
+        is that deep. In this failing case, the calls run until Python's default limit —
+        about 1,000 calls — and only then stop.
+
+        **Reference code.**
+
+        ```python
+        def jumlah(n):
+            if n <= 0:              # catches 0 and negatives at once
+                return 0
+            return n + jumlah(n - 1)
+        ```
+
+        **Common trap.** The answer "Python does not allow a function to call itself" is
+        wrong: that is exactly what recursion does, and `jumlah(3)` returns 6 without
+        trouble. The answer "`n` changes value" is wrong: every call has its own `n` on
+        its own work desk, and that is precisely why recursion works at all. The answer
+        "0 and negative numbers are rejected by Python" is wrong: Python forbids nothing
+        and the function really does run with those numbers — what happens is that its
+        calls never stop on their own.
+
+  # --- Kuis 3: menghitung pemanggilan fib(5) ------------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi berikut menghitung bilangan Fibonacci secara rekursif tanpa memoisasi.
+        Setiap kali fungsi dipanggil, `penghitung` bertambah satu. Berapa nilai
+        `penghitung` setelah `fib(5)` selesai?
+      en: |
+        The function below computes Fibonacci numbers recursively without memoisation.
+        Every time the function is called, `penghitung` grows by one. What is the value
+        of `penghitung` after `fib(5)` finishes?
+    kode: |
+      def fib(n):
+          penghitung[0] += 1
+          if n <= 1:
+              return n
+          return fib(n - 1) + fib(n - 2)
+
+      penghitung = [0]
+      fib(5)
+      print(penghitung[0])
+    opsi:
+      - teks:
+          id: "15, karena nilai yang sama dihitung berkali-kali"
+          en: "15, because the same values are computed repeatedly"
+        benar: true
+      - teks:
+          id: "5, karena hasilnya adalah bilangan Fibonacci kelima"
+          en: "5, because the result is the fifth Fibonacci number"
+        benar: false
+      - teks:
+          id: "9, karena hanya cabang pertamanya yang dihitung"
+          en: "9, because only its first branch gets computed"
+        benar: false
+      - teks:
+          id: "32, karena setiap pemanggilan bercabang menjadi dua"
+          en: "32, because every call branches into two"
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Jumlahkan pemanggilan tingkat demi tingkat, mulai dari yang
+        paling atas.
+
+        - `fib(5)` — 1 pemanggilan.
+        - Ia memanggil `fib(4)` dan `fib(3)` — 2 pemanggilan.
+        - `fib(4)` memanggil `fib(3)` dan `fib(2)`; `fib(3)` memanggil `fib(2)` dan
+          `fib(1)` — 4 pemanggilan.
+        - Tingkat berikutnya — 6 pemanggilan.
+        - Tingkat terakhir, yang berhenti di kasus dasar — 2 pemanggilan.
+
+        Seluruhnya 1 + 2 + 4 + 6 + 2 = **15**.
+
+        Perhatikan bahwa `fib(3)` dipanggil **dua kali** dan `fib(2)` **tiga kali**.
+        Setiap kemunculan adalah pemanggilan sungguhan yang mengerjakan ulang hal yang
+        sama, karena hasilnya tidak disimpan.
+
+        **Kompleksitas.** Karena setiap pemanggilan bercabang menjadi dua, jumlah
+        pemanggilannya tumbuh mendekati `O(2^n)`. Untuk `fib(5)` angkanya masih kecil
+        (15), tetapi untuk `fib(30)` angkanya menjadi 2.692.537 — dan itulah yang membuat
+        versi naif ini tidak layak dipakai untuk `n` yang besar. Ruangnya `O(n)`, karena
+        kedalaman pohonnya paling dalam `n`.
+
+        **Kode referensi.**
+
+        ```python
+        def fib(n):
+            penghitung[0] += 1
+            if n <= 1:
+                return n
+            return fib(n - 1) + fib(n - 2)
+        ```
+
+        **Jebakan umum.** Jawaban 5 datang dari membaca hasil fungsinya (`fib(5)` = 5)
+        padahal yang ditanya adalah **jumlah pemanggilan**, bukan nilai yang
+        dikembalikan. Jawaban 9 adalah jumlah pemanggilan `fib(4)` — satu tingkat terlalu
+        rendah. Jawaban 32 datang dari mengira setiap tingkat **selalu** bercabang penuh
+        menjadi dua, sehingga `2^5 = 32`; padahal cabangnya berhenti di kasus dasar, dan
+        tingkat-tingkat atasnya tidak lagi bercabang penuh.
+      en: |
+        **Approach.** Add up the calls level by level, starting from the very top.
+
+        - `fib(5)` — 1 call.
+        - It calls `fib(4)` and `fib(3)` — 2 calls.
+        - `fib(4)` calls `fib(3)` and `fib(2)`; `fib(3)` calls `fib(2)` and `fib(1)` —
+          4 calls.
+        - The next level — 6 calls.
+        - The last level, stopping at the base cases — 2 calls.
+
+        All together 1 + 2 + 4 + 6 + 2 = **15**.
+
+        Notice that `fib(3)` is called **twice** and `fib(2)` **three times**. Every
+        appearance is a real call redoing the same thing, because the result is not
+        stored.
+
+        **Complexity.** Because every call branches into two, the number of calls grows
+        towards `O(2^n)`. For `fib(5)` the number is still small (15), but for `fib(30)`
+        it becomes 2,692,537 — and that is what makes this naive version unusable for
+        large `n`. The space is `O(n)`, because the tree's deepest point is `n`.
+
+        **Reference code.**
+
+        ```python
+        def fib(n):
+            penghitung[0] += 1
+            if n <= 1:
+                return n
+            return fib(n - 1) + fib(n - 2)
+        ```
+
+        **Common trap.** The answer 5 comes from reading the function's result
+        (`fib(5)` = 5) when the question asks for the **number of calls**, not the value
+        returned. The answer 9 is the number of calls for `fib(4)` — one level too low.
+        The answer 32 comes from assuming every level **always** branches fully into
+        two, so `2^5 = 32`; but the branches stop at the base cases, and the upper
+        levels no longer branch fully.
+
+  # --- Kuis 4: urutan cetak saat print SETELAH pemanggilan rekursif -------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi berikut hampir sama dengan yang pertama, tetapi `print`-nya dipindah ke
+        **setelah** pemanggilan rekursif. Berapa nilai yang tercetak, dan dalam urutan
+        apa?
+      en: |
+        The function below is almost the same as the first one, but its `print` is moved
+        to **after** the recursive call. Which values are printed, and in what order?
+    kode: |
+      def cetak(n):
+          if n == 0:
+              return
+          cetak(n - 1)
+          print(n)
+
+      cetak(3)
+    opsi:
+      - teks:
+          id: "1, lalu 2, lalu 3"
+          en: "1, then 2, then 3"
+        benar: true
+      - teks:
+          id: "3, lalu 2, lalu 1"
+          en: "3, then 2, then 1"
+        benar: false
+      - teks:
+          id: "1, lalu 1, lalu 1"
+          en: "1, then 1, then 1"
+        benar: false
+      - teks:
+          id: Tidak mencetak apa pun, karena pemanggilan rekursifnya selesai lebih dulu
+          en: It prints nothing, because the recursive call finishes first
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Bedanya dengan Kuis 1 hanya **letak** `print`. Di sini
+        pemanggilan rekursif terjadi lebih dulu, baru pencetakannya.
+
+        Pemanggilannya turun dulu sampai dasar: `cetak(3)` → `cetak(2)` → `cetak(1)` →
+        `cetak(0)`. `cetak(0)` langsung berhenti. Sesudah itu tumpukan pemanggilannya
+        selesai satu per satu dari yang **paling dalam**:
+
+        - `cetak(1)` selesai, mencetak `1`.
+        - `cetak(2)` selesai, mencetak `2`.
+        - `cetak(3)` selesai, mencetak `3`.
+
+        Hasilnya `1, 2, 3` — kebalikan dari Kuis 1.
+
+        **Kompleksitas.** Sama seperti Kuis 1: `n` pemanggilan, `O(n)` waktu dan `O(n)`
+        ruang. Yang berubah hanya urutan pekerjaannya, bukan jumlahnya.
+
+        **Kode referensi.**
+
+        ```python
+        def cetak(n):
+            if n == 0:
+                return
+            cetak(n - 1)      # pemanggilan lebih dulu
+            print(n)          # baru mencetak
+        ```
+
+        **Jebakan umum.** Jawaban `3, 2, 1` datang dari mengira letak `print` tidak
+        mengubah apa pun — padahal justru itulah satu-satunya yang diubah di sini, dan
+        ia membalik seluruh urutannya. Jawaban `1, 1, 1` mengira yang tercetak adalah
+        nilai dasar berulang kali. Jawaban "tidak mencetak apa pun" mengira
+        pemanggilan yang lebih dalam membatalkan pencetakan di atasnya, padahal setiap
+        pemanggilan tetap melanjutkan pekerjaannya sendiri setelah pemanggilan di
+        bawahnya selesai.
+      en: |
+        **Approach.** The only difference from Kuis 1 is the **position** of the
+        `print`. Here the recursive call happens first, and only then the printing.
+
+        The calls descend to the bottom first: `cetak(3)` → `cetak(2)` → `cetak(1)` →
+        `cetak(0)`. `cetak(0)` stops at once. After that the call stack finishes one by
+        one from the **innermost**:
+
+        - `cetak(1)` finishes, printing `1`.
+        - `cetak(2)` finishes, printing `2`.
+        - `cetak(3)` finishes, printing `3`.
+
+        The result is `1, 2, 3` — the reverse of Kuis 1.
+
+        **Complexity.** Just like Kuis 1: `n` calls, `O(n)` time and `O(n)` space. Only
+        the order of the work changed, not the amount.
+
+        **Reference code.**
+
+        ```python
+        def cetak(n):
+            if n == 0:
+                return
+            cetak(n - 1)      # the call first
+            print(n)          # then the printing
+        ```
+
+        **Common trap.** The answer `3, 2, 1` comes from assuming the position of the
+        `print` changes nothing — but that is the only thing changed here, and it
+        reverses the entire order. The answer `1, 1, 1` assumes the base value is printed
+        repeatedly. The answer "it prints nothing" assumes a deeper call cancels the
+        printing above it, but every call still carries on with its own work after the
+        call below it finishes.
+
+  # --- Kuis 5: kenapa fib naif lambat, dan apa yang menyelamatkannya -----------
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah program menghitung `fib(30)` dengan fungsi rekursif naif. Ia memanggil
+        fungsinya **2.692.537 kali** dan terasa lambat. Setelah catatan hasil ditambahkan,
+        program yang sama hanya memanggil fungsinya **59 kali**. Apa yang sebenarnya
+        dilakukan catatan itu, dan kenapa jumlahnya bisa turun sejauh itu?
+      en: |
+        A program computes `fib(30)` with a naive recursive function. It calls the
+        function **2,692,537 times** and feels slow. After a record of results is added,
+        the same program calls the function only **59 times**. What does that record
+        actually do, and why can the count drop that far?
+    opsi:
+      - teks:
+          id: Catatan itu menyimpan hasil setiap argumen yang sudah dihitung, sehingga pemanggilan berikutnya dengan argumen yang sama cukup membacanya — pekerjaan yang tadinya diulang-ulang kini dikerjakan sekali
+          en: The record stores the result of every argument already computed, so a later call with the same argument only reads it — work that used to be repeated is now done once
+        benar: true
+      - teks:
+          id: Catatan itu membuat fungsinya berhenti lebih awal, sehingga kasus dasarnya tercapai jauh sebelum `n` mencapai 0 atau 1
+          en: The record makes the function stop earlier, so its base case is reached long before `n` gets down to 0 or 1
+        benar: false
+      - teks:
+          id: Catatan itu mengubah fungsi rekursif menjadi perulangan biasa, sehingga tidak ada lagi pemanggilan fungsi yang tercatat
+          en: The record turns the recursive function into an ordinary loop, so there are no longer any recorded function calls
+        benar: false
+      - teks:
+          id: Catatan itu menyimpan seluruh pohon rekursi di memori, sehingga cabang-cabangnya bisa dijalankan bersamaan dan tidak lagi menunggu satu sama lain
+          en: The record stores the whole recursion tree in memory, so its branches can run at the same time and no longer wait for each other
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Bandingkan kedua pohon rekursinya. Pada versi naif, `fib(3)`
+        dihitung berkali-kali karena tidak ada yang mengingat hasilnya. Jumlah
+        pemanggilannya tumbuh mendekati `2^n`, sehingga `fib(30)` menuntut jutaan
+        pemanggilan.
+
+        **Memoisasi** mengubah hal itu dengan satu langkah: sebelum menghitung, periksa
+        dulu catatannya. Kalau hasil untuk argumen itu sudah ada, langsung kembalikan
+        tanpa memanggil lagi. Dengan begitu setiap nilai dari `fib(0)` sampai `fib(30)`
+        dihitung **tepat sekali**, dan sisanya hanya pembacaan. Jumlah pemanggilan pun
+        turun dari 2.692.537 menjadi 59.
+
+        **Kompleksitas.** Inilah inti perubahannya: waktu turun dari `O(2^n)` menjadi
+        `O(n)`, karena setiap nilai dikerjakan sekali. Harganya adalah ruang `O(n)` —
+        catatan itu menyimpan satu tempat untuk setiap nilai. Memoisasi selalu menukar
+        waktu dengan memori, dan itu keputusan sadar, bukan efek samping.
+
+        **Kode referensi.**
+
+        ```python
+        def fib_cepat(n, catatan):
+            if n in catatan:
+                return catatan[n]
+            if n <= 1:
+                catatan[n] = n
+                return n
+            catatan[n] = fib_cepat(n - 1, catatan) + fib_cepat(n - 2, catatan)
+            return catatan[n]
+        ```
+
+        **Jebakan umum.** Jawaban "membuat fungsinya berhenti lebih awal" salah:
+        kedalaman rekursinya tetap sama, dan kasus dasarnya tetap `n <= 1` — yang
+        berubah adalah berapa kali cabang yang sama dikerjakan. Jawaban "mengubahnya
+        menjadi perulangan" salah: fungsinya tetap rekursif, dan pemanggilan rekursifnya
+        masih ada. Jawaban "menjalankan cabangnya bersamaan" salah: catatan itu menghemat
+        dengan **tidak mengulang** pekerjaan, bukan dengan menjalankannya serentak —
+        programnya tetap berjalan satu langkah pada satu waktu.
+      en: |
+        **Approach.** Compare the two recursion trees. In the naive version, `fib(3)` is
+        computed over and over because nothing remembers the result. The number of calls
+        grows towards `2^n`, so `fib(30)` demands millions of calls.
+
+        **Memoisation** changes that with a single step: before computing, check the
+        record first. If the result for that argument is already there, return it at once
+        without calling again. That way every value from `fib(0)` to `fib(30)` is
+        computed **exactly once**, and the rest are mere reads. The call count drops from
+        2,692,537 to 59.
+
+        **Complexity.** This is the heart of the change: the time drops from `O(2^n)` to
+        `O(n)`, because every value is done once. The price is `O(n)` space — the record
+        holds one slot for every value. Memoisation always trades time for memory, and
+        that is a deliberate decision, not a side effect.
+
+        **Reference code.**
+
+        ```python
+        def fib_cepat(n, catatan):
+            if n in catatan:
+                return catatan[n]
+            if n <= 1:
+                catatan[n] = n
+                return n
+            catatan[n] = fib_cepat(n - 1, catatan) + fib_cepat(n - 2, catatan)
+            return catatan[n]
+        ```
+
+        **Common trap.** The answer "it makes the function stop earlier" is wrong: the
+        recursion depth stays the same, and the base case is still `n <= 1` — what
+        changed is how many times the same branch is redone. The answer "it turns it into
+        a loop" is wrong: the function is still recursive, and its recursive calls are
+        still there. The answer "it runs the branches at the same time" is wrong: the
+        record saves work by **not repeating** it, not by running it concurrently — the
+        program still runs one step at a time.
+
+  # --- Soal Kode -----------------------------------------------------------------
+  #
+  # Bentuknya menyimpang dari `docs/design-tree.md` ("implementasi struktur data dari
+  # nol"), karena Rekursi bukan struktur data. Yang diminta: menulis dua fungsi
+  # rekursif dari nol, masing-masing mengembalikan pasangan (nilai, jumlah pemanggilan),
+  # sehingga kedalaman rekursi dan pertumbuhannya terasa sebagai angka yang bisa
+  # diperiksa test case. Keputusannya di ADR-0025.
+  - tipe: soal-kode
+    skenario:
+      id: |
+        Tulis dari nol **dua fungsi rekursif**, masing-masing mengembalikan **pasangan**
+        `(nilai, jumlah_pemanggilan)`. Pasangan itu ditulis sebagai daftar dua elemen:
+        `[nilai, jumlah_pemanggilan]`.
+
+        **Fungsi pertama — `faktorial(n)`.** Mengembalikan faktorial `n` (`1` untuk
+        `n <= 1`). Kasus dasarnya `n <= 1`. Hitung **setiap** pemanggilan, termasuk
+        pemanggilan yang berhenti di kasus dasar.
+
+        **Fungsi kedua — `jumlah_digit(n)`.** Mengembalikan banyak digit `n` dalam
+        bilangan desimal. Kasus dasarnya `n < 10` — sebuah angka satu digit. Hitung juga
+        **setiap** pemanggilannya, termasuk yang berhenti di kasus dasar. Contohnya
+        `jumlah_digit(507)` mengembalikan `3`, karena 507 punya tiga digit.
+
+        **Fungsi `proses(n)`** memanggil keduanya dengan `n` yang sama, lalu
+        mengembalikan satu daftar berisi empat angka:
+
+        `[nilai_faktorial, jumlah_pemanggilan_faktorial, nilai_jumlah_digit, jumlah_pemanggilan_jumlah_digit]`
+
+        Kedua fungsi itu wajib **rekursif** — memanggil dirinya sendiri. Jangan memakai
+        perulangan (`for`/`while`) untuk menghitung faktorial maupun banyak digit, dan
+        jangan memakai `math.factorial` atau mengubah angka menjadi teks (`str`) untuk
+        menghitung digitnya. Tulis rekursinya sendiri, supaya kamu merasakan kasus dasar
+        dan kedalamannya.
+
+        Perhatikan bahwa `faktorial(n)` dipanggil **n kali** untuk `n >= 1`, sedangkan
+        `jumlah_digit(n)` dipanggil sebanyak **banyak digitnya**. Keduanya naik, tetapi
+        dengan laju yang sangat berbeda — dan itulah yang diperlihatkan angka pada
+        hasilnya.
+      en: |
+        Write from scratch **two recursive functions**, each returning a **pair**
+        `(value, call_count)`. Write that pair as a two-element list:
+        `[value, call_count]`.
+
+        **First function — `faktorial(n)`.** Returns the factorial of `n` (`1` for
+        `n <= 1`). Its base case is `n <= 1`. Count **every** call, including the call
+        that stops at the base case.
+
+        **Second function — `jumlah_digit(n)`.** Returns how many digits `n` has in
+        decimal. Its base case is `n < 10` — a single-digit number. Count **every** call
+        as well, including the one that stops at the base case. For example
+        `jumlah_digit(507)` returns `3`, because 507 has three digits.
+
+        **The `proses(n)` function** calls both with the same `n`, then returns a single
+        list of four numbers:
+
+        `[factorial_value, factorial_call_count, digit_count, digit_call_count]`
+
+        Both functions must be **recursive** — calling themselves. Do not use a loop
+        (`for`/`while`) to compute the factorial or the digit count, and do not use
+        `math.factorial` or turn the number into text (`str`) to count its digits. Write
+        the recursion yourself, so that you feel the base case and the depth.
+
+        Notice that `faktorial(n)` is called **n times** for `n >= 1`, while
+        `jumlah_digit(n)` is called as many times as it has **digits**. Both grow, but at
+        very different rates — and that is what the numbers in the result show.
+    fungsi: proses
+    test_case:
+      # Kasus 1 — nol: kedua fungsi berhenti langsung di kasus dasarnya.
+      - argumen:
+          - 0
+        diharapkan: [1, 1, 1, 1]
+      # Kasus 2 — satu: faktorial(1) dan jumlah_digit(1) sama-sama satu pemanggilan.
+      - argumen:
+          - 1
+        diharapkan: [1, 1, 1, 1]
+      # Kasus 3 — empat: faktorial dipanggil 4 kali, jumlah_digit cukup 1 kali
+      # (4 sudah satu digit).
+      - argumen:
+          - 4
+        diharapkan: [24, 4, 1, 1]
+      # Kasus 4 — sepuluh: faktorial 10 kali, jumlah_digit 2 kali (dua digit).
+      - argumen:
+          - 10
+        diharapkan: [3628800, 10, 2, 2]
+      # Kasus 5 — lima belas: faktorial tetap tumbuh mengikuti n (15 kali),
+      # jumlah_digit tetap 2 kali karena 15 masih dua digit. Di sinilah bedanya
+      # terlihat sebagai angka.
+      - argumen:
+          - 15
+        diharapkan: [1307674368000, 15, 2, 2]
+    solusi_referensi: |
+      def faktorial(n):
+          if n <= 1:
+              return [1, 1]
+          nilai, jumlah = faktorial(n - 1)
+          return [n * nilai, jumlah + 1]
+
+
+      def jumlah_digit(n):
+          if n < 10:
+              return [1, 1]
+          banyak, jumlah = jumlah_digit(n // 10)
+          return [banyak + 1, jumlah + 1]
+
+
+      def proses(n):
+          nilai_f, jumlah_f = faktorial(n)
+          nilai_d, jumlah_d = jumlah_digit(n)
+          return [nilai_f, jumlah_f, nilai_d, jumlah_d]
