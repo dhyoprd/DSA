@@ -1,0 +1,1690 @@
+# Topik 7 — Sorting.
+#
+# Topik ketujuh di Jalur, `prasyarat: [2, 6]` (Array & String, Rekursi). Materi di
+# sini memakai dua hal dari Topik sebelumnya: gagasan "menukar isi dua kotak di dalam
+# sebuah larik" dari Array & String (#17), dan gagasan "fungsi yang memanggil dirinya
+# sendiri dengan persoalan yang lebih kecil" dari Rekursi (#20). Pengurutan gabung
+# adalah bagi-dan-taklukkan, dan itulah yang membuat Rekursi jadi prasyarat.
+#
+# **ADA penyimpangan yang dicatat.** `docs/design-tree.md` menetapkan Soal Kode
+# berbentuk "implementasi struktur data dari nol". Sorting **bukan** struktur data,
+# jadi bentuk itu tidak bisa dipakai apa adanya di sini — persis situasi Big-O (#16,
+# ADR-0023) dan Rekursi (#20, ADR-0025). Soal Kode Topik ini menjadi **menulis dua
+# algoritma pengurutan dari nol dan mengembalikan jumlah perbandingannya**, supaya
+# beda O(n²) dan O(n log n) terasa sebagai angka yang bisa diperiksa test case. Field
+# `kompleksitas` juga diisi **algoritma yang dianalisis**, bukan struktur data — sama
+# seperti #16 dan #20. Kedua penyimpangan itu diputuskan pemilik dan dicatat di
+# `docs/adr/0026-bentuk-soal-kode-sorting.md`.
+#
+# **Pembahasan hanya untuk kelima Kuis.** Soal Kode di sini tidak punya Pembahasan,
+# karena skema di issue #1 — dan `frontend/src/lib/konten/tipe.ts` — tidak punya field
+# `penjelasan` pada `SoalKode`. Pemilik sudah memutuskan (2026-10-06) bahwa cukup 5
+# Pembahasan per Topik, sama seperti #10, #16, #17, #18, #19, dan #20.
+#
+# Semua Soal dan Pembahasan di sini ditulis original, sesuai ADR-0005. Tidak ada teks
+# LeetCode yang disalin maupun diterjemahkan.
+#
+# **Setiap angka di berkas ini sudah dijalankan, bukan dibaca.** Yang diperiksa dengan
+# menjalankan Python 3.14: jumlah perbandingan gelembung polos selalu n(n-1)/2
+# (n=16 → 120, n=8 → 28, n=5 → 10); jejak gelembung [5, 2, 9, 1] per putaran; jumlah
+# perbandingan gabung pada data yang sama (n=16 → 32, n=8 → 12); pohon penggabungan
+# [8, 3, 5, 1, 9, 2, 7, 4] = 4 + 6 + 7 = **17 perbandingan** (dihitung ulang tingkat
+# demi tingkat); dan kelima test case Soal Kode. **Gelembung di sini sengaja POLOS**
+# — tanpa henti-awal — supaya jumlah perbandingannya tidak bergantung pada isi data
+# dan bisa diperiksa test case. Gelembung berhenti-awal disebut di bagian Jebakan,
+# beserta akibatnya: pada data yang sudah terurut ia justru lebih hemat daripada
+# pengurutan gabung, dan itu sebabnya bentuk itu tidak dipakai di Soal Kode.
+#
+# **Kuis 4 sempat memuat klaim yang salah dan sudah diperbaiki.** Pembahasannya
+# mula-mula menyebut gabung pada 10.000 elemen memakai "10.000 × 14 = 140.000"
+# perbandingan. Itu batas atas teoretis, bukan angka sesungguhnya: dijalankan, gabung
+# pada 10.000 elemen yang sudah terurut memakai **64.608** perbandingan, sedangkan
+# sisip memakai **10.019** dan gelembung polos **49.995.000**. Angka-angka itulah yang
+# sekarang tertulis. Pelajaran yang sama dengan #20: batas atas rumus bukan hasil
+# pengukuran, dan keduanya tidak boleh dipertukarkan.
+#
+# **Tiga klaim lain juga diperbaiki setelah dijalankan.** (a) Materi mula-mula
+# menyajikan `n log n = 64` untuk 16 elemen sebagai jumlah perbandingan, padahal Kuis 3
+# justru menandai 64 sebagai pengecoh dan menyatakan jumlah sesungguhnya 32 — sekarang
+# Materi menyebutnya sebagai laju pertumbuhan. (b) Jebakan Kuis 5 menjelaskan arah
+# perpindahan yang terbalik (siswa bernilai 70 dikatakan pindah ke belakang 80, padahal
+# pada urutan menaik 70 justru di depan) — diganti dengan contoh yang benar: yang
+# berpindah ke belakang adalah siswa bernilai 90 yang tadinya di depan. (c) Kalimat
+# penutup Kuis 4 menyebut gabung "tidak terpengaruh" susunan data, bertabrakan dengan
+# angkanya sendiri (64.608 lawan 64.620) — diselaraskan menjadi "hampir tidak
+# terpengaruh". Rinciannya di ADR-0026.
+#
+# `nomor`, `slug`, `judul`, dan `prasyarat` harus sama dengan content/jalur.yaml —
+# validator menolak build kalau berbeda.
+
+nomor: 7
+slug: sorting
+judul:
+  id: Sorting
+  en: Sorting
+prasyarat: [2, 6]
+
+# Sumber terstruktur untuk ekspor CSV/Anki (ticket #14). Karena sorting bukan struktur
+# data, isinya **algoritma yang dianalisis** — sama seperti Big-O (#16) dan Rekursi
+# (#20), sesuai ADR-0023 dan ADR-0025. Nama field tetap `struktur`; yang berbeda
+# isinya. Mengganti nama field itu akan menyentuh `tipe.ts`, validator, penyusun
+# kartu, dan uji-ujinya demi satu Topik — dan aturan repo ini adalah abstraksi diubah
+# saat ada kebutuhan kedua yang nyata.
+#
+# `waktu` dan `ruang` memakai notasi O(...) apa adanya — notasi itu sama di kedua
+# bahasa, jadi menerjemahkannya hanya menghasilkan dua salinan yang bisa menyimpang.
+#
+# **Nilai yang memuat koma WAJIB dikutip.** Dalam pemetaan alir YAML (`{ ... }`), koma
+# memisahkan entri — jadi `{ id: A, B, en: ... }` menghasilkan `id: "A"` plus kunci
+# liar `B: null`, dan kata itu hilang dari kartu tanpa error apa pun. Gerbang konten
+# tidak menangkapnya (jebakan 80). Kutipan di bawah bukan hiasan.
+#
+# **Nilai di sini wajib sama dengan tabel di bagian "Tabel kompleksitas" di Materi.**
+# ADR-0019 mencatat bahwa keduanya memang bisa menyimpang dan tidak ada gerbang yang
+# membandingkannya — yang menjaganya adalah disiplin saat menyunting, dan skrip
+# pemeriksa mandiri Topik ini.
+kompleksitas:
+  - struktur:
+      id: Pengurutan gelembung
+      en: Bubble sort
+    ruang: O(1)
+    operasi:
+      - nama: { id: Bandingkan satu pasangan bersebelahan, en: Compare one adjacent pair }
+        waktu: O(1)
+      - nama: { id: Urutkan n elemen, en: Sort n elements }
+        waktu: O(n²)
+
+  - struktur:
+      id: Pengurutan sisip
+      en: Insertion sort
+    ruang: O(1)
+    operasi:
+      - nama: { id: Bandingkan satu elemen dengan kuncinya, en: Compare one element with the key }
+        waktu: O(1)
+      - nama: { id: Urutkan n elemen, en: Sort n elements }
+        waktu: O(n²)
+      - nama: { id: Urutkan data yang sudah terurut, en: Sort data that is already sorted }
+        waktu: O(n)
+
+  - struktur:
+      id: Pengurutan gabung
+      en: Merge sort
+    ruang: O(n)
+    operasi:
+      - nama: { id: Gabungkan dua bagian terurut, en: Merge two sorted parts }
+        waktu: O(n)
+      - nama: { id: Urutkan n elemen, en: Sort n elements }
+        waktu: O(n log n)
+
+# Istilah yang layak dihafal. `istilah` adalah pasangan Indonesia–English; `definisi`
+# menjelaskannya di kedua bahasa. Setiap pasangan di bawah ini berbeda antara kedua
+# bahasa, jadi setiap istilah menghasilkan dua kartu: definisinya, dan pasangannya.
+#
+# **Setiap kartu di sini mengajarkan sesuatu yang memang ada di Materi.** Itu kelas
+# cacat yang ditemukan di #17 dan #18 (kartu yang mengajarkan hal yang nol kali disebut
+# di Materi). Kesembilan istilah di bawah muncul di Materi, bukan hanya di sini.
+#
+# **Tidak ada istilah yang sudah dipakai Topik lain.** Front kartu definisi berbentuk
+# "Definisi — <istilah>", dan Anki menolak catatan dengan front yang sama. Karena itu
+# "Bagi dan taklukkan" (sudah dipakai Rekursi) dan "Pencarian biner" (sudah dipakai
+# Big-O) tidak didaftarkan lagi di sini.
+istilah:
+  - istilah: { id: Pengurutan, en: Sorting }
+    definisi:
+      id: Menyusun ulang isi sebuah kumpulan data supaya urut menurut aturan tertentu — biasanya dari kecil ke besar. Urutannya bisa naik atau turun, dan yang mengurutkan adalah aturan pembandingnya.
+      en: Rearranging the contents of a collection so it follows a certain order — usually from smallest to largest. The order can be ascending or descending, and what decides it is the comparison rule.
+  - istilah: { id: Urutan menaik, en: Ascending order }
+    definisi:
+      id: Urutan dari yang terkecil ke yang terbesar. Setiap elemen tidak lebih besar daripada elemen sesudahnya, jadi `[1, 2, 3]` menaik sedangkan `[3, 2, 1]` tidak.
+      en: Order from smallest to largest. Each element is no larger than the one after it, so `[1, 2, 3]` is ascending while `[3, 2, 1]` is not.
+  - istilah: { id: Urutan menurun, en: Descending order }
+    definisi:
+      id: Urutan dari yang terbesar ke yang terkecil. Setiap elemen tidak lebih kecil daripada elemen sesudahnya, jadi `[3, 2, 1]` menurun sedangkan `[1, 2, 3]` tidak.
+      en: Order from largest to smallest. Each element is no smaller than the one after it, so `[3, 2, 1]` is descending while `[1, 2, 3]` is not.
+  - istilah: { id: Perbandingan, en: Comparison }
+    definisi:
+      id: Tindakan memeriksa mana di antara dua nilai yang lebih kecil atau lebih besar. Hampir semua algoritma pengurutan bekerja dengan membandingkan dua nilai, dan banyaknya perbandingan itulah yang menentukan seberapa cepat algoritmanya.
+      en: The act of checking which of two values is smaller or larger. Almost every sorting algorithm works by comparing two values, and the number of comparisons decides how fast the algorithm is.
+  - istilah: { id: Pertukaran, en: Swap }
+    definisi:
+      id: Menukar posisi dua elemen di dalam sebuah larik. Di Python, `data[i], data[j] = data[j], data[i]` menukar keduanya sekaligus tanpa memerlukan variabel bantu.
+      en: Exchanging the positions of two elements inside an array. In Python, `data[i], data[j] = data[j], data[i]` swaps both at once without needing a helper variable.
+  - istilah: { id: Penggabungan, en: Merge }
+    definisi:
+      id: Menyatukan dua bagian yang masing-masing sudah terurut menjadi satu bagian terurut — bandingkan elemen paling depan dari kedua bagian, ambil yang lebih kecil, lalu ulangi.
+      en: Combining two parts that are each already sorted into a single sorted part — compare the front element of both parts, take the smaller one, then repeat.
+  - istilah: { id: Pengurutan gelembung, en: Bubble sort }
+    definisi:
+      id: Pengurutan yang berulang kali membandingkan dua elemen bersebelahan dan menukarnya kalau urutannya salah. Elemen terbesar menggelembung ke ujung kanan pada setiap putaran.
+      en: A sort that repeatedly compares two adjacent elements and swaps them when they are out of order. The largest element bubbles to the right end on every pass.
+  - istilah: { id: Pengurutan stabil, en: Stable sort }
+    definisi:
+      id: Pengurutan yang tidak mengubah urutan asli dua elemen yang nilainya sama. Kalau dua kartu bernilai sama sudah berurutan sebelum diurutkan, keduanya tetap berurutan setelahnya.
+      en: A sort that does not change the original order of two elements with the same value. If two cards of equal value were in a certain order before sorting, they stay in that order afterwards.
+  - istilah: { id: Pengurutan di tempat, en: In-place sort }
+    definisi:
+      id: Pengurutan yang mengubah larik aslinya sendiri dan hanya memakai sedikit ruang tambahan — tidak membuat larik baru sebesar datanya. Ruang tambahannya tetap, tidak tumbuh mengikuti banyaknya data.
+      en: A sort that rearranges the original array itself and uses only a little extra space — it does not build a new array as large as the data. Its extra space is fixed and does not grow with the amount of data.
+
+materi:
+  id: |
+    ## Kenapa pengurutan penting
+
+    **Pengurutan** (*sorting*) adalah menyusun ulang isi sebuah kumpulan data supaya
+    urut menurut aturan tertentu. Aturannya bisa apa saja — angka dari kecil ke besar,
+    nama dari A ke Z, tanggal dari yang paling lama. Yang paling sering dipakai adalah
+    **urutan menaik** (*ascending order*), dari yang terkecil ke yang terbesar, dan
+    kebalikannya **urutan menurun** (*descending order*).
+
+    Pertanyaannya: kenapa repot-repot mengurutkan? Karena banyak hal menjadi jauh
+    lebih mudah setelah datanya urut.
+
+    - **Mencari jadi cepat.** Di Topik 1 kamu melihat pencarian biner hanya bekerja
+      pada data yang sudah terurut — dan ia jauh lebih cepat daripada memeriksa satu
+      per satu.
+    - **Data jadi enak dibaca.** Daftar nilai dari yang tertinggi, daftar nama dari A
+      ke Z, riwayat dari yang terbaru.
+    - **Menemukan yang kembar jadi mudah.** Setelah urut, nilai yang sama pasti
+      bersebelahan.
+    - **Menggabungkan dua daftar jadi mudah.** Kalau keduanya sudah urut, kamu bisa
+      menyatukannya dalam satu kali jalan — itulah yang kamu lihat di bagian
+      Penggabungan nanti.
+
+    Di Topik ini kamu akan menulis tiga algoritma pengurutan dari nol, dan membandingkan
+    mana yang lebih cepat — bukan dengan stopwatch, melainkan dengan **menghitung
+    perbandingannya**.
+
+    ## Membandingkan dua cara mengurutkan
+
+    Bagaimana kita tahu satu algoritma pengurutan lebih cepat daripada yang lain?
+    Menjalankannya lalu melihat jam dinding tidak bisa diandalkan: hasilnya berbeda di
+    setiap komputer, dan berbeda setiap kali dijalankan. Cara yang dipakai Topik 1
+    adalah menghitung **banyaknya pekerjaan**, bukan lamanya.
+
+    Untuk pengurutan, pekerjaan yang paling sering dihitung adalah **perbandingan**
+    (*comparison*) — berapa kali algoritmanya memeriksa "mana yang lebih kecil di
+    antara kedua nilai ini?". Alasannya: hampir semua algoritma pengurutan bekerja
+    dengan membandingkan dua nilai, jadi jumlah perbandingan menggambarkan kerjanya
+    dengan baik.
+
+    Perbandingan itu sendiri adalah pekerjaan **tetap**: membandingkan `5` dengan `9`
+    memakan satu langkah, tidak peduli datanya sebesar apa. Jadi biayanya `O(1)` — dan
+    yang membuat sebuah pengurutan menjadi mahal adalah **banyaknya** perbandingan,
+    bukan satu perbandingan.
+
+    Ukuran "banyaknya perbandingan" inilah yang akan kamu pakai terus di Topik ini,
+    dan itulah yang diminta Soal Kode di akhir.
+
+    ## Pengurutan gelembung
+
+    **Pengurutan gelembung** (*bubble sort*) adalah yang paling mudah dibayangkan.
+    Ia berjalan berulang kali dari kiri ke kanan, membandingkan **dua elemen
+    bersebelahan**, dan menukarnya kalau urutannya salah.
+
+    ```python
+    def urut_gelembung(data):
+        n = len(data)
+        for i in range(n):
+            for j in range(n - 1 - i):
+                if data[j] > data[j + 1]:                  # bandingkan
+                    data[j], data[j + 1] = data[j + 1], data[j]   # tukar
+    ```
+
+    Perhatikan dua hal pada perulangan dalamnya. Panjangnya `n - 1 - i`, bukan `n - 1`:
+    setiap putaran selesai, satu elemen terbesar sudah pasti berada di ujung kanan, jadi
+    bagian itu tidak perlu diperiksa lagi. Dan perulangan luarnya berjalan `n` kali.
+
+    Mari lacak `[5, 2, 9, 1]` pada putaran pertama:
+
+    ```
+    [5, 2, 9, 1]   bandingkan 5 dan 2  ->  salah urutan, tukar
+    [2, 5, 9, 1]   bandingkan 5 dan 9  ->  sudah benar
+    [2, 5, 9, 1]   bandingkan 9 dan 1  ->  salah urutan, tukar
+    [2, 5, 1, 9]   putaran 1 selesai: 9 sudah di tempat terakhirnya
+    ```
+
+    Perhatikan bahwa `9` — yang terbesar — sudah sampai di ujung kanan setelah satu
+    putaran. Itulah asal nama "gelembung": elemen terbesar menggelembung ke ujung.
+
+    Untuk `[5, 2, 9, 1]` yang panjangnya 4, perbandingannya: putaran pertama 3 kali,
+    kedua 2 kali, ketiga 1 kali, keempat 0 kali — seluruhnya **6 perbandingan**. Secara
+    umum, larik berisi `n` elemen memerlukan tepat
+
+    `(n - 1) + (n - 2) + … + 1 = n × (n - 1) / 2` perbandingan.
+
+    Bentuk itu adalah `O(n²)` — dan untuk 16 elemen, jumlahnya **120**.
+
+    ## Pengurutan sisip
+
+    **Pengurutan sisip** (*insertion sort*) bekerja seperti orang menyusun kartu di
+    tangannya. Kamu ambil satu kartu baru, lalu memindahkannya ke kiri melewati kartu
+    yang lebih besar, sampai menemukan tempatnya.
+
+    ```python
+    def urut_sisip(data):
+        for i in range(1, len(data)):
+            kunci = data[i]
+            j = i - 1
+            while j >= 0 and data[j] > kunci:
+                data[j + 1] = data[j]      # geser ke kanan
+                j -= 1
+            data[j + 1] = kunci            # taruh di tempatnya
+    ```
+
+    Bagian kiri (`data[0]` sampai `data[i - 1]`) selalu sudah terurut. Yang dilakukan
+    setiap langkah adalah **menyisipkan** `data[i]` ke bagian kiri itu, dengan menggeser
+    elemen yang lebih besar satu langkah ke kanan.
+
+    Pengurutan sisip punya satu sifat istimewa: **kalau datanya sudah hampir urut, ia
+    sangat cepat.** Pada data yang sudah terurut sempurna, setiap kunci langsung
+    menemukan tempatnya tanpa menggeser apa pun — hanya `n - 1` perbandingan, yang
+    berarti `O(n)`. Untuk 16 elemen yang sudah urut, itu **15** perbandingan, bukan 120.
+    Sayangnya pada data yang benar-benar terbalik ia kembali menjadi `O(n²)`.
+
+    ## Pengurutan gabung
+
+    Sekarang algoritma yang lebih pintar. **Pengurutan gabung** (*merge sort*) memakai
+    pola **bagi dan taklukkan** yang kamu pelajari di Topik Rekursi: pecah persoalan
+    menjadi bagian yang lebih kecil, selesaikan tiap bagian dengan cara yang sama, lalu
+    gabungkan hasilnya.
+
+    Idenya sederhana sampai terasa curang:
+
+    1. Kalau lariknya berisi 0 atau 1 elemen, ia **sudah terurut** — tidak ada yang
+       perlu dikerjakan.
+    2. Kalau lebih, bagi dua lariknya menjadi kiri dan kanan.
+    3. Urutkan kiri, dan urutkan kanan — dengan cara yang sama, yaitu rekursi.
+    4. Gabungkan dua bagian yang sudah terurut itu menjadi satu.
+
+    ```python
+    def urut_gabung(data):
+        if len(data) <= 1:                  # kasus dasar
+            return data
+        tengah = len(data) // 2
+        kiri = urut_gabung(data[:tengah])   # urutkan kiri
+        kanan = urut_gabung(data[tengah:])  # urutkan kanan
+        return gabung(kiri, kanan)          # satukan
+    ```
+
+    Kalau kamu perhatikan, ini persis pola Rekursi: ada kasus dasar (`len <= 1`), ada
+    langkah rekursif yang memperkecil persoalan (membelah dua), dan ada langkah
+    menggabungkan hasilnya. Itu sebabnya Rekursi jadi prasyarat Topik ini.
+
+    Yang membuatnya cepat adalah **langkah 4**: menggabungkan dua bagian yang sudah
+    terurut jauh lebih murah daripada mengurutkan dari awal. Bagian berikutnya
+    menjelaskan kenapa.
+
+    ## Langkah menggabungkan
+
+    **Penggabungan** (*merge*) adalah menyatukan dua bagian yang masing-masing sudah
+    terurut menjadi satu bagian terurut. Caranya seperti menggabungkan dua tumpukan
+    kartu yang masing-masing sudah tersusun: lihat kartu paling atas dari kedua
+    tumpukan, ambil yang lebih kecil, lalu ulangi.
+
+    ```python
+    def gabung(kiri, kanan):
+        hasil = []
+        i = 0
+        j = 0
+        while i < len(kiri) and j < len(kanan):
+            if kiri[i] <= kanan[j]:      # ambil dari kiri kalau lebih kecil
+                hasil.append(kiri[i])    # atau sama — supaya stabil
+                i += 1
+            else:
+                hasil.append(kanan[j])
+                j += 1
+        hasil.extend(kiri[i:])           # sisa kiri, tanpa banding lagi
+        hasil.extend(kanan[j:])          # sisa kanan, tanpa banding lagi
+        return hasil
+    ```
+
+    Perhatikan: `<=` bukan `<`. Kalau nilainya sama, yang diambil adalah dari kiri.
+    Aturan kecil itu yang membuat pengurutan gabung menjadi **pengurutan stabil**
+    (*stable sort*) — pengurutan yang tidak mengubah urutan asli dua elemen yang
+    nilainya sama.
+
+    Mari gabungkan `[1, 4, 7]` dengan `[2, 3, 9]`:
+
+    ```
+    kiri: [1, 4, 7]     kanan: [2, 3, 9]
+    bandingkan 1 vs 2  ->  ambil 1   (kiri)     hasil: [1]
+    bandingkan 4 vs 2  ->  ambil 2   (kanan)    hasil: [1, 2]
+    bandingkan 4 vs 3  ->  ambil 3   (kanan)    hasil: [1, 2, 3]
+    bandingkan 4 vs 9  ->  ambil 4   (kiri)     hasil: [1, 2, 3, 4]
+    bandingkan 7 vs 9  ->  ambil 7   (kiri)     hasil: [1, 2, 3, 4, 7]
+    kiri habis — sisa kanan [9] disalin tanpa banding
+    hasil akhir: [1, 2, 3, 4, 7, 9]             5 perbandingan
+    ```
+
+    Setiap perbandingan memindahkan **satu** elemen ke hasil. Karena ada 6 elemen, kerja
+    menggabungkannya paling banyak 6 langkah — jadi menggabungkan bagian berukuran `n`
+    memakan waktu `O(n)`, bukan `O(n²)`.
+
+    ## O(n²) lawan O(n log n)
+
+    Sekarang bagian yang membuat semuanya masuk akal. Kenapa pengurutan gabung jauh
+    lebih cepat untuk data yang besar?
+
+    Lihat pohon pembagiannya untuk `[8, 3, 5, 1, 9, 2, 7, 4]`. Setiap kotak adalah
+    satu pemanggilan `urut_gabung`, dan angka di samping panah gabungan adalah jumlah
+    perbandingannya:
+
+    ```
+                        [8, 3, 5, 1, 9, 2, 7, 4]
+                       /                          \
+              [8, 3, 5, 1]                    [9, 2, 7, 4]
+              /          \                    /          \
+          [8, 3]       [5, 1]            [9, 2]       [7, 4]
+          /    \       /    \            /    \       /    \
+        [8]    [3]   [5]    [1]        [9]    [2]   [7]    [4]
+          \    /       \    /            \    /       \    /
+          [3, 8]       [1, 5]            [2, 9]       [4, 7]
+              \          /                    \          /
+              [1, 3, 5, 8]                    [2, 4, 7, 9]
+                       \                          /
+                        [1, 2, 3, 4, 5, 7, 8, 9]
+    ```
+
+    Jumlah perbandingannya, tingkat demi tingkat:
+
+    - Tingkat paling bawah — 4 penggabungan, masing-masing 1 perbandingan: **4**
+    - Tingkat tengah — 2 penggabungan, masing-masing 3 perbandingan: **6**
+    - Tingkat paling atas — 1 penggabungan, 7 perbandingan: **7**
+
+    Seluruhnya **4 + 6 + 7 = 17 perbandingan**. Bandingkan dengan pengurutan gelembung
+    pada data yang sama: 8 elemen selalu butuh `8 × 7 / 2 = 28` perbandingan. **17 lawan
+    28** — gabung menang, dan selisihnya makin lebar begitu datanya bertambah besar.
+
+    Kenapa begitu? Ada dua sebab yang bisa dipisahkan:
+
+    - **Banyaknya tingkat adalah `log n`.** Setiap kali larik dibelah dua, tingginya
+      bertambah satu. Untuk 8 elemen ada 3 tingkat, untuk 16 ada 4, untuk 32 ada 5.
+      Angka itu tumbuh sangat lambat — 1.000 elemen hanya butuh sekitar 10 tingkat.
+    - **Setiap tingkat memakan `O(n)`.** Pada satu tingkat, seluruh elemen dijumlahkan
+      tetap `n`, dan menggabungkannya sekali jalan memakan waktu `O(n)`.
+
+    `O(n)` per tingkat, sebanyak `log n` tingkat — hasilnya **`O(n log n)`**. Itu jauh
+    lebih baik daripada `O(n²)`. Bandingkan **lajunya** untuk 16 elemen: `n² = 256`
+    sedangkan `n log n = 16 × 4 = 64`, dan jaraknya makin lebar seiring bertambahnya
+    data.
+
+    **Hati-hati membaca angka 64 itu.** Ia adalah nilai `n log n` sebagai **laju
+    pertumbuhan**, bukan jumlah perbandingan sesungguhnya. Jumlah perbandingan
+    sesungguhnya untuk 16 elemen adalah **32** — seperti pada 8 elemen tadi, di mana
+    `n log n = 24` tetapi perbandingan sesungguhnya **17**. Rumusnya menggambarkan
+    bagaimana biayanya tumbuh, bukan menggantikan hitungannya. Pembedaan itu diuji di
+    Kuis 3.
+
+    Harga yang dibayar pengurutan gabung adalah **ruang**: ia membuat larik-larik baru
+    untuk menampung hasil penggabungan, sehingga memerlukan `O(n)` ruang tambahan.
+    Pengurutan gelembung dan sisip tidak — keduanya **pengurutan di tempat**
+    (*in-place sort*), yang mengubah larik aslinya sendiri dengan ruang tambahan tetap.
+
+    ## Tabel kompleksitas
+
+    | Operasi | Waktu | Kenapa |
+    |---|---|---|
+    | Bandingkan satu pasangan bersebelahan (gelembung) | O(1) | Membandingkan dua nilai adalah pekerjaan tetap, tidak peduli datanya sebesar apa |
+    | Urutkan n elemen (gelembung) | O(n²) | Ada dua perulangan bersarang, dan perbandingannya selalu n × (n - 1) / 2 |
+    | Bandingkan satu elemen dengan kuncinya (sisip) | O(1) | Satu perbandingan antara kunci dan satu elemen di sebelah kirinya |
+    | Urutkan n elemen (sisip) | O(n²) | Pada data terbalik, setiap kunci harus digeser melewati seluruh bagian kiri |
+    | Urutkan data yang sudah terurut (sisip) | O(n) | Setiap kunci langsung menemukan tempatnya, jadi hanya n - 1 perbandingan |
+    | Gabungkan dua bagian terurut (gabung) | O(n) | Setiap perbandingan memindahkan satu elemen, jadi seluruhnya sebanyak banyaknya elemen |
+    | Urutkan n elemen (gabung) | O(n log n) | Ada log n tingkat pembelahan, dan setiap tingkat memakan O(n) |
+
+    Untuk ruangnya: gelembung dan sisip `O(1)` karena keduanya mengurutkan di tempat,
+    sedangkan gabung `O(n)` karena membuat larik baru untuk menampung hasil gabungan.
+
+    ## Jebakan yang sering terjadi
+
+    **Mengira pengurutan gelembung butuh `n` putaran penuh.** Yang benar: putaran
+    ke-`i` hanya memeriksa `n - 1 - i` pasangan, karena `i` elemen terbesar sudah
+    berada di ujung kanan. Memakai `n - 1` di perulangan dalam membuat algoritmanya
+    tetap benar, tetapi membandingkan pasangan yang sudah pasti urut.
+
+    **Menghitung perbandingan gelembung dari data yang dipakai.** Untuk gelembung
+    **polos** — yang ditulis di atas, tanpa henti-awal — jumlah perbandingannya selalu
+    `n × (n - 1) / 2`, tidak peduli isi datanya. Data yang sudah terurut tetap
+    memerlukan 120 perbandingan untuk 16 elemen. Yang berubah hanyalah banyaknya
+    **pertukaran**, bukan perbandingan.
+
+    **Gelembung berhenti-awal bisa mengalahkan pengurutan gabung.** Bentuk yang umum
+    dipakai di banyak buku menambahkan penanda: kalau satu putaran penuh tidak ada
+    pertukaran, pengurutannya berhenti lebih awal. Pada data yang sudah terurut, bentuk
+    itu hanya butuh `n - 1` perbandingan — lebih sedikit daripada pengurutan gabung.
+    Karena itu **Soal Kode di Topik ini memakai gelembung polos**: supaya jumlah
+    perbandingannya pasti, tidak bergantung pada isi data, dan bisa diperiksa test case.
+    Saat membandingkan dua algoritma, pastikan dulu keduanya dihitung dengan aturan yang
+    sama.
+
+    **Menukar dua nilai dengan cara yang salah.** Menulis `data[j] = data[j + 1]` lalu
+    `data[j + 1] = data[j]` akan menyalin nilai yang sama ke kedua tempat, karena yang
+    pertama sudah menimpa nilai aslinya. Di Python, `data[j], data[j + 1] = data[j + 1], data[j]`
+    menukar keduanya sekaligus dan aman.
+
+    **Mengira pengurutan gabung menghemat ruang karena membelah data.** Justru
+    sebaliknya: setiap penggabungan membuat larik baru, sehingga ruang tambahannya
+    `O(n)`. Pengurutan gelembung dan sisip lebih hemat ruang — tetapi jauh lebih lambat
+    untuk data besar. Tidak ada yang menang di semua hal.
+
+    **Mengira `<=` dan `<` di langkah penggabungan sama saja.** Keduanya menghasilkan
+    larik yang sama terurutnya, tetapi `<=` yang mengambil dari kiri saat nilainya sama
+    membuat pengurutan gabung menjadi **stabil** — urutan asli elemen bernilai sama
+    dipertahankan. Memakai `<` membalik urutan elemen yang nilainya sama.
+
+    **Membandingkan dua algoritma dengan data yang berbeda.** Kalau gelembung diuji
+    pada 100 elemen dan gabung pada 10, hasilnya tidak berarti apa-apa. Perbandingan
+    hanya sah kalau datanya sama — itu sebabnya Soal Kode di Topik ini mengembalikan
+    **kedua** hasil dari **satu** daftar masukan.
+
+  en: |
+    ## Why sorting matters
+
+    **Sorting** means rearranging the contents of a collection so it follows a certain
+    order. The rule can be anything — numbers from smallest to largest, names from A to
+    Z, dates from oldest to newest. The one used most often is **ascending order**,
+    from smallest to largest, and the opposite is **descending order**.
+
+    Why bother sorting at all? Because a lot of things become far easier once the data
+    is in order.
+
+    - **Searching becomes fast.** In Topic 1 you saw that binary search only works on
+      sorted data — and it is far faster than checking one by one.
+    - **Data becomes easy to read.** A list of scores from the highest, a list of names
+      from A to Z, a history from the most recent.
+    - **Finding duplicates becomes easy.** Once sorted, equal values are always next to
+      each other.
+    - **Combining two lists becomes easy.** If both are already sorted, you can join
+      them in a single pass — that is what you will see in the Merging section later.
+
+    In this Topic you will write three sorting algorithms from scratch and compare which
+    one is faster — not with a stopwatch, but by **counting comparisons**.
+
+    ## Comparing two ways to sort
+
+    How do we know one sorting algorithm is faster than another? Running it and watching
+    the wall clock is not reliable: the result differs on every computer, and differs
+    every time you run it. The way Topic 1 uses is to count the **amount of work**, not
+    the duration.
+
+    For sorting, the work counted most often is the **comparison** — how many times the
+    algorithm checks "which of these two values is smaller?". The reason: almost every
+    sorting algorithm works by comparing two values, so the number of comparisons
+    describes its work well.
+
+    A comparison itself is a **fixed** amount of work: comparing `5` with `9` takes one
+    step, no matter how large the data is. So its cost is `O(1)` — and what makes a sort
+    expensive is the **number** of comparisons, not one comparison.
+
+    This measure — the number of comparisons — is what you will use throughout this
+    Topic, and it is what the Code Problem at the end asks for.
+
+    ## Bubble sort
+
+    **Bubble sort** is the easiest to picture. It walks from left to right again and
+    again, comparing **two adjacent elements**, and swapping them when they are out of
+    order.
+
+    ```python
+    def urut_gelembung(data):
+        n = len(data)
+        for i in range(n):
+            for j in range(n - 1 - i):
+                if data[j] > data[j + 1]:                  # compare
+                    data[j], data[j + 1] = data[j + 1], data[j]   # swap
+    ```
+
+    Notice two things in the inner loop. Its length is `n - 1 - i`, not `n - 1`: once a
+    pass finishes, the largest element is already at the right end, so that part needs
+    no further checking. And the outer loop runs `n` times.
+
+    Let us trace `[5, 2, 9, 1]` on its first pass:
+
+    ```
+    [5, 2, 9, 1]   compare 5 and 2  ->  out of order, swap
+    [2, 5, 9, 1]   compare 5 and 9  ->  already correct
+    [2, 5, 9, 1]   compare 9 and 1  ->  out of order, swap
+    [2, 5, 1, 9]   pass 1 done: 9 is in its final place
+    ```
+
+    Notice that `9` — the largest — reached the right end after a single pass. That is
+    where the name "bubble" comes from: the largest element bubbles to the end.
+
+    For `[5, 2, 9, 1]`, which has length 4, the comparisons are: 3 on the first pass, 2
+    on the second, 1 on the third, 0 on the fourth — **6 comparisons** in all. In
+    general, an array of `n` elements needs exactly
+
+    `(n - 1) + (n - 2) + … + 1 = n × (n - 1) / 2` comparisons.
+
+    That shape is `O(n²)` — and for 16 elements the count is **120**.
+
+    ## Insertion sort
+
+    **Insertion sort** works the way a person arranges cards in their hand. You take one
+    new card, then move it left past the cards that are larger, until it finds its place.
+
+    ```python
+    def urut_sisip(data):
+        for i in range(1, len(data)):
+            kunci = data[i]
+            j = i - 1
+            while j >= 0 and data[j] > kunci:
+                data[j + 1] = data[j]      # shift right
+                j -= 1
+            data[j + 1] = kunci            # place it
+    ```
+
+    The left part (`data[0]` through `data[i - 1]`) is always already sorted. What each
+    step does is **insert** `data[i]` into that left part, shifting the larger elements
+    one step right.
+
+    Insertion sort has one special property: **if the data is nearly sorted, it is very
+    fast.** On perfectly sorted data, every key finds its place at once without shifting
+    anything — only `n - 1` comparisons, which means `O(n)`. For 16 already-sorted
+    elements that is **15** comparisons, not 120. Unfortunately, on data that is
+    completely reversed it goes back to `O(n²)`.
+
+    ## Merge sort
+
+    Now a smarter algorithm. **Merge sort** uses the **divide and conquer** pattern you
+    learned in the Recursion Topic: split the problem into smaller parts, solve each part
+    the same way, then combine the results.
+
+    The idea is simple to the point of feeling like cheating:
+
+    1. If the array holds 0 or 1 element, it is **already sorted** — nothing to do.
+    2. Otherwise, split it into a left and a right half.
+    3. Sort the left, and sort the right — the same way, by recursion.
+    4. Merge those two sorted parts into one.
+
+    ```python
+    def urut_gabung(data):
+        if len(data) <= 1:                  # base case
+            return data
+        tengah = len(data) // 2
+        kiri = urut_gabung(data[:tengah])   # sort left
+        kanan = urut_gabung(data[tengah:])  # sort right
+        return gabung(kiri, kanan)          # combine
+    ```
+
+    If you look closely, this is exactly the Recursion pattern: there is a base case
+    (`len <= 1`), a recursive step that shrinks the problem (splitting in two), and a
+    step that combines the results. That is why Recursion is a prerequisite for this
+    Topic.
+
+    What makes it fast is **step 4**: merging two already-sorted parts is far cheaper
+    than sorting from scratch. The next section explains why.
+
+    ## The merge step
+
+    A **merge** combines two parts that are each already sorted into a single sorted
+    part. It works like combining two stacks of cards that are each already in order:
+    look at the top card of both stacks, take the smaller one, then repeat.
+
+    ```python
+    def gabung(kiri, kanan):
+        hasil = []
+        i = 0
+        j = 0
+        while i < len(kiri) and j < len(kanan):
+            if kiri[i] <= kanan[j]:      # take from the left if smaller
+                hasil.append(kiri[i])    # or equal — so it stays stable
+                i += 1
+            else:
+                hasil.append(kanan[j])
+                j += 1
+        hasil.extend(kiri[i:])           # leftover left, no more comparisons
+        hasil.extend(kanan[j:])          # leftover right, no more comparisons
+        return hasil
+    ```
+
+    Notice: `<=`, not `<`. When the values are equal, the one taken comes from the left.
+    That small rule is what makes merge sort a **stable sort** — a sort that does not
+    change the original order of two equal elements.
+
+    Let us merge `[1, 4, 7]` with `[2, 3, 9]`:
+
+    ```
+    left: [1, 4, 7]     right: [2, 3, 9]
+    compare 1 vs 2  ->  take 1   (left)     result: [1]
+    compare 4 vs 2  ->  take 2   (right)    result: [1, 2]
+    compare 4 vs 3  ->  take 3   (right)    result: [1, 2, 3]
+    compare 4 vs 9  ->  take 4   (left)     result: [1, 2, 3, 4]
+    compare 7 vs 9  ->  take 7   (left)     result: [1, 2, 3, 4, 7]
+    left is empty — the leftover right [9] is copied with no comparison
+    final result: [1, 2, 3, 4, 7, 9]        5 comparisons
+    ```
+
+    Each comparison moves **one** element into the result. Since there are 6 elements,
+    merging them takes at most 6 steps — so merging a part of size `n` costs `O(n)`
+    time, not `O(n²)`.
+
+    ## O(n²) versus O(n log n)
+
+    Now the part that makes everything click. Why is merge sort far faster on large data?
+
+    Look at the splitting tree for `[8, 3, 5, 1, 9, 2, 7, 4]`. Each box is one call to
+    `urut_gabung`, and the number beside each merge arrow is its comparison count:
+
+    ```
+                        [8, 3, 5, 1, 9, 2, 7, 4]
+                       /                          \
+              [8, 3, 5, 1]                    [9, 2, 7, 4]
+              /          \                    /          \
+          [8, 3]       [5, 1]            [9, 2]       [7, 4]
+          /    \       /    \            /    \       /    \
+        [8]    [3]   [5]    [1]        [9]    [2]   [7]    [4]
+          \    /       \    /            \    /       \    /
+          [3, 8]       [1, 5]            [2, 9]       [4, 7]
+              \          /                    \          /
+              [1, 3, 5, 8]                    [2, 4, 7, 9]
+                       \                          /
+                        [1, 2, 3, 4, 5, 7, 8, 9]
+    ```
+
+    The comparison count, level by level:
+
+    - Bottom level — 4 merges, 1 comparison each: **4**
+    - Middle level — 2 merges, 3 comparisons each: **6**
+    - Top level — 1 merge, 7 comparisons: **7**
+
+    That is **4 + 6 + 7 = 17 comparisons** in all. Compare that with bubble sort on the
+    same data: 8 elements always need `8 × 7 / 2 = 28` comparisons. **17 versus 28** —
+    merge wins, and the gap widens as the data grows.
+
+    Why? There are two causes, and they can be separated:
+
+    - **The number of levels is `log n`.** Every time the array is split in two, the
+      height grows by one. For 8 elements there are 3 levels, for 16 there are 4, for 32
+      there are 5. That number grows very slowly — 1,000 elements need only about 10
+      levels.
+    - **Each level costs `O(n)`.** At one level, all the elements still add up to `n`,
+      and merging them in one pass costs `O(n)`.
+
+    `O(n)` per level, for `log n` levels — the result is **`O(n log n)`**. That is far
+    better than `O(n²)`. Compare their **growth rates** for 16 elements: `n² = 256`
+    while `n log n = 16 × 4 = 64`, and the gap widens as the data grows.
+
+    **Be careful reading that 64.** It is the value of `n log n` as a **growth rate**,
+    not the actual number of comparisons. The actual comparison count for 16 elements is
+    **32** — just as for 8 elements above, where `n log n = 24` but the actual count is
+    **17**. The formula describes how the cost grows; it does not replace the count.
+    That distinction is tested in Quiz 3.
+
+    The price merge sort pays is **space**: it creates new arrays to hold the merge
+    results, so it needs `O(n)` extra space. Bubble and insertion sort do not — both are
+    **in-place sorts**, rearranging the original array itself with fixed extra space.
+
+    ## Complexity table
+
+    | Operation | Time | Why |
+    |---|---|---|
+    | Compare one adjacent pair (bubble) | O(1) | Comparing two values is fixed work, no matter how large the data is |
+    | Sort n elements (bubble) | O(n²) | There are two nested loops, and the comparisons are always n × (n - 1) / 2 |
+    | Compare one element with the key (insertion) | O(1) | One comparison between the key and one element to its left |
+    | Sort n elements (insertion) | O(n²) | On reversed data, every key has to shift past the whole left part |
+    | Sort data that is already sorted (insertion) | O(n) | Every key finds its place at once, so only n - 1 comparisons |
+    | Merge two sorted parts (merge) | O(n) | Each comparison moves one element, so the total equals the number of elements |
+    | Sort n elements (merge) | O(n log n) | There are log n splitting levels, and each level costs O(n) |
+
+    As for space: bubble and insertion are `O(1)` because both sort in place, while merge
+    is `O(n)` because it creates a new array to hold the merged result.
+
+    ## Common traps
+
+    **Assuming bubble sort needs `n` full passes.** The truth: pass `i` only checks
+    `n - 1 - i` pairs, because `i` largest elements are already at the right end. Using
+    `n - 1` in the inner loop keeps the algorithm correct, but compares pairs that are
+    certainly already in order.
+
+    **Working out bubble's comparison count from the data it is given.** For **plain**
+    bubble sort — the one written above, without early stopping — the comparison count is
+    always `n × (n - 1) / 2`, no matter what the data holds. Already-sorted data still
+    needs 120 comparisons for 16 elements. What changes is the number of **swaps**, not
+    the comparisons.
+
+    **Early-stopping bubble sort can beat merge sort.** The form used in many books adds
+    a flag: if a whole pass makes no swap, the sort stops early. On already-sorted data
+    that form needs only `n - 1` comparisons — fewer than merge sort. That is why the
+    **Code Problem in this Topic uses plain bubble sort**: so the comparison count is
+    certain, does not depend on the data, and can be checked by test cases. When comparing
+    two algorithms, first make sure both are counted by the same rule.
+
+    **Swapping two values the wrong way.** Writing `data[j] = data[j + 1]` and then
+    `data[j + 1] = data[j]` copies the same value into both places, because the first
+    line already overwrote the original. In Python,
+    `data[j], data[j + 1] = data[j + 1], data[j]` swaps both at once and is safe.
+
+    **Assuming merge sort saves space because it splits the data.** The opposite is
+    true: every merge creates a new array, so its extra space is `O(n)`. Bubble and
+    insertion sort use less space — but are far slower on large data. Nothing wins at
+    everything.
+
+    **Assuming `<=` and `<` in the merge step are the same.** Both produce the same
+    sorted array, but using `<=`, which takes from the left on equal values, makes merge
+    sort **stable** — the original order of equal elements is preserved. Using `<`
+    reverses the order of equal elements.
+
+    **Comparing two algorithms on different data.** If bubble is tested on 100 elements
+    and merge on 10, the result means nothing. A comparison is only valid when the data
+    is the same — which is why the Code Problem in this Topic returns **both** results
+    from **one** input list.
+
+soal:
+  # --- Kuis 1: melacak gelembung polos — berapa perbandingan putaran pertama -----
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi berikut mengurutkan sebuah larik dengan pengurutan gelembung **polos**:
+        tidak ada henti-awal, jadi perulangan luarnya selalu berjalan penuh.
+
+        Untuk larik `[4, 1, 3, 2]`, berapa perbandingan yang terjadi pada **putaran
+        pertama** perulangan luar, dan seperti apa isi lariknya setelah putaran itu?
+      en: |
+        The function below sorts an array with **plain** bubble sort: there is no early
+        stop, so the outer loop always runs to completion.
+
+        For the array `[4, 1, 3, 2]`, how many comparisons happen on the **first pass**
+        of the outer loop, and what does the array look like after that pass?
+    kode: |
+      def urut_gelembung(data):
+          n = len(data)
+          for i in range(n):
+              for j in range(n - 1 - i):
+                  if data[j] > data[j + 1]:
+                      data[j], data[j + 1] = data[j + 1], data[j]
+          return data
+    opsi:
+      - teks:
+          id: 3 perbandingan, dan lariknya menjadi `[1, 3, 2, 4]`
+          en: 3 comparisons, and the array becomes `[1, 3, 2, 4]`
+        benar: true
+      - teks:
+          id: 4 perbandingan, dan lariknya menjadi `[1, 3, 2, 4]`
+          en: 4 comparisons, and the array becomes `[1, 3, 2, 4]`
+        benar: false
+      - teks:
+          id: 3 perbandingan, dan lariknya menjadi `[1, 2, 3, 4]`
+          en: 3 comparisons, and the array becomes `[1, 2, 3, 4]`
+        benar: false
+      - teks:
+          id: 6 perbandingan, dan lariknya menjadi `[1, 2, 3, 4]`
+          en: 6 comparisons, and the array becomes `[1, 2, 3, 4]`
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Pada putaran pertama, `i = 0`, sehingga perulangan dalamnya
+        berjalan dari `j = 0` sampai `j = n - 2`. Untuk `n = 4`, itu `j = 0, 1, 2` —
+        **3 perbandingan**. Perulangan luarnya belum pernah dijalankan, jadi belum ada
+        elemen yang "diamankan" di ujung kanan.
+
+        Lacak setiap perbandingannya:
+
+        - `j = 0`: bandingkan `4` dan `1`. `4 > 1`, jadi tukar → `[1, 4, 3, 2]`
+        - `j = 1`: bandingkan `4` dan `3`. `4 > 3`, jadi tukar → `[1, 3, 4, 2]`
+        - `j = 2`: bandingkan `4` dan `2`. `4 > 2`, jadi tukar → `[1, 3, 2, 4]`
+
+        Setelah putaran pertama, lariknya `[1, 3, 2, 4]` — dan perhatikan bahwa `4`,
+        yang terbesar, sudah sampai di ujung kanan. Itulah yang membuat putaran
+        berikutnya hanya perlu memeriksa `n - 2 = 2` pasangan.
+
+        **Kompleksitas.** Satu putaran penuh memeriksa `n - 1` pasangan, jadi waktunya
+        `O(n)` untuk putaran itu. Seluruh pengurutannya `O(n²)`, karena ada `n` putaran.
+        Ruangnya `O(1)` — lariknya diubah di tempat, tanpa larik baru.
+
+        **Kode referensi.**
+
+        ```python
+        def urut_gelembung(data):
+            n = len(data)
+            for i in range(n):
+                for j in range(n - 1 - i):
+                    if data[j] > data[j + 1]:
+                        data[j], data[j + 1] = data[j + 1], data[j]
+            return data
+
+        print(urut_gelembung([4, 1, 3, 2]))   # [1, 2, 3, 4]
+        ```
+
+        **Jebakan umum.** Jawaban **4 perbandingan** datang dari memakai `n` bukan
+        `n - 1` di perulangan dalam — itu membandingkan pasangan terakhir yang tidak
+        ada. Jawaban **`[1, 2, 3, 4]`** mengira satu putaran sudah mengurutkan
+        seluruhnya, padahal satu putaran hanya menggelembungkan **satu** elemen
+        terbesar ke ujung kanan; sisa lariknya masih perlu diurutkan. Jawaban **6
+        perbandingan** menghitung seluruh pengurutannya (`4 × 3 / 2 = 6`), bukan satu
+        putaran saja — padahal pertanyaannya khusus putaran pertama.
+      en: |
+        **Approach.** On the first pass, `i = 0`, so the inner loop runs from `j = 0` to
+        `j = n - 2`. For `n = 4` that is `j = 0, 1, 2` — **3 comparisons**. The outer
+        loop has not completed a pass yet, so no element has been "secured" at the right
+        end.
+
+        Trace each comparison:
+
+        - `j = 0`: compare `4` and `1`. `4 > 1`, so swap → `[1, 4, 3, 2]`
+        - `j = 1`: compare `4` and `3`. `4 > 3`, so swap → `[1, 3, 4, 2]`
+        - `j = 2`: compare `4` and `2`. `4 > 2`, so swap → `[1, 3, 2, 4]`
+
+        After the first pass the array is `[1, 3, 2, 4]` — and notice that `4`, the
+        largest, has reached the right end. That is why the next pass only needs to
+        check `n - 2 = 2` pairs.
+
+        **Complexity.** A single full pass checks `n - 1` pairs, so its time is `O(n)`.
+        The whole sort is `O(n²)`, because there are `n` passes. The space is `O(1)` —
+        the array is changed in place, with no new array.
+
+        **Reference code.**
+
+        ```python
+        def urut_gelembung(data):
+            n = len(data)
+            for i in range(n):
+                for j in range(n - 1 - i):
+                    if data[j] > data[j + 1]:
+                        data[j], data[j + 1] = data[j + 1], data[j]
+            return data
+
+        print(urut_gelembung([4, 1, 3, 2]))   # [1, 2, 3, 4]
+        ```
+
+        **Common trap.** The answer **4 comparisons** comes from using `n` instead of
+        `n - 1` in the inner loop — that compares a final pair that does not exist. The
+        answer **`[1, 2, 3, 4]`** assumes one pass sorts everything, but a single pass
+        only bubbles **one** largest element to the right end; the rest of the array
+        still needs sorting. The answer **6 comparisons** counts the whole sort
+        (`4 × 3 / 2 = 6`), not one pass — but the question is specifically about the
+        first pass.
+
+  # --- Kuis 2: melacak langkah penggabungan -------------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi `gabung` menyatukan dua bagian yang masing-masing sudah terurut menjadi
+        satu bagian terurut. Ia membandingkan elemen paling depan dari kedua bagian,
+        mengambil yang lebih kecil, lalu mengulangi.
+
+        Berapa perbandingan yang terjadi saat menggabungkan `[2, 5, 9]` dengan
+        `[1, 6]`, dan apa hasilnya?
+      en: |
+        The `gabung` function combines two parts that are each already sorted into one
+        sorted part. It compares the front element of both parts, takes the smaller one,
+        then repeats.
+
+        How many comparisons happen when merging `[2, 5, 9]` with `[1, 6]`, and what is
+        the result?
+    kode: |
+      def gabung(kiri, kanan):
+          hasil = []
+          i = 0
+          j = 0
+          while i < len(kiri) and j < len(kanan):
+              if kiri[i] <= kanan[j]:
+                  hasil.append(kiri[i])
+                  i += 1
+              else:
+                  hasil.append(kanan[j])
+                  j += 1
+          hasil.extend(kiri[i:])
+          hasil.extend(kanan[j:])
+          return hasil
+
+      print(gabung([2, 5, 9], [1, 6]))
+    opsi:
+      - teks:
+          id: 4 perbandingan, hasilnya `[1, 2, 5, 6, 9]`
+          en: 4 comparisons, the result is `[1, 2, 5, 6, 9]`
+        benar: true
+      - teks:
+          id: 5 perbandingan, hasilnya `[1, 2, 5, 6, 9]`
+          en: 5 comparisons, the result is `[1, 2, 5, 6, 9]`
+        benar: false
+      - teks:
+          id: 3 perbandingan, hasilnya `[1, 2, 5, 6, 9]`
+          en: 3 comparisons, the result is `[1, 2, 5, 6, 9]`
+        benar: false
+      - teks:
+          id: 4 perbandingan, hasilnya `[1, 2, 5, 9, 6]`
+          en: 4 comparisons, the result is `[1, 2, 5, 9, 6]`
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Perbandingan hanya terjadi di dalam perulangan `while`, yaitu
+        selama **kedua** bagian masih punya elemen. Begitu salah satu bagian habis,
+        sisanya disalin tanpa perbandingan.
+
+        Lacak langkahnya:
+
+        - bandingkan `2` vs `1` → `1` lebih kecil, ambil `1` (kanan). Sisa: kiri
+          `[2, 5, 9]`, kanan `[6]`
+        - bandingkan `2` vs `6` → `2` lebih kecil, ambil `2` (kiri). Sisa: kiri
+          `[5, 9]`, kanan `[6]`
+        - bandingkan `5` vs `6` → `5` lebih kecil, ambil `5` (kiri). Sisa: kiri `[9]`,
+          kanan `[6]`
+        - bandingkan `9` vs `6` → `6` lebih kecil, ambil `6` (kanan). Sisa: kiri
+          `[9]`, kanan kosong
+
+        Bagian kanan habis, jadi perulangannya berhenti dan `9` disalin tanpa
+        perbandingan. Seluruhnya **4 perbandingan**, hasilnya `[1, 2, 5, 6, 9]`.
+
+        **Kompleksitas.** Setiap perbandingan memindahkan tepat satu elemen ke hasil,
+        jadi menggabungkan dua bagian berukuran total `n` memakan waktu `O(n)`. Ruangnya
+        juga `O(n)`, karena hasilnya ditampung di larik baru.
+
+        **Kode referensi.**
+
+        ```python
+        def gabung(kiri, kanan):
+            hasil = []
+            i = 0
+            j = 0
+            while i < len(kiri) and j < len(kanan):
+                if kiri[i] <= kanan[j]:
+                    hasil.append(kiri[i])
+                    i += 1
+                else:
+                    hasil.append(kanan[j])
+                    j += 1
+            hasil.extend(kiri[i:])
+            hasil.extend(kanan[j:])
+            return hasil
+
+        print(gabung([2, 5, 9], [1, 6]))   # [1, 2, 5, 6, 9]
+        ```
+
+        **Jebakan umum.** Jawaban **5 perbandingan** mengira sisa `9` juga
+        dibandingkan — padahal setelah bagian kanan habis, perulangan `while` berhenti
+        dan sisanya disalin apa adanya. Jawaban **3 perbandingan** mengira penggabungan
+        berhenti begitu salah satu bagian tinggal satu elemen, padahal perbandingan
+        terakhir (`9` vs `6`) tetap terjadi selama kedua bagian masih berisi. Jawaban
+        **`[1, 2, 5, 9, 6]`** menyalin sisa bagian kiri sebelum membandingkannya —
+        hasil penggabungan dua bagian terurut harus selalu terurut, dan `9` sebelum `6`
+        tidak terurut.
+      en: |
+        **Approach.** Comparisons only happen inside the `while` loop, that is while
+        **both** parts still hold elements. Once one part is empty, the rest is copied
+        without comparison.
+
+        Trace the steps:
+
+        - compare `2` vs `1` → `1` is smaller, take `1` (right). Left: `[2, 5, 9]`,
+          right: `[6]`
+        - compare `2` vs `6` → `2` is smaller, take `2` (left). Left: `[5, 9]`,
+          right: `[6]`
+        - compare `5` vs `6` → `5` is smaller, take `5` (left). Left: `[9]`,
+          right: `[6]`
+        - compare `9` vs `6` → `6` is smaller, take `6` (right). Left: `[9]`,
+          right: empty
+
+        The right part is empty, so the loop stops and `9` is copied with no comparison.
+        That is **4 comparisons** in all, and the result is `[1, 2, 5, 6, 9]`.
+
+        **Complexity.** Each comparison moves exactly one element into the result, so
+        merging two parts totalling `n` elements takes `O(n)` time. The space is also
+        `O(n)`, because the result is held in a new array.
+
+        **Reference code.**
+
+        ```python
+        def gabung(kiri, kanan):
+            hasil = []
+            i = 0
+            j = 0
+            while i < len(kiri) and j < len(kanan):
+                if kiri[i] <= kanan[j]:
+                    hasil.append(kiri[i])
+                    i += 1
+                else:
+                    hasil.append(kanan[j])
+                    j += 1
+            hasil.extend(kiri[i:])
+            hasil.extend(kanan[j:])
+            return hasil
+
+        print(gabung([2, 5, 9], [1, 6]))   # [1, 2, 5, 6, 9]
+        ```
+
+        **Common trap.** The answer **5 comparisons** assumes the leftover `9` is also
+        compared — but once the right part is empty the `while` loop stops and the rest
+        is copied as is. The answer **3 comparisons** assumes the merge stops as soon as
+        one part has a single element left, but the final comparison (`9` vs `6`) still
+        happens while both parts hold elements. The answer **`[1, 2, 5, 9, 6]`** copies
+        the leftover left part before comparing it — the result of merging two sorted
+        parts must always be sorted, and `9` before `6` is not.
+
+  # --- Kuis 3: gelembung polos lawan gabung pada data yang sama ----------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Dua fungsi berikut mengurutkan larik dengan aturan yang berbeda: yang pertama
+        pengurutan gelembung **polos**, yang kedua pengurutan gabung. Keduanya
+        mengembalikan jumlah perbandingan yang mereka lakukan.
+
+        Untuk larik berisi 16 elemen yang **sudah terurut** `[1, 2, 3, …, 16]`,
+        manakah yang benar?
+      en: |
+        The two functions below sort an array by different rules: the first is **plain**
+        bubble sort, the second is merge sort. Both return the number of comparisons they
+        made.
+
+        For an array of 16 elements that is **already sorted** `[1, 2, 3, …, 16]`, which
+        one is correct?
+    kode: |
+      def banding_gelembung(data):
+          data = list(data)
+          n = len(data)
+          banding = 0
+          for i in range(n):
+              for j in range(n - 1 - i):
+                  banding += 1
+                  if data[j] > data[j + 1]:
+                      data[j], data[j + 1] = data[j + 1], data[j]
+          return banding
+
+      def banding_gabung(data):
+          if len(data) <= 1:
+              return 0
+          tengah = len(data) // 2
+          kiri = list(data[:tengah])
+          kanan = list(data[tengah:])
+          banding = banding_gabung(kiri) + banding_gabung(kanan)
+          i = 0
+          j = 0
+          while i < len(kiri) and j < len(kanan):
+              banding += 1
+              if kiri[i] <= kanan[j]:
+                  i += 1
+              else:
+                  j += 1
+          return banding
+    opsi:
+      - teks:
+          id: Gelembung 120 perbandingan, gabung 32 — gelembung tetap jauh lebih banyak meskipun datanya sudah terurut
+          en: Bubble makes 120 comparisons, merge 32 — bubble still makes far more even though the data is already sorted
+        benar: true
+      - teks:
+          id: Gelembung 15 perbandingan, gabung 32 — karena datanya sudah terurut, gelembung justru lebih hemat
+          en: Bubble makes 15 comparisons, merge 32 — because the data is already sorted, bubble is actually cheaper
+        benar: false
+      - teks:
+          id: Gelembung 120 perbandingan, gabung 120 — keduanya sama karena mengurutkan data yang sama
+          en: Bubble makes 120 comparisons, merge 120 — both are the same because they sort the same data
+        benar: false
+      - teks:
+          id: Gelembung 120 perbandingan, gabung 64 — gabung memakai n log n = 16 × 4
+          en: Bubble makes 120 comparisons, merge 64 — merge uses n log n = 16 × 4
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Kuncinya ada di bentuk perulangan gelembung: **polos**, tanpa
+        henti-awal. Perulangan luarnya selalu berjalan `n` kali, dan perulangan dalamnya
+        selalu memeriksa seluruh pasangan yang tersisa — tidak peduli apakah datanya
+        sudah terurut.
+
+        Untuk gelembung, jumlah perbandingannya selalu
+
+        `n × (n - 1) / 2 = 16 × 15 / 2 = 120`
+
+        Untuk gabung, hitung per tingkat pembelahan: 16 elemen membelah menjadi tingkat
+        berukuran 8, 4, 2, dan 1 — jadi ada 4 tingkat. Pada setiap tingkat, seluruh
+        penggabungan bersama-sama melakukan perbandingan sebanyak setengah jumlah
+        elemen, yaitu `16 / 2 = 8`. Seluruhnya `4 × 8 = 32`.
+
+        Jadi **120 lawan 32**. Gelembung tetap jauh lebih banyak, meskipun datanya sudah
+        terurut sempurna.
+
+        **Kompleksitas.** Gelembung `O(n²)` karena dua perulangan bersarang, dan
+        jumlahnya tidak bergantung pada isi data. Gabung `O(n log n)`: 4 tingkat
+        (`log 16 = 4`), masing-masing `O(n)`. Ruangnya: gelembung `O(1)` karena
+        mengurutkan di tempat, gabung `O(n)` karena membuat larik baru.
+
+        **Kode referensi.**
+
+        ```python
+        def banding_gelembung(data):
+            data = list(data)
+            banding = 0
+            for i in range(len(data)):
+                for j in range(len(data) - 1 - i):
+                    banding += 1
+                    if data[j] > data[j + 1]:
+                        data[j], data[j + 1] = data[j + 1], data[j]
+            return banding
+
+
+        def banding_gabung(data):
+            if len(data) <= 1:
+                return 0
+            tengah = len(data) // 2
+            kiri = list(data[:tengah])
+            kanan = list(data[tengah:])
+            banding = banding_gabung(kiri) + banding_gabung(kanan)
+            i = j = 0
+            while i < len(kiri) and j < len(kanan):
+                banding += 1
+                if kiri[i] <= kanan[j]:
+                    i += 1
+                else:
+                    j += 1
+            return banding
+
+
+        print(banding_gelembung(list(range(1, 17))))   # 120
+        print(banding_gabung(list(range(1, 17))))      # 32
+        ```
+
+        **Jebakan umum.** Jawaban **15 lawan 32** datang dari gelembung **berhenti-awal**
+        — bentuk yang berhenti begitu satu putaran tidak ada pertukaran. Pada data yang
+        sudah terurut, bentuk itu memang hanya butuh `n - 1 = 15` perbandingan. Kode di
+        soal ini **tidak** memakai henti-awal, jadi perulangan luarnya tetap berjalan
+        penuh. Jawaban **120 lawan 120** mengira kedua algoritma memakai aturan yang
+        sama. Jawaban **64** menghitung `n log n` sebagai angka perbandingan langsung
+        (`16 × 4`), padahal `n log n` hanya menggambarkan laju pertumbuhannya — angka
+        perbandingan sesungguhnya adalah **32**.
+      en: |
+        **Approach.** The key is the shape of the bubble loop: **plain**, with no early
+        stop. The outer loop always runs `n` times, and the inner loop always checks
+        every remaining pair — no matter whether the data is already sorted.
+
+        For bubble, the comparison count is always
+
+        `n × (n - 1) / 2 = 16 × 15 / 2 = 120`
+
+        For merge, count per splitting level: 16 elements split into levels of size 8,
+        4, 2, and 1 — so there are 4 levels. At each level, all the merges together make
+        comparisons equal to half the number of elements, that is `16 / 2 = 8`. In all,
+        `4 × 8 = 32`.
+
+        So **120 versus 32**. Bubble still makes far more, even though the data is
+        perfectly sorted.
+
+        **Complexity.** Bubble is `O(n²)` because of the two nested loops, and the count
+        does not depend on the data. Merge is `O(n log n)`: 4 levels (`log 16 = 4`), each
+        `O(n)`. As for space: bubble is `O(1)` because it sorts in place, merge is `O(n)`
+        because it creates new arrays.
+
+        **Reference code.**
+
+        ```python
+        def banding_gelembung(data):
+            data = list(data)
+            banding = 0
+            for i in range(len(data)):
+                for j in range(len(data) - 1 - i):
+                    banding += 1
+                    if data[j] > data[j + 1]:
+                        data[j], data[j + 1] = data[j + 1], data[j]
+            return banding
+
+
+        def banding_gabung(data):
+            if len(data) <= 1:
+                return 0
+            tengah = len(data) // 2
+            kiri = list(data[:tengah])
+            kanan = list(data[tengah:])
+            banding = banding_gabung(kiri) + banding_gabung(kanan)
+            i = j = 0
+            while i < len(kiri) and j < len(kanan):
+                banding += 1
+                if kiri[i] <= kanan[j]:
+                    i += 1
+                else:
+                    j += 1
+            return banding
+
+
+        print(banding_gelembung(list(range(1, 17))))   # 120
+        print(banding_gabung(list(range(1, 17))))      # 32
+        ```
+
+        **Common trap.** The answer **15 versus 32** comes from **early-stopping** bubble
+        — the form that stops as soon as a pass makes no swap. On already-sorted data
+        that form really does need only `n - 1 = 15` comparisons. The code in this
+        question does **not** use early stopping, so its outer loop still runs to
+        completion. The answer **120 versus 120** assumes both algorithms use the same
+        rule. The answer **64** treats `n log n` as a direct comparison count
+        (`16 × 4`), but `n log n` only describes its growth rate — the actual comparison
+        count is **32**.
+
+  # --- Kuis 4: memilih algoritma untuk data yang hampir terurut -----------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah sistem menerima daftar nilai ujian yang **sudah hampir terurut**: dari
+        10.000 baris, hanya sekitar 20 baris yang salah tempat, dan masing-masing hanya
+        bergeser sedikit dari posisi seharusnya.
+
+        Kamu perlu mengurutkannya kembali secepat mungkin, dan kamu **tidak boleh
+        memakai fungsi pengurutan bawaan** seperti `sorted()` atau `list.sort()`.
+
+        Algoritma mana yang paling tepat dipilih, dan kenapa?
+      en: |
+        A system receives a list of exam scores that is **already nearly sorted**: out of
+        10,000 rows, only about 20 are out of place, and each is only a little away from
+        where it belongs.
+
+        You need to sort it again as fast as possible, and you **may not use a built-in
+        sort** such as `sorted()` or `list.sort()`.
+
+        Which algorithm is the best choice, and why?
+    opsi:
+      - teks:
+          id: Pengurutan sisip, karena pada data yang hampir terurut setiap kunci hanya bergeser sedikit — kerjanya mendekati O(n), bukan O(n²)
+          en: Insertion sort, because on nearly sorted data each key shifts only a little — its work is close to O(n), not O(n²)
+        benar: true
+      - teks:
+          id: Pengurutan gelembung, karena ia selalu memakai paling sedikit perbandingan di antara ketiga algoritma
+          en: Bubble sort, because it always uses the fewest comparisons of the three algorithms
+        benar: false
+      - teks:
+          id: Pengurutan gabung, karena O(n log n) selalu yang tercepat, apa pun bentuk datanya
+          en: Merge sort, because O(n log n) is always the fastest, whatever the shape of the data
+        benar: false
+      - teks:
+          id: Ketiganya sama cepatnya, karena yang menentukan kecepatan adalah banyaknya elemen, bukan susunan datanya
+          en: All three are equally fast, because what decides speed is the number of elements, not the arrangement of the data
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Perhatikan kata "hampir terurut". Setiap algoritma punya bentuk
+        data yang paling menguntungkan, dan pengurutan sisip unggul justru pada bentuk
+        ini.
+
+        Pengurutan sisip menyisipkan satu elemen ke bagian kiri yang sudah terurut. Pada
+        data yang hampir terurut, setiap kunci hampir selalu sudah berada di tempatnya,
+        jadi perulangan `while`-nya berhenti setelah satu perbandingan. Untuk 10.000
+        baris dengan hanya 20 yang salah tempat, kerjanya mendekati `n` perbandingan —
+        sekitar 10.000, bukan ratusan juta.
+
+        Bandingkan dengan yang lain:
+
+        - **Gelembung polos** selalu memakai `n × (n - 1) / 2` perbandingan. Untuk
+          10.000 elemen itu **49.995.000** perbandingan — hampir 50 juta, meskipun
+          datanya hampir terurut.
+        - **Gabung** selalu `O(n log n)`, dan jumlahnya hampir tidak peduli datanya
+          hampir terurut atau tidak. Untuk 10.000 elemen, data yang sudah terurut
+          memakai **64.608** perbandingan dan data yang 20 barisnya salah tempat memakai
+          **64.620** — bedanya hanya belasan. Jauh lebih baik daripada gelembung, tetapi
+          masih sekitar enam kali lebih banyak daripada sisip pada data seperti ini.
+
+        Jadi pengurutan sisip adalah pilihan terbaik untuk kasus ini.
+
+        **Kompleksitas.** Sisip pada data yang sudah terurut `O(n)`; pada data yang
+        terbalik `O(n²)`; pada data hampir terurut kerjanya di antara keduanya, dan untuk
+        kasus ini mendekati `O(n)`. Ruangnya `O(1)` karena mengurutkan di tempat.
+
+        **Kode referensi.**
+
+        ```python
+        def urut_sisip(data):
+            for i in range(1, len(data)):
+                kunci = data[i]
+                j = i - 1
+                while j >= 0 and data[j] > kunci:
+                    data[j + 1] = data[j]
+                    j -= 1
+                data[j + 1] = kunci
+            return data
+
+        print(urut_sisip([1, 2, 4, 3, 5, 6, 8, 7]))   # [1, 2, 3, 4, 5, 6, 7, 8]
+        ```
+
+        **Jebakan umum.** Jawaban **gelembung** salah karena gelembung polos **tidak**
+        memanfaatkan sifat hampir terurut sama sekali: jumlah perbandingannya tetap
+        `n × (n - 1) / 2` apa pun isi datanya. Jawaban **gabung** salah karena `O(n log n)`
+        memang selalu baik, tetapi bukan yang **terbaik** di sini — pada data yang hampir
+        terurut, `O(n)` dari sisip lebih hemat. Jawaban **ketiganya sama** salah karena
+        susunan data memengaruhi banyaknya perbandingan dengan derajat yang sangat
+        berbeda: gelembung sama sekali tidak terpengaruh (selalu `n × (n - 1) / 2`),
+        sisip sangat terpengaruh (dari `O(n²)` sampai `O(n)`), dan gabung hampir tidak
+        terpengaruh (hanya berbeda belasan dari puluhan ribu). Itu sebabnya tidak ada
+        satu algoritma yang selalu menang.
+      en: |
+        **Approach.** Notice the phrase "nearly sorted". Every algorithm has a data shape
+        that suits it best, and insertion sort excels on exactly this shape.
+
+        Insertion sort inserts one element into the already-sorted left part. On nearly
+        sorted data, every key is almost always already in place, so its `while` loop
+        stops after one comparison. For 10,000 rows with only 20 out of place, its work is
+        close to `n` comparisons — about 10,000, not hundreds of millions.
+
+        Compare that with the others:
+
+        - **Plain bubble** always uses `n × (n - 1) / 2` comparisons. For 10,000 elements
+          that is **49,995,000** comparisons — almost 50 million, even though the data is
+          nearly sorted.
+        - **Merge** is always `O(n log n)`, and its count barely cares whether the data
+          is nearly sorted or not. For 10,000 elements, already-sorted data takes
+          **64,608** comparisons and data with 20 rows out of place takes **64,620** —
+          a difference of barely a dozen. Far better than bubble, but still about six
+          times more than insertion on data like this.
+
+        So insertion sort is the best choice for this case.
+
+        **Complexity.** Insertion is `O(n)` on already-sorted data; `O(n²)` on reversed
+        data; on nearly sorted data its work lies between the two, and for this case it is
+        close to `O(n)`. Its space is `O(1)` because it sorts in place.
+
+        **Reference code.**
+
+        ```python
+        def urut_sisip(data):
+            for i in range(1, len(data)):
+                kunci = data[i]
+                j = i - 1
+                while j >= 0 and data[j] > kunci:
+                    data[j + 1] = data[j]
+                    j -= 1
+                data[j + 1] = kunci
+            return data
+
+        print(urut_sisip([1, 2, 4, 3, 5, 6, 8, 7]))   # [1, 2, 3, 4, 5, 6, 7, 8]
+        ```
+
+        **Common trap.** The answer **bubble** is wrong because plain bubble does **not**
+        exploit nearly sorted data at all: its comparison count stays `n × (n - 1) / 2`
+        whatever the data holds. The answer **merge** is wrong because `O(n log n)` is
+        indeed always good, but not the **best** here — on nearly sorted data, the `O(n)`
+        of insertion is cheaper. The answer **all three are equal** is wrong because the
+        arrangement of the data affects the comparison count to very different degrees:
+        bubble is not affected at all (always `n × (n - 1) / 2`), insertion is strongly
+        affected (from `O(n²)` down to `O(n)`), and merge is barely affected (differing
+        by only a dozen out of tens of thousands). That is why no single algorithm always
+        wins.
+
+  # --- Kuis 5: pengurutan gabung itu stabil ------------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah aplikasi menyimpan daftar siswa dengan nilai ujiannya. Daftar itu **sudah
+        terurut menurut nama**. Aplikasi lalu mengurutkannya lagi menurut **nilai**,
+        memakai pengurutan gabung dengan aturan `kiri[i] <= kanan[j]` seperti di Materi.
+
+        Ada dua siswa bernama Aldi dan Budi yang nilainya sama, yaitu 80. Aldi muncul
+        lebih dulu daripada Budi di daftar yang terurut menurut nama.
+
+        Setelah diurutkan menurut nilai, bagaimana urutan Aldi dan Budi — dan kenapa?
+      en: |
+        An app stores a list of students with their exam scores. That list is **already
+        sorted by name**. The app then sorts it again by **score**, using merge sort with
+        the rule `kiri[i] <= kanan[j]` as in the Material.
+
+        Two students, Aldi and Budi, have the same score of 80. Aldi appears before Budi
+        in the name-sorted list.
+
+        After sorting by score, what is the order of Aldi and Budi — and why?
+    opsi:
+      - teks:
+          id: Aldi tetap lebih dulu daripada Budi, karena aturan `<=` mengambil dari bagian kiri saat nilainya sama — pengurutan gabung mempertahankan urutan asli elemen yang nilainya sama
+          en: Aldi still comes before Budi, because the `<=` rule takes from the left on equal values — merge sort preserves the original order of equal elements
+        benar: true
+      - teks:
+          id: Budi akan lebih dulu daripada Aldi, karena pengurutan gabung membalik urutan elemen yang nilainya sama pada setiap penggabungan
+          en: Budi will come before Aldi, because merge sort reverses the order of equal elements at every merge
+        benar: false
+      - teks:
+          id: Urutannya acak, karena kedua siswa nilainya sama sehingga tidak ada aturan yang menentukan siapa lebih dulu
+          en: The order is arbitrary, because the two students have the same score so no rule decides who comes first
+        benar: false
+      - teks:
+          id: Aldi tetap lebih dulu, karena pengurutan gabung selalu mempertahankan urutan asli seluruh data tanpa kecuali
+          en: Aldi still comes first, because merge sort always preserves the original order of the whole data without exception
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Perhatikan aturan pembandingnya: `kiri[i] <= kanan[j]`. Tanda
+        `<=` berarti "kurang dari **atau sama dengan**", jadi ketika kedua nilainya sama,
+        syaratnya tetap terpenuhi dan yang diambil adalah elemen dari **kiri**.
+
+        Sekarang perhatikan dari mana asal "kiri" dan "kanan". Sebelum diurutkan menurut
+        nilai, daftarnya sudah terurut menurut nama — dan Aldi ada sebelum Budi. Saat
+        kedua siswa itu bertemu di dalam satu penggabungan, Aldi berada di bagian kiri
+        dan Budi di bagian kanan (atau keduanya di bagian yang sama, dan urutannya sudah
+        terjaga dari penggabungan sebelumnya). Karena nilainya sama, aturan `<=`
+        mengambil Aldi lebih dulu.
+
+        Sifat inilah yang disebut **pengurutan stabil**: pengurutan yang tidak mengubah
+        urutan asli dua elemen yang nilainya sama. Itu berguna justru untuk kasus seperti
+        ini — mengurutkan ulang data yang sudah terurut menurut kunci lain, sehingga
+        urutan pertama tetap terjaga sebagai urutan kedua.
+
+        **Kompleksitas.** Mengurutkan 10.000 siswa memakai pengurutan gabung `O(n log n)`
+        waktu dan `O(n)` ruang tambahan. Sifat stabilnya tidak menambah biaya apa pun —
+        ia hanya bergantung pada pemilihan `<=` alih-alih `<`.
+
+        **Kode referensi.**
+
+        ```python
+        def gabung(kiri, kanan):
+            hasil = []
+            i = 0
+            j = 0
+            while i < len(kiri) and j < len(kanan):
+                if kiri[i] <= kanan[j]:      # <= membuatnya stabil
+                    hasil.append(kiri[i])
+                    i += 1
+                else:
+                    hasil.append(kanan[j])
+                    j += 1
+            hasil.extend(kiri[i:])
+            hasil.extend(kanan[j:])
+            return hasil
+
+        # (nama, nilai) sudah terurut menurut nama
+        siswa = [("Aldi", 80), ("Budi", 80)]
+        print(gabung([siswa[0]], [siswa[1]]))   # [('Aldi', 80), ('Budi', 80)]
+        ```
+
+        **Jebakan umum.** Jawaban **Budi lebih dulu** datang dari memakai `<` alih-alih
+        `<=`: dengan `<`, saat nilainya sama syaratnya **tidak** terpenuhi, sehingga yang
+        diambil justru elemen dari kanan — dan urutan elemen yang nilainya sama berbalik.
+        Jawaban **urutannya acak** salah karena pengurutan gabung sepenuhnya
+        deterministik: hasilnya bisa diprediksi persis dari data masukannya. Jawaban
+        **seluruh data dipertahankan urutannya** salah karena pengurutan **stabil** hanya
+        menjamin hal itu untuk elemen yang **nilainya sama**, bukan untuk seluruh data —
+        siswa bernilai 90 yang tadinya di depan tetap akan berpindah ke belakang siswa
+        bernilai 70, karena urutannya sekarang ditentukan oleh nilai.
+      en: |
+        **Approach.** Look at the comparison rule: `kiri[i] <= kanan[j]`. The `<=` sign
+        means "less than **or equal to**", so when the two values are equal the condition
+        still holds and the element taken comes from the **left**.
+
+        Now look at where "left" and "right" come from. Before being sorted by score, the
+        list was already sorted by name — and Aldi comes before Budi. When those two
+        students meet inside one merge, Aldi is in the left part and Budi in the right
+        (or both are in the same part, with their order already preserved by an earlier
+        merge). Because their values are equal, the `<=` rule takes Aldi first.
+
+        This property is called a **stable sort**: a sort that does not change the
+        original order of two elements with equal values. It is useful precisely for
+        cases like this — re-sorting data that is already sorted by another key, so the
+        first order survives as the second.
+
+        **Complexity.** Sorting 10,000 students with merge sort is `O(n log n)` time and
+        `O(n)` extra space. Its stability adds no cost at all — it depends only on
+        choosing `<=` rather than `<`.
+
+        **Reference code.**
+
+        ```python
+        def gabung(kiri, kanan):
+            hasil = []
+            i = 0
+            j = 0
+            while i < len(kiri) and j < len(kanan):
+                if kiri[i] <= kanan[j]:      # <= makes it stable
+                    hasil.append(kiri[i])
+                    i += 1
+                else:
+                    hasil.append(kanan[j])
+                    j += 1
+            hasil.extend(kiri[i:])
+            hasil.extend(kanan[j:])
+            return hasil
+
+        # (name, score) already sorted by name
+        siswa = [("Aldi", 80), ("Budi", 80)]
+        print(gabung([siswa[0]], [siswa[1]]))   # [('Aldi', 80), ('Budi', 80)]
+        ```
+
+        **Common trap.** The answer **Budi comes first** comes from using `<` instead of
+        `<=`: with `<`, when the values are equal the condition is **not** met, so the
+        element taken is the one from the right — and the order of equal elements is
+        reversed. The answer **the order is arbitrary** is wrong because merge sort is
+        fully deterministic: its result can be predicted exactly from its input. The
+        answer **the whole data keeps its order** is wrong because a **stable** sort only
+        guarantees that for elements with **equal values**, not for all the data — a
+        student scoring 90 who was in front will still move behind a student scoring 70,
+        because the order is now decided by the score.
+
+  # --- Soal Kode: dua algoritma pengurutan dari nol, kembalikan jumlah banding ---
+  #
+  # Bentuknya menyimpang dari `docs/design-tree.md` ("implementasi struktur data dari
+  # nol"), karena Sorting bukan struktur data. Yang diminta: menulis dua algoritma
+  # pengurutan dari nol, masing-masing mengembalikan pasangan (hasil, jumlah
+  # perbandingan), sehingga beda O(n²) dan O(n log n) terasa sebagai angka yang bisa
+  # diperiksa test case. Keputusannya di ADR-0026.
+  #
+  # Gelembung di sini **polos** — tanpa henti-awal — supaya jumlah perbandingannya
+  # selalu n × (n - 1) / 2 dan tidak bergantung pada isi data. Kalau memakai
+  # henti-awal, pada data yang sudah terurut gelembung justru lebih hemat daripada
+  # gabung, dan Soal ini akan mengajarkan hal yang berlawanan dengan Materi.
+  - tipe: soal-kode
+    skenario:
+      id: |
+        Tulis dari nol **dua algoritma pengurutan**, masing-masing mengembalikan
+        **pasangan** `(hasil, jumlah_perbandingan)`. Pasangan itu ditulis sebagai daftar
+        dua elemen: `[hasil, jumlah_perbandingan]`.
+
+        **Algoritma pertama — `urut_gelembung(daftar)`.** Pengurutan gelembung **polos**:
+        perulangan luar berjalan `n` kali dan perulangan dalam memeriksa pasangan yang
+        tersisa, **tanpa henti-awal**. Hitung satu perbandingan setiap kali kamu
+        membandingkan dua elemen bersebelahan. Karena tidak ada henti-awal, jumlah
+        perbandingannya akan selalu `n × (n - 1) / 2`, tidak peduli isi datanya.
+
+        **Algoritma kedua — `urut_gabung(daftar)`.** Pengurutan gabung yang **rekursif**:
+        kalau panjangnya 0 atau 1, ia sudah terurut; kalau lebih, bagi dua, urutkan
+        masing-masing dengan cara yang sama, lalu gabungkan. Saat menggabungkan, hitung
+        satu perbandingan setiap kali kamu membandingkan elemen paling depan dari kedua
+        bagian. Kalau salah satu bagian sudah habis, sisanya dipindahkan **tanpa
+        perbandingan**. Kalau nilainya sama, ambil dari bagian kiri.
+
+        **Fungsi `proses(daftar)`** memanggil keduanya dengan daftar yang sama, lalu
+        mengembalikan satu daftar berisi empat nilai:
+
+        `[hasil_gelembung, banding_gelembung, hasil_gabung, banding_gabung]`
+
+        Kedua fungsi wajib mengembalikan daftar hasil yang **baru dan terurut**, dan
+        tidak boleh mengubah daftar masukannya. Jangan memakai `sorted()` maupun
+        `list.sort()` — tulis kedua algoritmanya sendiri, supaya kamu merasakan bedanya
+        `O(n²)` dan `O(n log n)` sebagai angka.
+
+        Perhatikan bahwa pada data yang sama, gelembung selalu memakai jauh lebih banyak
+        perbandingan daripada gabung begitu datanya cukup besar — dan itulah yang
+        diperlihatkan angka pada hasilnya.
+      en: |
+        Write from scratch **two sorting algorithms**, each returning a **pair**
+        `(result, comparison_count)`. Write that pair as a two-element list:
+        `[result, comparison_count]`.
+
+        **First algorithm — `urut_gelembung(daftar)`.** **Plain** bubble sort: the outer
+        loop runs `n` times and the inner loop checks the remaining pairs, **with no
+        early stop**. Count one comparison every time you compare two adjacent elements.
+        Because there is no early stop, the comparison count will always be
+        `n × (n - 1) / 2`, whatever the data holds.
+
+        **Second algorithm — `urut_gabung(daftar)`.** **Recursive** merge sort: if the
+        length is 0 or 1 it is already sorted; otherwise split it in two, sort each part
+        the same way, then merge. While merging, count one comparison every time you
+        compare the front element of both parts. Once one part is empty, the rest is
+        moved over **with no comparison**. When the values are equal, take from the left
+        part.
+
+        **The `proses(daftar)` function** calls both with the same list, then returns a
+        single list of four values:
+
+        `[bubble_result, bubble_comparisons, merge_result, merge_comparisons]`
+
+        Both functions must return a **new, sorted** list, and must not change the input
+        list. Do not use `sorted()` or `list.sort()` — write both algorithms yourself, so
+        that you feel the difference between `O(n²)` and `O(n log n)` as numbers.
+
+        Notice that on the same data, bubble always uses far more comparisons than merge
+        once the data is large enough — and that is what the numbers in the result show.
+    fungsi: proses
+    test_case:
+      # Kasus 1 — tiga elemen. Gelembung 3, gabung 3: untuk data sekecil ini keduanya
+      # sama. Perhatikan bentuk pasangannya: [hasil, banding].
+      - argumen:
+          - [3, 1, 2]
+        diharapkan: [[1, 2, 3], 3, [1, 2, 3], 3]
+      # Kasus 2 — lima elemen sudah terurut. Gelembung tetap 5 × 4 / 2 = 10 karena
+      # polos, sedangkan gabung cukup 5. Di sini bedanya mulai terlihat.
+      - argumen:
+          - [1, 2, 3, 4, 5]
+        diharapkan: [[1, 2, 3, 4, 5], 10, [1, 2, 3, 4, 5], 5]
+      # Kasus 3 — lima elemen terbalik. Gelembung tetap 10 (tidak peduli isi data),
+      # gabung 7.
+      - argumen:
+          - [5, 4, 3, 2, 1]
+        diharapkan: [[1, 2, 3, 4, 5], 10, [1, 2, 3, 4, 5], 7]
+      # Kasus 4 — ada nilai kembar. Menguji dua hal: hasilnya benar-benar terurut, dan
+      # aturan "ambil dari kiri saat nilainya sama" tidak mengubah jumlah perbandingan.
+      - argumen:
+          - [2, 2, 1]
+        diharapkan: [[1, 2, 2], 3, [1, 2, 2], 3]
+      # Kasus 5 — delapan elemen acak. Inilah yang memperlihatkan bedanya sebagai
+      # angka: gelembung 8 × 7 / 2 = 28, sedangkan gabung 17 (dihitung di Materi
+      # sebagai 4 + 6 + 7).
+      - argumen:
+          - [8, 3, 5, 1, 9, 2, 7, 4]
+        diharapkan: [[1, 2, 3, 4, 5, 7, 8, 9], 28, [1, 2, 3, 4, 5, 7, 8, 9], 17]
+    solusi_referensi: |
+      def urut_gelembung(daftar):
+          data = list(daftar)
+          banding = 0
+          n = len(data)
+          for i in range(n):
+              for j in range(n - 1 - i):
+                  banding += 1
+                  if data[j] > data[j + 1]:
+                      data[j], data[j + 1] = data[j + 1], data[j]
+          return [data, banding]
+
+
+      def _gabung(kiri, kanan):
+          hasil = []
+          banding = 0
+          i = 0
+          j = 0
+          while i < len(kiri) and j < len(kanan):
+              banding += 1
+              if kiri[i] <= kanan[j]:
+                  hasil.append(kiri[i])
+                  i += 1
+              else:
+                  hasil.append(kanan[j])
+                  j += 1
+          hasil.extend(kiri[i:])
+          hasil.extend(kanan[j:])
+          return [hasil, banding]
+
+
+      def _urut_gabung(data):
+          if len(data) <= 1:
+              return [list(data), 0]
+          tengah = len(data) // 2
+          kiri, banding_kiri = _urut_gabung(data[:tengah])
+          kanan, banding_kanan = _urut_gabung(data[tengah:])
+          hasil, banding_gabung = _gabung(kiri, kanan)
+          return [hasil, banding_kiri + banding_kanan + banding_gabung]
+
+
+      def urut_gabung(daftar):
+          return _urut_gabung(list(daftar))
+
+
+      def proses(daftar):
+          hasil_gelembung, banding_gelembung = urut_gelembung(daftar)
+          hasil_gabung, banding_gabung = urut_gabung(daftar)
+          return [hasil_gelembung, banding_gelembung, hasil_gabung, banding_gabung]

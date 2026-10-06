@@ -102,7 +102,7 @@ ia bekerja pada nilai JavaScript biasa, jadi bisa diuji tanpa membuat berkas con
 
 ## Isi saat ini
 
-Enam Topik sudah punya berkas, semuanya tulisan sungguhan:
+Tujuh Topik sudah punya berkas, semuanya tulisan sungguhan:
 
 | Berkas | Isi | Ticket |
 |---|---|---|
@@ -112,6 +112,7 @@ Enam Topik sudah punya berkas, semuanya tulisan sungguhan:
 | `linked-list.yaml` | Materi, 5 Kuis, 1 Soal Kode | #18 |
 | `hash-table.yaml` | Materi, 5 Kuis, 1 Soal Kode | #19 |
 | `rekursi.yaml` | Materi, 5 Kuis, 1 Soal Kode | #20 |
+| `sorting.yaml` | Materi, 5 Kuis, 1 Soal Kode | #21 |
 
 `stack.yaml` ditulis lebih dulu sebagai pembuktian teknis: #4 menulis Materinya, #6
 menambahkan komponen serta logika penilaian Kuis-nya, dan **#10 mengganti draf Soal
@@ -123,16 +124,18 @@ apa adanya, karena array memang struktur data. `linked-list.yaml` (#18) juga
 memenuhinya apa adanya, karena linked list memang struktur data. `hash-table.yaml`
 (#19) memenuhinya apa adanya pula, karena hash table memang struktur data.
 `rekursi.yaml` (#20) **menyimpang lagi**, karena rekursi bukan struktur data — sama
-seperti Big-O, dan dicatat di ADR-0025.
+seperti Big-O, dan dicatat di ADR-0025. `sorting.yaml` (#21) **menyimpang lagi pula**,
+karena sorting bukan struktur data — sama seperti Big-O dan Rekursi, dan dicatat di
+ADR-0026.
 
-**Enam Topik lain belum punya berkas.** Materi dan Soal untuk keenam Topik itu
+**Lima Topik lain belum punya berkas.** Materi dan Soal untuk kelima Topik itu
 belum ditulis; `content/jalur.yaml` sudah mendeklarasikannya lebih dulu, sehingga
 Topik yang belum punya berkas tampil redup dan berlabel "segera" di sidebar.
 
 **Soal Kode tidak punya Pembahasan.** Skema di issue #1 tidak memberi field `penjelasan`
 pada `SoalKode`, jadi tiap Topik berisi **5 Pembahasan** (satu per Kuis), bukan 6 seperti
 tertulis di beberapa ticket. Itu keputusan pemilik (2026-10-06), dan berlaku untuk
-keenam berkas di atas.
+ketujuh berkas di atas.
 
 Catatan yang ditulis dari situs **tidak** disimpan di sini. Catatan dan Progres
 hidup di database backend, sesuai ADR-0003.
