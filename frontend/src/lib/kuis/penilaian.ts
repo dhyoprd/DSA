@@ -18,9 +18,11 @@
  * dipandu jawabannya. Itu kebalikan dari tujuan fitur ini (user story 26–27), dan
  * user story 49 meminta Pembahasan memang "tersembunyi di balik tombol".
  *
- * **Progres tidak dikirim ke backend di sini.** Ticket #8 hanya menghubungkan Kotak
- * Penjelasan; penyambungan Progres ke tampilan belum dikerjakan, dan modul ini tidak
- * menebak kontraknya.
+ * **Progres tidak dikirim ke backend dari sini.** Modul ini tetap murni: ia memutuskan
+ * keadaan Kuis, bukan mencatatnya. Pencatatan Progres ada di `ProgresProvider`
+ * (ticket #27), yang dipanggil `kuis.tsx` setelah `nilaiJawaban` menghasilkan keadaan
+ * barunya — sehingga aturan penilaian tetap bisa diuji tanpa jaringan, dan pencatatan
+ * tetap punya satu tempat.
  */
 
 /**
@@ -79,9 +81,11 @@ export function keadaanAwal(): KeadaanKuis {
  * sendiri — bukan tebakan dari data lain.
  *
  * **Yang sengaja tidak dipulihkan: `percobaan`.** Jumlah percobaan hidup di Progres
- * (`benar_terakhir`, `percobaan`), dan penyambungan Progres ke tampilan bukan lingkup
- * ticket ini. Mengisinya dengan angka karangan akan menampilkan hitungan yang salah,
- * jadi ia dibiarkan 0 — dan 0 berarti penandanya memang tidak ditampilkan.
+ * (`benar_terakhir`, `percobaan`), dan ia tidak dibaca ulang dari backend di sini —
+ * itu akan berarti satu permintaan Progres per Kuis. Angka yang ditampilkan adalah yang
+ * dihitung komponen selama halaman terbuka. Mengisinya dengan angka karangan akan
+ * menampilkan hitungan yang salah, jadi ia dibiarkan 0 — dan 0 berarti penandanya
+ * memang tidak ditampilkan.
  *
  * `pembahasanDibuka` juga `false`: pemelajar memulihkan tulisannya, bukan otomatis
  * membaca Pembahasan. Ia tetap harus menekan tombolnya, sama seperti setelah menjawab.

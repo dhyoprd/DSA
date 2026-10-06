@@ -125,8 +125,23 @@ Catatan (#14) sudah ada. **Rantai Stack kini lengkap ujung ke ujung.** **Catatan
 penting**: Progres sudah punya endpoint tetapi **belum tersambung ke tampilan** —
 status ○◐● di sidebar masih selalu ○. Beberapa komentar di kode menyebut #8 sebagai
 yang menyambungkannya; itu keliru, dan sudah dikoreksi. **Pekerjaan itu kini punya
-ticketnya sendiri: #27** (dibuat ticket #16). Lihat
+ticketnya sendiri: #27** (dibuat ticket #16) — **dan #27 sudah selesai; lihat
+"Progres tersambung" di bawah.** Lihat
 [ADR-0017](adr/0017-kotak-penjelasan-dan-pembahasan-di-balik-tombol.md).
+
+**Progres tersambung (#27) selesai.** Status ○◐● di sidebar kini Progres sungguhan.
+Progres dibaca **sekali** per halaman Topik lewat `ProgresProvider` (komponen klien di
+tingkat halaman), lalu dipakai sidebar, Kuis, dan Soal Kode bersama — tanpa token,
+provider **tidak mengirim permintaan sama sekali**, sehingga galat `401` tidak
+bertambah. Setiap jawaban Kuis dan setiap Eksekusi Kode mencatat hasilnya lewat
+`POST /api/progres/{slug}/{indeks}`. Aturan status **per Topik** belum pernah ada di
+mana pun dan ditetapkan di ticket ini: ● menuntut **keenam** Soal benar (termasuk Soal
+Kode), ◐ sudah ada percobaan, ○ belum — hidup di `lib/progres/status.ts` sebagai fungsi
+murni, terpisah dari `status_dari` backend yang mengurus status per Soal. Lihat
+[ADR-0024](adr/0024-status-topik-diturunkan-dari-seluruh-soal.md).
+**Catatan**: kriteria "Progres Topik ini terlacak" di ticket Topik mana pun kini
+terpenuhi, dan **tidak** boleh ditandai selesai di ticket Topik — pekerjaannya ada di
+sini. `#16` dan `#10` sudah bisa mengklaimnya.
 
 **Eksekusi Kode (#10) selesai.** Soal Kode Stack tampil di halaman Topik **setelah
 Kuis**: pemelajar menulis Python dari nol di editor, menjalankannya, dan melihat hasil
@@ -151,9 +166,8 @@ ditambahkan di antarmuka (beranda), mengikuti pola ADR-0018. `GET /api/ekspor/pr
 **tetap terpisah** — keputusan pemilik, karena Progres hanya ada di server sedangkan
 CSV dan Catatan tidak. Lihat [ADR-0019](adr/0019-field-kompleksitas-istilah-dan-ekspor-csv.md).
 **Catatan**: `stack` dan `big-o` sudah punya berkas, jadi CSV berisi kedua Topik itu;
-kriteria "ekspor mencakup Topik yang sudah diselesaikan" tetap belum bisa diuji penuh
-sampai ada Topik yang **diselesaikan** lewat Progres — dan Progres belum tersambung ke
-tampilan (lihat ticket #27).
+kriteria "ekspor mencakup Topik yang sudah diselesaikan" kini **bisa diuji penuh** —
+sejak #27 Progres tersambung ke tampilan, dan Topik benar-benar bisa berstatus ●.
 
 **Pencarian (#13) selesai.** Fase 1 nomor 2 kini ada: halaman `/[bahasa]/pencarian`
 dengan kotak yang menampilkan hasil **saat mengetik**. Indeks disusun dari Materi
@@ -186,8 +200,8 @@ Soal Kode yang ditetapkan dokumen ini tidak bisa dipakai apa adanya: Soalnya men
 O(n) dan O(log n) terasa sebagai angka. Field `kompleksitas` juga diisi **algoritma
 yang dianalisis**, bukan struktur data. Kedua penyimpangan itu dicatat di
 [ADR-0023](adr/0023-bentuk-soal-kode-big-o-dan-kompleksitas-algoritma.md).
-**Kriteria "Progres Topik ini terlacak" BELUM terpenuhi** — Progres masih belum
-tersambung ke tampilan; pekerjaannya dipisahkan ke ticket #27.
+**Kriteria "Progres Topik ini terlacak" terpenuhi sejak #27** — Progres tersambung ke
+tampilan lewat `ProgresProvider`; lihat "Progres tersambung (#27)" di atas.
 
 **Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
 → pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini

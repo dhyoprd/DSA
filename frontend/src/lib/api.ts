@@ -103,6 +103,43 @@ export async function ambilProgres(token: string | undefined, kamus: Kamus): Pro
 }
 
 /**
+ * Catat satu jawaban Soal, lalu kembalikan keadaan barisnya yang baru.
+ *
+ * `POST`, bukan `PUT`: setiap jawaban **menambah** `percobaan`, jadi mengirim dua kali
+ * menghasilkan keadaan yang berbeda. Itu kebalikan dari Kotak Penjelasan dan Catatan,
+ * yang mengganti seluruh isi alamat yang pasti dan karenanya memakai `PUT`.
+ *
+ * Balasannya adalah **baris itu saja**, bukan seluruh Progres — backend sengaja tidak
+ * memaksa permintaan baca kedua. Pemanggil yang menyimpan daftarnya menempelkan baris
+ * ini ke daftarnya sendiri (`lib/progres/baris.ts`).
+ *
+ * Galatnya sudah berupa pesan yang bisa ditampilkan langsung, sama seperti fungsi lain
+ * di modul ini.
+ */
+export async function catatProgres(
+  slugTopik: string,
+  indeksSoal: number,
+  benar: boolean,
+  kamus: Kamus,
+): Promise<BarisProgres> {
+  const response = await fetch(
+    `/api/progres/${encodeURIComponent(slugTopik)}/${String(indeksSoal)}`,
+    {
+      method: "POST",
+      cache: "no-store",
+      headers: { ...headerToken(), "Content-Type": "application/json" },
+      body: JSON.stringify({ benar }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(pesanGalat(response.status, kamus));
+  }
+
+  return response.json() as Promise<BarisProgres>;
+}
+
+/**
  * Unduh seluruh Progres sebagai berkas.
  *
  * Memakai `fetch`, bukan `<a href>`, karena endpoint-nya butuh header

@@ -135,13 +135,12 @@ export interface Istilah {
  *
  * Ini satu-satunya bagian bentuk data di modul ini yang **bukan** berasal dari
  * berkas YAML: Progres hidup di database backend (ADR-0003). Tipenya ada di sini
- * karena ia kosakata yang dipakai bersama oleh sidebar dan, nanti, backend.
+ * karena ia kosakata yang dipakai bersama oleh sidebar dan backend.
  *
- * Belum ada data yang mengisinya. Ticket #7 membangun endpoint Progres, tetapi belum
- * ada ticket yang menyambungkannya ke tampilan — ticket #8 sempat disangka yang
- * mengerjakannya, dan itu keliru (#8 mengerjakan Kotak Penjelasan). Sampai saat itu
- * seluruh Topik tampil `"belum"`. Nilainya sengaja hanya tiga, sesuai
- * `docs/design-tree.md` (○ belum, ◐ sedang, ● selesai).
+ * Nilainya tiga, sesuai `docs/design-tree.md` (○ belum, ◐ sedang, ● selesai). Aturan
+ * menurunkannya ada di dua tempat, dan pembagiannya disengaja: status **satu Soal**
+ * diturunkan backend (`store::progres::status_dari`), status **satu Topik** diturunkan
+ * antarmuka (`lib/progres/status.ts`, ADR-0024). Keduanya diturunkan, tidak disimpan.
  */
 export type StatusProgres = "belum" | "sedang" | "selesai";
 
