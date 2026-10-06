@@ -166,9 +166,10 @@ ditambahkan di antarmuka (beranda), mengikuti pola ADR-0018. `GET /api/ekspor/pr
 **tetap terpisah** — keputusan pemilik, karena Progres hanya ada di server sedangkan
 CSV dan Catatan tidak. Lihat [ADR-0019](adr/0019-field-kompleksitas-istilah-dan-ekspor-csv.md).
 **Catatan**: CSV dibangun dari **setiap** Topik yang sudah punya berkas, jadi ia
-bertambah sendiri saat Topik baru ditulis (per #18: `stack`, `big-o`, `array-string`,
-`linked-list`). Kriteria "ekspor mencakup Topik yang sudah diselesaikan" **bisa diuji
-penuh** — sejak #27 Progres tersambung ke tampilan, dan Topik benar-benar bisa berstatus ●.
+bertambah sendiri saat Topik baru ditulis. Kriteria "ekspor mencakup Topik yang sudah
+diselesaikan" **bisa diuji penuh** — sejak #27 Progres tersambung ke tampilan, dan Topik
+benar-benar bisa berstatus ●. *(Daftar Topik yang sudah punya berkas sengaja tidak
+diulang di sini; ia akan basi setiap kali Topik baru ditulis. Lihat `content/README.md`.)*
 
 **Pencarian (#13) selesai.** Fase 1 nomor 2 kini ada: halaman `/[bahasa]/pencarian`
 dengan kotak yang menampilkan hasil **saat mengetik**. Indeks disusun dari Materi
@@ -178,8 +179,8 @@ saat backend mati. Tautan ke halaman ini ada di beranda dan di sidebar setiap To
 Istilah **Pencarian** ditambahkan ke `CONTEXT.md` oleh ticket ini. Lihat
 [ADR-0020](adr/0020-pencarian-halaman-indeks-dan-pencocokan-di-peramban.md).
 **Catatan**: indeksnya dibangun dari **setiap** Topik yang sudah punya berkas, jadi ia
-bertambah sendiri saat Topik baru ditulis (per #18: `stack`, `big-o`, `array-string`,
-`linked-list`).
+bertambah sendiri saat Topik baru ditulis. *(Daftar Topiknya sengaja tidak diulang di
+sini; ia akan basi setiap kali Topik baru ditulis. Lihat `content/README.md`.)*
 
 **Visualisasi Stack (#15) selesai sebagian.** Visualisasi pertama ada: bagian di
 halaman Topik, tepat di bawah Materi, menampilkan **Stack dan Queue** dengan urutan
@@ -228,12 +229,32 @@ pun. Satu cacat isi juga ditemukan saat meninjau ulang: satu pengecoh di Kuis 4
 sebenarnya **juga benar** (perulangan memang memeriksa `sekarang.berikutnya`, sehingga
 simpul pertama tidak pernah jadi kandidat), dan diganti supaya hanya ada satu jawaban
 yang bisa dipertahankan.
-**Catatan tentang "6 Pembahasan"**: ticket #16, #17, dan #18 sama-sama menyebut 6
+**Catatan tentang "6 Pembahasan"**: ticket #16, #17, #18, dan #19 sama-sama menyebut 6
 Pembahasan, tetapi skema di issue #1 tidak memberi field `penjelasan` pada `SoalKode` —
 hanya `Kuis` yang punya. Tiap Topik karena itu berisi **5 Pembahasan**, satu per Kuis.
 Pemilik memutuskan (2026-10-06) untuk tidak menambah field itu, sehingga Soal Kode tidak
 punya Pembahasan sampai ada keputusan lain. Angka "Pembahasan 72" di tabel "Angka scope"
 di bawah karena itu perlu dibaca sebagai 60 Pembahasan Kuis + 12 tanpa bentuknya.
+
+**Topik Hash Table (#19) selesai — Topik kelima yang punya berkas.** Materi dua bahasa,
+5 Kuis skenario, 1 Soal Kode, dan 5 Pembahasan, semuanya tulisan asli. Topik ini kembali
+memenuhi bentuk Soal Kode yang ditetapkan dokumen ini apa adanya — **implementasi
+struktur data dari nol** — karena hash table memang struktur data; sama seperti Array &
+String (#17) dan Linked List (#18), dan berbeda dari Big-O (#16), yang bukan struktur
+data dan karena itu menyimpang lewat ADR-0023.
+**Tidak ada ADR baru dan tidak ada baris kode aplikasi yang berubah**: Topik ini masuk
+sebagai berkas `content/hash-table.yaml`. Dua cacat ditemukan dengan **menjalankan dan
+meninjau ulang**, bukan membaca — sama seperti #16, #17, dan #18:
+(a) satu operasi di field `kompleksitas` mula-mula ditulis
+`{ id: Tambah kunci, rata-rata, en: ... }`. Dalam pemetaan alir YAML, koma memisahkan
+entri, sehingga kata "rata-rata" menjadi kunci liar bernilai `null` dan **hilang** dari
+kartu Anki — kartunya akan berbunyi "Add or update one key → O(1)", membuang satu-satunya
+keterangan yang membuat pernyataan itu benar. Gerbang konten tidak menangkapnya, karena
+validator hanya memeriksa `id` dan `en` terisi, bukan bahwa tidak ada kunci lain; yang
+menemukannya skrip pemeriksa mandiri. (b) Dua pengecoh di Kuis 4 masing-masing ternyata
+bisa dipertahankan (mengurutkan rantai memang memungkinkan pencarian biner; menghapus
+pasangan memang menurunkan faktor beban), dan diganti supaya hanya ada satu jawaban yang
+bisa dipertahankan.
 
 **Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
 → pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini
