@@ -165,9 +165,10 @@ keduanya disusun CSV berformat Anki **saat build**, disajikan statis di
 ditambahkan di antarmuka (beranda), mengikuti pola ADR-0018. `GET /api/ekspor/progres`
 **tetap terpisah** — keputusan pemilik, karena Progres hanya ada di server sedangkan
 CSV dan Catatan tidak. Lihat [ADR-0019](adr/0019-field-kompleksitas-istilah-dan-ekspor-csv.md).
-**Catatan**: `stack` dan `big-o` sudah punya berkas, jadi CSV berisi kedua Topik itu;
-kriteria "ekspor mencakup Topik yang sudah diselesaikan" kini **bisa diuji penuh** —
-sejak #27 Progres tersambung ke tampilan, dan Topik benar-benar bisa berstatus ●.
+**Catatan**: CSV dibangun dari **setiap** Topik yang sudah punya berkas, jadi ia
+bertambah sendiri saat Topik baru ditulis (per #18: `stack`, `big-o`, `array-string`,
+`linked-list`). Kriteria "ekspor mencakup Topik yang sudah diselesaikan" **bisa diuji
+penuh** — sejak #27 Progres tersambung ke tampilan, dan Topik benar-benar bisa berstatus ●.
 
 **Pencarian (#13) selesai.** Fase 1 nomor 2 kini ada: halaman `/[bahasa]/pencarian`
 dengan kotak yang menampilkan hasil **saat mengetik**. Indeks disusun dari Materi
@@ -176,8 +177,9 @@ pencocokannya berjalan di peramban — tanpa backend, tanpa token, dan tetap bek
 saat backend mati. Tautan ke halaman ini ada di beranda dan di sidebar setiap Topik.
 Istilah **Pencarian** ditambahkan ke `CONTEXT.md` oleh ticket ini. Lihat
 [ADR-0020](adr/0020-pencarian-halaman-indeks-dan-pencocokan-di-peramban.md).
-**Catatan**: `stack` dan `big-o` sudah punya berkas, jadi bagian Materi kedua Topik itu
-yang bisa ditemukan; keduanya bertambah sendiri saat Topik berikutnya ditulis.
+**Catatan**: indeksnya dibangun dari **setiap** Topik yang sudah punya berkas, jadi ia
+bertambah sendiri saat Topik baru ditulis (per #18: `stack`, `big-o`, `array-string`,
+`linked-list`).
 
 **Visualisasi Stack (#15) selesai sebagian.** Visualisasi pertama ada: bagian di
 halaman Topik, tepat di bawah Materi, menampilkan **Stack dan Queue** dengan urutan
@@ -210,12 +212,28 @@ kembali memenuhi bentuk Soal Kode yang ditetapkan dokumen ini apa adanya —
 dari Big-O (#16), yang bukan struktur data dan karena itu menyimpang lewat ADR-0023.
 **Tidak ada ADR baru dan tidak ada baris kode aplikasi yang berubah**: Topik ini masuk
 sebagai berkas `content/array-string.yaml`, sama seperti #16.
-**Catatan tentang "6 Pembahasan"**: ticket #16 dan #17 sama-sama menyebut 6 Pembahasan,
-tetapi skema di issue #1 tidak memberi field `penjelasan` pada `SoalKode` — hanya `Kuis`
-yang punya. Tiap Topik karena itu berisi **5 Pembahasan**, satu per Kuis. Pemilik
-memutuskan (2026-10-06) untuk tidak menambah field itu, sehingga Soal Kode tidak punya
-Pembahasan sampai ada keputusan lain. Angka "Pembahasan 72" di tabel "Angka scope" di
-bawah karena itu perlu dibaca sebagai 60 Pembahasan Kuis + 12 tanpa bentuknya.
+
+**Topik Linked List (#18) selesai — Topik keempat yang punya berkas.** Materi dua
+bahasa, 5 Kuis skenario, 1 Soal Kode, dan 5 Pembahasan, semuanya tulisan asli. Topik ini
+kembali memenuhi bentuk Soal Kode yang ditetapkan dokumen ini apa adanya —
+**implementasi struktur data dari nol** — karena linked list memang struktur data; sama
+seperti Array & String (#17), dan berbeda dari Big-O (#16), yang bukan struktur data dan
+karena itu menyimpang lewat ADR-0023.
+**Tidak ada ADR baru dan tidak ada baris kode aplikasi yang berubah**: Topik ini masuk
+sebagai berkas `content/linked-list.yaml`. Satu cacat ditemukan dengan **menjalankan**,
+bukan membaca — sama seperti #16 dan #17: rumus jumlah langkah pada Kuis 3 mula-mula
+ditulis `n(n − 1) / 2` (menghasilkan 15 untuk n = 6), padahal hasil terukurnya
+`(n − 1)(n − 2) / 2` (10), karena dua penambahan pertama memang tidak menelusuri apa
+pun. Satu cacat isi juga ditemukan saat meninjau ulang: satu pengecoh di Kuis 4
+sebenarnya **juga benar** (perulangan memang memeriksa `sekarang.berikutnya`, sehingga
+simpul pertama tidak pernah jadi kandidat), dan diganti supaya hanya ada satu jawaban
+yang bisa dipertahankan.
+**Catatan tentang "6 Pembahasan"**: ticket #16, #17, dan #18 sama-sama menyebut 6
+Pembahasan, tetapi skema di issue #1 tidak memberi field `penjelasan` pada `SoalKode` —
+hanya `Kuis` yang punya. Tiap Topik karena itu berisi **5 Pembahasan**, satu per Kuis.
+Pemilik memutuskan (2026-10-06) untuk tidak menambah field itu, sehingga Soal Kode tidak
+punya Pembahasan sampai ada keputusan lain. Angka "Pembahasan 72" di tabel "Angka scope"
+di bawah karena itu perlu dibaca sebagai 60 Pembahasan Kuis + 12 tanpa bentuknya.
 
 **Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
 → pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini
