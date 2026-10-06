@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "node --test \"src/**/*.test.ts\""
+    "test": "node --test \"src/**/*.test.ts\"",
+    "verifikasi-soal": "node scripts/verifikasi-soal.ts"
   },
   "dependencies": {
     "mdast-util-to-string": "4.0.0",

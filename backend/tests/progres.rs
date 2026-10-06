@@ -278,8 +278,7 @@ async fn progres_bertahan_setelah_database_dibuka_ulang() {
     let pool = dsa_backend::db::buka(&berkas)
         .await
         .expect("database harus bisa dibuka ulang");
-    let state = dsa_backend::AppState::baru(pendukung::TOKEN.to_string(), pool);
-    let app_baru = dsa_backend::app(state);
+    let app_baru = pendukung::app_dari_pool(pool);
 
     let response = app_baru
         .oneshot(dengan_token(permintaan_get("/api/progres")))

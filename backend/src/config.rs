@@ -17,6 +17,12 @@ pub struct Config {
     /// Berkas database SQLite.
     /// Alasan mesinnya SQLite ada di `docs/adr/0010-sqlite-litefs-sebagai-mesin-database.md`.
     pub database_path: PathBuf,
+    /// Nama image runner yang dipakai menjalankan kode pemelajar.
+    ///
+    /// Dibaca dari environment supaya versi image bisa dinaikkan tanpa menyentuh
+    /// kode. Keputusan memakai kontainer ada di
+    /// `docs/adr/0022-eksekusi-kode-lokal-lewat-docker.md`.
+    pub runner_image: String,
 }
 
 impl Config {
@@ -26,6 +32,7 @@ impl Config {
     /// - `PORT` (bawaan `8080`).
     /// - `API_TOKEN` (wajib) — backend menolak menyala tanpa ini.
     /// - `DATABASE_PATH` (bawaan `dsa.db` di direktori kerja).
+    /// - `RUNNER_IMAGE` (bawaan `dsa-runner:lokal`) — image yang menjalankan kode.
     pub fn from_env() -> Self {
         let host = std::env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
         let port = std::env::var("PORT")
@@ -43,10 +50,14 @@ impl Config {
             .unwrap_or_else(|_| "dsa.db".to_string())
             .into();
 
+        let runner_image =
+            std::env::var("RUNNER_IMAGE").unwrap_or_else(|_| "dsa-runner:lokal".to_string());
+
         Self {
             addr,
             api_token,
             database_path,
+            runner_image,
         }
     }
 

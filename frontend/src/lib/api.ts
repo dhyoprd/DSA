@@ -12,6 +12,7 @@
 import { ambilToken } from "./token.ts";
 import type { Kamus } from "./bahasa/kamus.ts";
 import type { StatusProgres } from "./konten/tipe.ts";
+import type { HasilEksekusi, PermintaanEksekusi } from "./eksekusi/tipe.ts";
 
 /** Balasan `GET /api/health`. */
 export interface HealthResponse {
@@ -247,9 +248,78 @@ export async function simpanCatatan(
   return response.json() as Promise<BarisCatatan>;
 }
 
+/**
+ * Jalankan kode Soal Kode dan kembalikan hasilnya per test case.
+ *
+ * Berbeda dari fungsi lain di modul ini, **galat pemelajar bukan lemparan**: kode yang
+ * gagal sintaks atau lewat batas waktu tetap dibalas `200` oleh backend, dengan
+ * `status` di dalam badan. Yang melempar hanya permintaan yang ditolak **sebelum**
+ * dijalankan (kode kosong, terlalu panjang, batas laju) atau kegagalan layanan.
+ *
+ * Pemisahan itu penting bagi pemanggil: `catch` di sini berarti "permintaannya tidak
+ * pernah sampai", sedangkan `status` di dalam hasil berarti "kodenya yang bermasalah".
+ * Menggabungkan keduanya akan membuat pemelajar melihat "kodenya terlalu panjang"
+ * sebagai kegagalan jaringan.
+ *
+ * Token wajib: endpoint eksekusi menjalankan kode, jadi ia di belakang token yang sama
+ * dengan Progres dan Catatan.
+ */
+export async function jalankanKode(
+  permintaan: PermintaanEksekusi,
+  kamus: Kamus,
+): Promise<HasilEksekusi> {
+  const response = await fetch("/api/eksekusi", {
+    method: "POST",
+    cache: "no-store",
+    headers: { ...headerToken(), "Content-Type": "application/json" },
+    body: JSON.stringify(permintaan),
+  });
+
+  if (!response.ok) {
+    throw new Error(await pesanPenolakan(response, kamus));
+  }
+
+  return response.json() as Promise<HasilEksekusi>;
+}
+
+/**
+ * Pesan untuk permintaan yang ditolak, dalam bahasa yang sedang berlaku.
+ *
+ * Backend mengirim dua hal saat menolak: `galat` (kalimat Indonesia) dan `jenis`
+ * (nama mesin-terbaca). Antarmuka memakai `jenis` untuk memilih kalimatnya sendiri
+ * dari kamus, dan jatuh ke `galat` kalau jenisnya belum dikenal — sehingga penolakan
+ * yang belum punya kalimat terjemahan tetap terbaca, bukan hilang.
+ *
+ * Badan galat dibaca sebagai JSON, tetapi kegagalan membacanya tidak dijadikan galat
+ * baru: rewrite Next bisa membalas HTML saat backend mati, dan pada saat itu yang
+ * berguna justru `pesanGalat` berdasarkan status.
+ */
+async function pesanPenolakan(response: Response, kamus: Kamus): Promise<string> {
+  let isi: { galat?: string; jenis?: string } | null = null;
+  try {
+    isi = (await response.json()) as { galat?: string; jenis?: string };
+  } catch {
+    isi = null;
+  }
+
+  switch (isi?.jenis) {
+    case "kode-kosong":
+      return kamus.soalKodeKosong;
+    case "ukuran-kode":
+      return kamus.soalKodeTerlaluPanjang;
+    case "batas-laju":
+      return kamus.soalKodeTerlaluSering;
+    case "jumlah-kasus":
+      // Pemelajar tidak bisa memperbaiki ini — jumlah test case milik Soal, bukan
+      // kodenya. Pesan backend dipakai apa adanya karena ia menyebut angkanya.
+      return isi.galat ?? pesanGalat(response.status, kamus);
+    default:
+      return isi?.galat ?? pesanGalat(response.status, kamus);
+  }
+}
+
 /** Nama berkas dari header `Content-Disposition`, atau `null` kalau tidak ada. */
-function namaBerkas(response: Response): string | null {
-  const header = response.headers.get("content-disposition");
+function namaBerkas(response: Response): string | null {  const header = response.headers.get("content-disposition");
   if (header === null) return null;
 
   const cocok = /filename="([^"]+)"/.exec(header);

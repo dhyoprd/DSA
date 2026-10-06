@@ -70,19 +70,42 @@ bisa terlupa. Yang diperiksa:
 Pesan kegagalan menyebut berkas dan lokasi masalahnya, dan **semua** masalah
 dikumpulkan sekaligus — supaya beberapa kesalahan bisa diperbaiki dalam satu putaran.
 
-Aturan yang **belum** ada: menjalankan `solusi_referensi` terhadap test case-nya
-sendiri. Itu butuh mesin Eksekusi Kode yang baru dibangun di ticket #10, dan di sana
-pula ia menjadi bagian gerbang ini.
+### Gerbang solusi referensi (ticket #10)
+
+Aturan yang **sudah ada**: menjalankan `solusi_referensi` terhadap test case-nya
+sendiri, di kontainer yang sama dengan yang dipakai situs. Aturan ini dari issue #1,
+dan ia yang menangkap test case yang salah tulis — kesalahan yang tidak bisa dilihat
+test HTTP mana pun, dan yang membuat pemelajar stuck pada Soal yang tidak punya
+jawaban benar (risiko nomor 4 di `docs/design-tree.md`).
+
+**Jalankan dengan perintah terpisah, sebelum commit:**
+
+```bash
+cd frontend && npm run verifikasi-soal
+```
+
+Ia **tidak** berjalan di `next dev`/`next build`: gerbang konten di `next.config.ts`
+dijalankan setiap kali, dan menuntut Docker hidup di sana akan memperlambat setiap
+start sekaligus membuat pengembangan Materi bergantung pada daemon Docker. Konsekuensi
+yang diterima: **ini satu langkah yang bisa terlupa**, dan repo ini belum punya CI.
+
+Perintahnya butuh image runner sudah dibangun (`docker build -t dsa-runner:lokal
+runner`). Alasannya di
+[`docs/adr/0022`](../docs/adr/0022-eksekusi-kode-lokal-lewat-docker.md); bentuk
+runner-nya di [`runner/README.md`](../runner/README.md).
+
+Kode gerbangnya ada di `frontend/src/lib/konten/` (`gerbang-soal.ts`, murni dan diuji)
+dan `frontend/scripts/verifikasi-soal.ts` (yang memanggil Docker).
 
 Kode gerbangnya ada di `frontend/src/lib/konten/`. Aturan isi (`periksa.ts`) murni —
 ia bekerja pada nilai JavaScript biasa, jadi bisa diuji tanpa membuat berkas contoh.
 
 ## Isi saat ini
 
-Materi dan kelima Kuis `stack.yaml` sudah tulisan sungguhan — ticket #4 menulis
-Materinya, dan ticket #6 menambahkan komponen serta logika penilaian Kuis-nya. Yang
-masih **draf** tinggal Soal Kodenya; ticket #10 menggantinya. Topik selain Stack
-belum punya berkas.
+Materi, kelima Kuis, dan **satu Soal Kode** `stack.yaml` sudah tulisan sungguhan —
+ticket #4 menulis Materinya, #6 menambahkan komponen serta logika penilaian Kuis-nya,
+dan **#10 mengganti draf Soal Kodenya dengan Soal sungguhan** sekaligus membangun mesin
+Eksekusi Kode yang menjalankannya. Topik selain Stack belum punya berkas.
 
 Catatan yang ditulis dari situs **tidak** disimpan di sini. Catatan dan Progres
 hidup di database backend, sesuai ADR-0003.
