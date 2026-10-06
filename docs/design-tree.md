@@ -29,6 +29,11 @@ Hasil sesi grilling. Setiap keputusan di bawah sudah dipilih sadar, bukan diasum
 > menjadi **menulis dua fungsi rekursif dari nol dan mengembalikan jumlah
 > pemanggilannya**, sehingga kedalaman rekursi dan laju pertumbuhannya terasa sebagai
 > angka. Lihat [ADR-0025](adr/0025-bentuk-soal-kode-rekursi.md).
+> **Diperluas ticket #21 (2026-10-06).** Untuk Topik **Sorting** — yang juga bukan
+> struktur data — bentuk ini kembali tidak bisa dipakai apa adanya. Soal Kodenya
+> menjadi **menulis dua algoritma pengurutan dari nol dan mengembalikan jumlah
+> perbandingannya**, sehingga perbedaan O(n²) dan O(n log n) terasa sebagai angka.
+> Lihat [ADR-0026](adr/0026-bentuk-soal-kode-sorting.md).
 **Batas keras**: tidak ada soal bergaya LeetCode. Semua Soal dan Pembahasan ditulis original. Soal LeetCode boleh ditautkan, tidak boleh disalin.
 **Pembahasan**: penuh, tersembunyi, terbuka setelah jawaban benar. Berisi pendekatan, kompleksitas, kode referensi, jebakan umum.
 **Kotak Penjelasan**: ada. Kamu menulis alasan dengan kata sendiri, tidak dinilai otomatis, lalu membandingkan dengan penjelasan referensi.
@@ -234,7 +239,7 @@ pun. Satu cacat isi juga ditemukan saat meninjau ulang: satu pengecoh di Kuis 4
 sebenarnya **juga benar** (perulangan memang memeriksa `sekarang.berikutnya`, sehingga
 simpul pertama tidak pernah jadi kandidat), dan diganti supaya hanya ada satu jawaban
 yang bisa dipertahankan.
-**Catatan tentang "6 Pembahasan"**: ticket #16, #17, #18, #19, dan #20 sama-sama
+**Catatan tentang "6 Pembahasan"**: ticket #16, #17, #18, #19, #20, dan #21 sama-sama
 menyebut 6 Pembahasan, tetapi skema di issue #1 tidak memberi field `penjelasan` pada
 `SoalKode` — hanya `Kuis` yang punya. Tiap Topik karena itu berisi **5 Pembahasan**,
 satu per Kuis.
@@ -281,6 +286,35 @@ batas (`turun(900)` aman, `turun(2000)` gagal); (b) diagram pohon rekursi `fib(5
 mula-mula menggambar 13 simpul karena satu `fib(2)` terdalam tidak dikembangkan,
 padahal prosanya menyebut 15 pemanggilan — diagram diganti dengan pohon lengkap 15
 simpul, dan prosanya kini menyebut perhitungannya (1 + 2 + 4 + 6 + 2).
+
+**Topik Sorting (#21) selesai — Topik ketujuh yang punya berkas.** Materi dua bahasa,
+5 Kuis skenario, 1 Soal Kode, dan 5 Pembahasan, semuanya tulisan asli. Topik ini
+**menyimpang lagi** dari bentuk Soal Kode yang ditetapkan dokumen ini — **bukan**
+implementasi struktur data dari nol — karena sorting bukan struktur data, sama seperti
+Big-O (#16) dan Rekursi (#20), dan berbeda dari Array & String (#17), Linked List
+(#18), dan Hash Table (#19) yang memang struktur data. Soalnya menjadi **menulis dua
+algoritma pengurutan dari nol dan mengembalikan jumlah perbandingannya**, supaya
+perbedaan O(n²) dan O(n log n) terasa sebagai angka; field `kompleksitas` juga diisi
+algoritma yang dianalisis. Keduanya dicatat di
+[ADR-0026](adr/0026-bentuk-soal-kode-sorting.md).
+**Tidak ada baris kode aplikasi yang berubah**: Topik ini masuk sebagai berkas
+`content/sorting.yaml`. **Empat cacat isi** ditemukan dengan **menjalankan dan meninjau
+ulang**, bukan membaca — sama seperti #16 sampai #20: (a) Pembahasan Kuis 4 mula-mula
+menyebut pengurutan gabung pada 10.000 elemen memakai `10.000 × 14 = 140.000`
+perbandingan — itu **batas atas teoretis**, bukan angka sesungguhnya; dijalankan, gabung
+pada 10.000 elemen yang sudah terurut memakai **64.608** perbandingan, sedangkan sisip
+**10.019** dan gelembung polos **49.995.000**; (b) Materi menyajikan `n log n = 64`
+sebagai jumlah perbandingan, padahal Kuis 3 menandai 64 sebagai pengecoh dan menyatakan
+jumlah sesungguhnya **32** — Materi kini menyebutnya sebagai laju pertumbuhan; (c)
+jebakan "seluruh data dipertahankan urutannya" di Kuis 5 menjelaskan arah perpindahan
+yang **terbalik** (siswa bernilai 70 dikatakan pindah ke belakang 80, padahal pada
+urutan menaik justru sebaliknya); (d) kalimat penutup Kuis 4 menyebut gabung "tidak
+terpengaruh" susunan data, bertabrakan dengan angkanya sendiri. Rinciannya di
+[ADR-0026](adr/0026-bentuk-soal-kode-sorting.md).
+Soal Kode-nya sengaja memakai **gelembung polos** (tanpa henti-awal), supaya jumlah
+perbandingannya selalu `n × (n - 1) / 2` dan tidak bergantung pada isi data — kalau
+memakai henti-awal, gelembung justru lebih hemat daripada gabung pada data terurut,
+dan Soal itu akan mengajarkan hal yang berlawanan dengan Materinya.
 
 **Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
 → pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini
