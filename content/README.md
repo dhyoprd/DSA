@@ -102,10 +102,30 @@ ia bekerja pada nilai JavaScript biasa, jadi bisa diuji tanpa membuat berkas con
 
 ## Isi saat ini
 
-Materi, kelima Kuis, dan **satu Soal Kode** `stack.yaml` sudah tulisan sungguhan —
-ticket #4 menulis Materinya, #6 menambahkan komponen serta logika penilaian Kuis-nya,
-dan **#10 mengganti draf Soal Kodenya dengan Soal sungguhan** sekaligus membangun mesin
-Eksekusi Kode yang menjalankannya. Topik selain Stack belum punya berkas.
+Tiga Topik sudah punya berkas, semuanya tulisan sungguhan:
+
+| Berkas | Isi | Ticket |
+|---|---|---|
+| `stack.yaml` | Materi, 5 Kuis, 1 Soal Kode | #4, #6, #10 |
+| `big-o.yaml` | Materi, 5 Kuis, 1 Soal Kode | #16 |
+| `array-string.yaml` | Materi, 5 Kuis, 1 Soal Kode | #17 |
+
+`stack.yaml` ditulis lebih dulu sebagai pembuktian teknis: #4 menulis Materinya, #6
+menambahkan komponen serta logika penilaian Kuis-nya, dan **#10 mengganti draf Soal
+Kodenya dengan Soal sungguhan** sekaligus membangun mesin Eksekusi Kode yang
+menjalankannya. `big-o.yaml` (#16) adalah Topik pertama di Jalur, dan Soal Kodenya
+menyimpang dari bentuk "implementasi struktur data dari nol" karena Big-O bukan
+struktur data — lihat ADR-0023. `array-string.yaml` (#17) kembali memenuhi bentuk itu
+apa adanya, karena array memang struktur data.
+
+**Sembilan Topik lain belum punya berkas.** Materi dan Soal untuk kesembilan Topik itu
+belum ditulis; `content/jalur.yaml` sudah mendeklarasikannya lebih dulu, sehingga
+Topik yang belum punya berkas tampil redup dan berlabel "segera" di sidebar.
+
+**Soal Kode tidak punya Pembahasan.** Skema di issue #1 tidak memberi field `penjelasan`
+pada `SoalKode`, jadi tiap Topik berisi **5 Pembahasan** (satu per Kuis), bukan 6 seperti
+tertulis di beberapa ticket. Itu keputusan pemilik (2026-10-06), dan berlaku untuk
+ketiga berkas di atas.
 
 Catatan yang ditulis dari situs **tidak** disimpan di sini. Catatan dan Progres
 hidup di database backend, sesuai ADR-0003.

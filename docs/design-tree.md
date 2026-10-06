@@ -203,6 +203,20 @@ yang dianalisis**, bukan struktur data. Kedua penyimpangan itu dicatat di
 **Kriteria "Progres Topik ini terlacak" terpenuhi sejak #27** — Progres tersambung ke
 tampilan lewat `ProgresProvider`; lihat "Progres tersambung (#27)" di atas.
 
+**Topik Array & String (#17) selesai — Topik ketiga yang punya berkas.** Materi dua
+bahasa, 5 Kuis skenario, 1 Soal Kode, dan 5 Pembahasan, semuanya tulisan asli. Topik ini
+kembali memenuhi bentuk Soal Kode yang ditetapkan dokumen ini apa adanya —
+**implementasi struktur data dari nol** — karena array memang struktur data; berbeda
+dari Big-O (#16), yang bukan struktur data dan karena itu menyimpang lewat ADR-0023.
+**Tidak ada ADR baru dan tidak ada baris kode aplikasi yang berubah**: Topik ini masuk
+sebagai berkas `content/array-string.yaml`, sama seperti #16.
+**Catatan tentang "6 Pembahasan"**: ticket #16 dan #17 sama-sama menyebut 6 Pembahasan,
+tetapi skema di issue #1 tidak memberi field `penjelasan` pada `SoalKode` — hanya `Kuis`
+yang punya. Tiap Topik karena itu berisi **5 Pembahasan**, satu per Kuis. Pemilik
+memutuskan (2026-10-06) untuk tidak menambah field itu, sehingga Soal Kode tidak punya
+Pembahasan sampai ada keputusan lain. Angka "Pembahasan 72" di tabel "Angka scope" di
+bawah karena itu perlu dibaca sebagai 60 Pembahasan Kuis + 12 tanpa bentuknya.
+
 **Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
 → pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini
 memenuhi user story 49 ("Pembahasan tersembunyi di balik tombol") yang sebelumnya
