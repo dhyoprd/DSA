@@ -18,6 +18,12 @@ Hasil sesi grilling. Setiap keputusan di bawah sudah dipilih sadar, bukan diasum
 **Komposisi per Topik**: 5 Kuis + 1 Soal Kode.
 **Bentuk Kuis**: skenario nyata, sebagian menampilkan kode untuk ditebak outputnya.
 **Bentuk Soal Kode**: implementasi struktur data dari nol, diuji test case otomatis.
+> **DIKOREKSI ticket #16 (2026-10-06).** Untuk Topik **Big-O** — yang bukan struktur
+> data — bentuk ini tidak bisa dipakai apa adanya. Soal Kodenya menjadi **menulis dua
+> pencarian dari nol dan mengembalikan jumlah langkah**, sehingga perbedaan O(n) dan
+> O(log n) terasa sebagai angka. Bentuk "implementasi struktur data dari nol" tetap
+> berlaku untuk Topik yang memang punya struktur. Lihat
+> [ADR-0023](adr/0023-bentuk-soal-kode-big-o-dan-kompleksitas-algoritma.md).
 **Batas keras**: tidak ada soal bergaya LeetCode. Semua Soal dan Pembahasan ditulis original. Soal LeetCode boleh ditautkan, tidak boleh disalin.
 **Pembahasan**: penuh, tersembunyi, terbuka setelah jawaban benar. Berisi pendekatan, kompleksitas, kode referensi, jebakan umum.
 **Kotak Penjelasan**: ada. Kamu menulis alasan dengan kata sendiri, tidak dinilai otomatis, lalu membandingkan dengan penjelasan referensi.
@@ -118,7 +124,8 @@ tanpa bahasa dialihkan `proxy.ts`. Materi tetap halaman statis per bahasa. Lihat
 Catatan (#14) sudah ada. **Rantai Stack kini lengkap ujung ke ujung.** **Catatan
 penting**: Progres sudah punya endpoint tetapi **belum tersambung ke tampilan** —
 status ○◐● di sidebar masih selalu ○. Beberapa komentar di kode menyebut #8 sebagai
-yang menyambungkannya; itu keliru, dan sudah dikoreksi. Lihat
+yang menyambungkannya; itu keliru, dan sudah dikoreksi. **Pekerjaan itu kini punya
+ticketnya sendiri: #27** (dibuat ticket #16). Lihat
 [ADR-0017](adr/0017-kotak-penjelasan-dan-pembahasan-di-balik-tombol.md).
 
 **Eksekusi Kode (#10) selesai.** Soal Kode Stack tampil di halaman Topik **setelah
@@ -143,9 +150,10 @@ keduanya disusun CSV berformat Anki **saat build**, disajikan statis di
 ditambahkan di antarmuka (beranda), mengikuti pola ADR-0018. `GET /api/ekspor/progres`
 **tetap terpisah** — keputusan pemilik, karena Progres hanya ada di server sedangkan
 CSV dan Catatan tidak. Lihat [ADR-0019](adr/0019-field-kompleksitas-istilah-dan-ekspor-csv.md).
-**Catatan**: baru `stack` yang punya berkas, jadi CSV baru berisi Topik itu; kriteria
-"ekspor mencakup Topik yang sudah diselesaikan" belum bisa diuji sampai Topik kedua
-ditulis.
+**Catatan**: `stack` dan `big-o` sudah punya berkas, jadi CSV berisi kedua Topik itu;
+kriteria "ekspor mencakup Topik yang sudah diselesaikan" tetap belum bisa diuji penuh
+sampai ada Topik yang **diselesaikan** lewat Progres — dan Progres belum tersambung ke
+tampilan (lihat ticket #27).
 
 **Pencarian (#13) selesai.** Fase 1 nomor 2 kini ada: halaman `/[bahasa]/pencarian`
 dengan kotak yang menampilkan hasil **saat mengetik**. Indeks disusun dari Materi
@@ -154,8 +162,8 @@ pencocokannya berjalan di peramban — tanpa backend, tanpa token, dan tetap bek
 saat backend mati. Tautan ke halaman ini ada di beranda dan di sidebar setiap Topik.
 Istilah **Pencarian** ditambahkan ke `CONTEXT.md` oleh ticket ini. Lihat
 [ADR-0020](adr/0020-pencarian-halaman-indeks-dan-pencocokan-di-peramban.md).
-**Catatan**: baru `stack` yang punya berkas, jadi baru bagian Materi Topik itu yang
-bisa ditemukan; keduanya bertambah sendiri saat Topik berikutnya ditulis.
+**Catatan**: `stack` dan `big-o` sudah punya berkas, jadi bagian Materi kedua Topik itu
+yang bisa ditemukan; keduanya bertambah sendiri saat Topik berikutnya ditulis.
 
 **Visualisasi Stack (#15) selesai sebagian.** Visualisasi pertama ada: bagian di
 halaman Topik, tepat di bawah Materi, menampilkan **Stack dan Queue** dengan urutan
@@ -169,6 +177,17 @@ gzip, hanya di rute Topik). Urutan langkahnya ada di dalam kode, **bukan** di
 [ADR-0021](adr/0021-visualisasi-stack-di-halaman-topik-lewat-motion.md).
 **Catatan**: ini baru 1 dari 12 Visualisasi yang dijanjikan; 11 Topik lain belum punya,
 dan `VISUALISASI_PER_TOPIK` di `daftar-visualisasi.tsx` masih berisi satu baris.
+
+**Topik Big-O (#16) selesai — Topik kedua yang punya berkas.** Materi dua bahasa,
+5 Kuis skenario, 1 Soal Kode, dan 6 Pembahasan, semuanya tulisan asli. Big-O adalah
+Topik pertama di Jalur (`prasyarat: []`) dan **bukan struktur data**, sehingga bentuk
+Soal Kode yang ditetapkan dokumen ini tidak bisa dipakai apa adanya: Soalnya menjadi
+**menulis dua pencarian dari nol dan mengembalikan jumlah langkah**, supaya perbedaan
+O(n) dan O(log n) terasa sebagai angka. Field `kompleksitas` juga diisi **algoritma
+yang dianalisis**, bukan struktur data. Kedua penyimpangan itu dicatat di
+[ADR-0023](adr/0023-bentuk-soal-kode-big-o-dan-kompleksitas-algoritma.md).
+**Kriteria "Progres Topik ini terlacak" BELUM terpenuhi** — Progres masih belum
+tersambung ke tampilan; pekerjaannya dipisahkan ke ticket #27.
 
 **Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
 → pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini
