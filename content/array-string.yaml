@@ -1,0 +1,1173 @@
+# Topik 2 — Array & String.
+#
+# Topik kedua di Jalur, `prasyarat: [1]` (Big-O). Materi di sini memakai notasi O(...)
+# yang diajarkan Topik 1, jadi keduanya berurutan dengan sengaja.
+#
+# **Tidak ada penyimpangan yang perlu dicatat.** `docs/design-tree.md` menetapkan Soal
+# Kode berbentuk "implementasi struktur data dari nol". Array **adalah** struktur data,
+# jadi bentuk itu bisa dipakai apa adanya di sini — berbeda dari Big-O (#16), yang bukan
+# struktur data dan karena itu butuh ADR-0023. Berkas ini tidak menuntut ADR baru.
+#
+# **Pembahasan hanya untuk kelima Kuis.** Soal Kode di sini tidak punya Pembahasan,
+# karena skema di issue #1 — dan `frontend/src/lib/konten/tipe.ts` — tidak punya field
+# `penjelasan` pada `SoalKode`. Menambahkannya berarti perubahan skema. Pemilik sudah
+# memutuskan (2026-10-06) bahwa cukup 5 Pembahasan, sama seperti #16 dan #10 yang juga
+# diterima tanpa Pembahasan Soal Kode.
+#
+# Semua Soal dan Pembahasan di sini ditulis original, sesuai ADR-0005. Tidak ada teks
+# LeetCode yang disalin maupun diterjemahkan.
+#
+# `nomor`, `slug`, `judul`, dan `prasyarat` harus sama dengan content/jalur.yaml —
+# validator menolak build kalau berbeda.
+
+nomor: 2
+slug: array-string
+judul:
+  id: Array & String
+  en: Array & String
+prasyarat: [1]
+
+# Sumber terstruktur untuk ekspor CSV/Anki (ticket #14). Isinya struktur data Topik ini
+# beserta biaya operasinya. `waktu` dan `ruang` memakai notasi O(...) apa adanya —
+# notasi itu sama di kedua bahasa, jadi menerjemahkannya hanya menghasilkan dua salinan
+# yang bisa menyimpang tanpa menambah informasi.
+kompleksitas:
+  - struktur:
+      id: Array (dinamis)
+      en: Array (dynamic)
+    ruang: O(n)
+    operasi:
+      - nama: { id: Ambil elemen per indeks, en: Read an element by index }
+        waktu: O(1)
+      - nama: { id: Tambah elemen di belakang, en: Add an element at the back }
+        waktu: O(1) amortized
+      - nama: { id: Sisip elemen di tengah, en: Insert an element in the middle }
+        waktu: O(n)
+      - nama: { id: Hapus elemen di tengah, en: Remove an element in the middle }
+        waktu: O(n)
+      - nama: { id: Cari satu nilai, en: Find one value }
+        waktu: O(n)
+
+  - struktur:
+      id: String (imutabel)
+      en: String (immutable)
+    ruang: O(n)
+    operasi:
+      - nama: { id: Ambil satu karakter, en: Read a single character }
+        waktu: O(1)
+      - nama: { id: Gabung dua string, en: Concatenate two strings }
+        waktu: O(n)
+      - nama: { id: Bandingkan dua string, en: Compare two strings }
+        waktu: O(n)
+      - nama: { id: Periksa apakah ada satu karakter, en: Check whether a character is present }
+        waktu: O(n)
+
+# Istilah yang layak dihafal. `istilah` adalah pasangan Indonesia–English; `definisi`
+# menjelaskannya di kedua bahasa. Istilah yang tidak punya padanan Indonesia — mis.
+# "String" — tetap dicatat, tetapi pasangannya sama di kedua bahasa; kartu
+# "String → String" tidak dihasilkan karena tidak menguji apa pun.
+istilah:
+  - istilah: { id: Larik, en: Array }
+    definisi:
+      id: Deretan nilai yang disimpan bersebelahan dan masing-masing punya nomor urut sendiri, sehingga satu nilai bisa diambil langsung lewat nomornya.
+      en: A row of values stored side by side, each with its own position number, so a single value can be fetched directly through that number.
+  - istilah: { id: Indeks, en: Index }
+    definisi:
+      id: Nomor posisi sebuah elemen di dalam array. Di Python dan hampir semua bahasa, indeks pertama bernilai 0, bukan 1.
+      en: The position number of an element inside an array. In Python and almost every language, the first index is 0, not 1.
+  - istilah: { id: Elemen, en: Element }
+    definisi:
+      id: Satu nilai yang disimpan di dalam array, menempati satu posisi.
+      en: One value stored inside an array, occupying one position.
+  - istilah: { id: Array dinamis, en: Dynamic array }
+    definisi:
+      id: Array yang ukurannya bisa bertambah saat sudah penuh. Ia menampung kelebihan kapasitas sejak awal, dan hanya sesekali menyalin isinya ke tempat yang lebih besar.
+      en: An array whose size can grow once it is full. It keeps spare capacity in advance, and only occasionally copies its contents somewhere larger.
+  - istilah: { id: Penggeseran, en: Shifting }
+    definisi:
+      id: Memindahkan elemen satu per satu ke posisi sebelahnya. Inilah yang membuat menyisipkan atau menghapus di tengah array memakan waktu O(n).
+      en: Moving elements one by one into the neighbouring position. This is what makes inserting or removing in the middle of an array cost O(n).
+  - istilah: { id: Kapasitas, en: Capacity }
+    definisi:
+      id: Berapa banyak elemen yang bisa ditampung sebelum array dinamis perlu diperbesar. Selalu lebih besar atau sama dengan jumlah elemen yang sedang tersimpan.
+      en: How many elements an array can hold before it needs to grow. Always greater than or equal to the number of elements currently stored.
+  - istilah: { id: Imutabel, en: Immutable }
+    definisi:
+      id: Sifat nilai yang tidak bisa diubah setelah dibuat. String di Python imutabel — setiap "perubahan" sebenarnya menghasilkan string baru.
+      en: The property of a value that cannot be changed after it is created. Python strings are immutable — every "change" actually produces a new string.
+  - istilah: { id: String, en: String }
+    definisi:
+      id: Deretan karakter. Akses per indeksnya O(1), tetapi karena imutabel, menyambungnya berulang kali di dalam perulangan menjadi mahal.
+      en: A row of characters. Reading it by index is O(1), but because it is immutable, joining it repeatedly inside a loop becomes expensive.
+
+materi:
+  id: |
+    ## Deretan kotak bernomor
+
+    Bayangkan sederet loker di sekolah, semuanya bersebelahan, masing-masing punya
+    nomor. Kamu bisa langsung membuka loker nomor 7 tanpa membuka loker 1 sampai 6
+    lebih dulu — kamu hanya perlu nomornya.
+
+    Itulah **array**: deretan nilai yang disimpan bersebelahan, dan masing-masing punya
+    **indeks** (nomornya). Di Python, array yang paling sering kamu pakai bernama `list`.
+
+    ```python
+    nilai = [10, 20, 30, 40]
+    ```
+
+    ## Indeks dimulai dari nol
+
+    Ini sering membingungkan di awal. Pada daftar di atas, `nilai[0]` bernilai `10`,
+    bukan `nilai[1]`. Elemen keempat (`40`) ada di `nilai[3]`.
+
+    Alasannya bukan keisengan. Indeks sebenarnya adalah **jarak dari awal**: elemen
+    pertama berjarak 0 langkah dari awal, elemen kedua berjarak 1 langkah, dan
+    seterusnya. Cara berpikir itu yang nanti membuat alamat elemen bisa dihitung
+    langsung.
+
+    Karena itu, kalau array berisi n elemen, indeks yang sah adalah 0 sampai n − 1.
+    Meminta `nilai[4]` pada daftar berisi empat elemen menghasilkan `IndexError` —
+    bukan nilai kosong, melainkan kesalahan. Itu kabar baik: kesalahan yang berteriak
+    jauh lebih mudah ditemukan daripada kesalahan yang diam.
+
+    ## Kenapa akses per indeks itu O(1)
+
+    Karena semua kotaknya sama besar dan bersebelahan, komputer tidak perlu mencari.
+    Ia menghitung alamatnya dengan satu perkalian:
+
+    ```
+    alamat elemen ke-i = alamat awal + i × ukuran satu kotak
+    ```
+
+    Tidak ada perulangan, tidak ada pemeriksaan satu per satu. Itu sebabnya `nilai[2]`
+    memakan waktu yang sama, entah array-nya berisi sepuluh elemen atau sepuluh juta.
+
+    Bandingkan dengan mencari **nilai** tertentu — misalnya "apakah angka 42 ada di
+    dalam daftar ini?". Array tidak menyimpan peta nilai ke posisi, jadi satu-satunya
+    cara adalah memeriksa dari depan satu per satu. Itu `O(n)`. Perhatikan bedanya:
+    **mengambil posisi yang sudah kamu tahu** itu `O(1)`, **mencari posisi yang belum
+    kamu tahu** itu `O(n)`.
+
+    ## Array dinamis: ukuran yang bisa berubah
+
+    Array klasik di bahasa tingkat rendah punya ukuran tetap: kalau kamu memesan sepuluh
+    kotak, kamu mendapat sepuluh kotak, tidak bisa lebih. `list` di Python bukan array
+    klasik — ia **array dinamis**, dan ukurannya bisa bertambah.
+
+    Caranya begini. `list` menyimpan dua angka: berapa elemen yang sedang terisi
+    (`ukuran`) dan berapa yang muat (`kapasitas`). Kapasitas sengaja dibuat lebih besar
+    dari ukuran, sehingga ada ruang cadangan.
+
+    ```python
+    # Gambaran keadaan internal setelah menambah 3 elemen ke list kosong:
+    #   ukuran    = 3
+    #   kapasitas = 4      ← ada satu slot cadangan
+    #   isi       = [10, 20, 30, _]
+    ```
+
+    Selama masih ada slot cadangan, menambah elemen di belakang hanya menulis ke slot
+    berikutnya — **O(1)**. Ketika cadangan habis, `list` membuat array baru yang lebih
+    besar, menyalin seluruh isinya, lalu menambahkan elemen baru. Penyalinan itu sendiri
+    `O(n)`.
+
+    Kalau penyalinan itu `O(n)`, kenapa kita bilang menambah di belakang `O(1)`?
+    Karena penyalinan itu **jarang** terjadi. Angka "jarang" itu bukan kira-kira: kalau
+    kapasitas baru selalu **beberapa kali** yang lama (bukan sekadar ditambah sedikit),
+    maka penyalinan yang sudah terjadi selalu lebih kecil daripada penyalinan
+    berikutnya, sehingga total elemen yang disalin sepanjang perjalanan tetap sebanding
+    dengan n — bukan n². Dibagi ke semua penambahan, biaya rata-ratanya tetap O(1).
+    Biaya rata-rata seperti ini disebut **amortized** — mahal sesekali, murah
+    rata-ratanya.
+
+    Berapa kali persisnya ia membesar adalah urusan dalam masing-masing bahasa. `list`
+    Python membesar sekitar 1,125 kali, banyak bahasa lain memakai 2 kali. Yang penting
+    bukan angkanya, melainkan sifatnya: **selalu ada faktor tetap yang lebih besar dari
+    1**. Kalau kapasitasnya hanya ditambah satu slot setiap kali, seluruh isinya akan
+    disalin pada setiap penambahan, dan biayanya kembali menjadi `O(n²)`.
+
+    ## Biaya menyisipkan dan menghapus
+
+    Di sinilah array menunjukkan kelemahannya. Karena elemennya bersebelahan dan
+    berurutan, menyisipkan di tengah berarti semua elemen di sebelah kanannya harus
+    **digeser** satu langkah:
+
+    ```
+    Sebelum:  [A] [B] [C] [D] [E]
+    Sisip X di indeks 2:
+    geser C,D,E ke kanan satu langkah:  [A] [B] [ ] [C] [D] [E]
+    taruh X:                            [A] [B] [X] [C] [D] [E]
+    ```
+
+    Kalau yang disisipkan di indeks 0, **seluruh** isi array bergeser — `O(n)`. Kalau
+    disisipkan di ujung, tidak ada yang bergeser — `O(1)`. Menghapus bekerja dengan cara
+    yang sama, hanya arah geserannya ke kiri.
+
+    Inilah mengapa Queue (Topik 4) tidak diimplementasikan dengan array biasa:
+    mengambil dari depan berarti menggeser seluruh sisanya setiap kali, dan itu mahal.
+
+    ## String: deretan karakter yang tidak bisa diubah
+
+    String adalah deretan karakter, dan akses per indeksnya juga `O(1)`:
+
+    ```python
+    teks = "halo"
+    print(teks[1])      # a
+    ```
+
+    Bedanya dengan array: string **imutabel** — tidak bisa diubah setelah dibuat.
+
+    ```python
+    teks = "halo"
+    teks[0] = "H"       # TypeError: 'str' object does not support item assignment
+    ```
+
+    Untuk "mengubahnya", kamu sebenarnya membuat string **baru**:
+
+    ```python
+    teks = "halo"
+    teks = "H" + teks[1:]      # teks sekarang "Halo" — string baru
+    ```
+
+    Imutabilitas ini bukan kekurangan. Karena string tidak bisa berubah, ia aman dipakai
+    bersama-sama: dua bagian program yang memegang string yang sama tidak bisa saling
+    mengejutkan. Tetapi ia punya satu konsekuensi yang harus kamu tahu.
+
+    ## Jebakan: menyambung string di dalam perulangan
+
+    Perhatikan cara menyusun teks yang paling wajar ditulis pemula:
+
+    ```python
+    teks = ""
+    for baris in daftar_baris:
+        teks += baris
+    ```
+
+    Terlihat seperti menambahkan ke ujung, seperti array. **Tidak.** Karena string
+    imutabel, `teks += baris` membuat string **baru** sepanjang gabungan keduanya, lalu
+    menyalin seluruh isi lama ke sana. Untuk n baris, jumlah karakter yang disalin
+    adalah 1 + 2 + 3 + … + n, yaitu `O(n²)`.
+
+    Cara yang benar: kumpulkan dulu potongannya ke dalam `list`, lalu gabungkan sekali
+    di akhir.
+
+    ```python
+    potongan = []
+    for baris in daftar_baris:
+        potongan.append(baris)
+    teks = "".join(potongan)        # O(n)
+    ```
+
+    `join` bisa menghitung total panjangnya sekali, mengalokasikan satu tempat sekali,
+    lalu menyalin setiap potongan tepat sekali. Itu `O(n)` — perbedaan yang tidak
+    terasa pada seratus baris, tetapi terasa detikannya pada seratus ribu.
+
+    ## Tabel kompleksitas
+
+    | Operasi | Waktu | Kenapa |
+    |---|---|---|
+    | Ambil elemen per indeks | O(1) | Alamat dihitung langsung, tanpa mencari |
+    | Tambah elemen di belakang | O(1) amortized | Menulis ke slot cadangan; sesekali menyalin |
+    | Sisip elemen di tengah | O(n) | Seluruh elemen di kanannya bergeser |
+    | Hapus elemen di tengah | O(n) | Seluruh elemen di kanannya bergeser |
+    | Cari satu nilai | O(n) | Diperiksa satu per satu dari depan |
+    | Ambil satu karakter string | O(1) | Sama seperti array |
+    | Gabung dua string | O(n) | String baru disalin utuh |
+    | Bandingkan dua string | O(n) | Karakter dibandingkan sampai ada yang berbeda |
+
+    ## Jebakan yang sering terjadi
+
+    **Mengira indeks mulai dari 1.** Menulis `nilai[1]` untuk "elemen pertama" adalah
+    kesalahan paling sering, dan akibatnya bukan error — hasilnya hanya bergeser satu,
+    sehingga sulit terlihat. Satu-satunya obatnya adalah membiasakan diri.
+
+    **Mengira menghapus selalu murah.** `list.pop()` tanpa argumen mengambil dari
+    belakang dan memang `O(1)`. `list.pop(0)` mengambil dari depan dan `O(n)`. Bentuk
+    pemanggilannya terlihat hampir sama, biayanya berbeda jauh. Menghapus dari depan n
+    kali menjadi `O(n²)`.
+
+    **Mengira semua operasi array itu O(1).** Hanya **akses per indeks** dan **tambah
+    di ujung** yang `O(1)`. Begitu kamu menyisipkan, menghapus, atau mencari, biayanya
+    `O(n)`.
+
+    **Menyambung string di dalam perulangan.** Sudah dibahas di atas, dan tetap jebakan
+    nomor satu pada Topik ini. Bentuk `+=` pada string dan `+=` pada daftar terlihat
+    sama tetapi biayanya `O(n²)` lawan `O(1)`.
+
+    **Mengira `"a" in teks` itu O(1).** Operator `in` pada string mencari dari awal,
+    jadi `O(n)`. Pada `set` dan `dict` (Topik 5) ia baru benar-benar `O(1)`.
+
+    **Lupa bahwa string tidak bisa diubah di tempat.** Menulis algoritma yang "menukar
+    karakter dalam string" akan gagal. Ubah dulu ke `list`, kerjakan, lalu gabungkan
+    kembali dengan `"".join(...)`.
+
+  en: |
+    ## A row of numbered boxes
+
+    Picture a row of school lockers, all side by side, each with its own number. You can
+    open locker number 7 directly without opening lockers 1 through 6 first — you only
+    need its number.
+
+    That is an **array**: a row of values stored side by side, each with its own
+    **index** (its number). In Python, the array you will use most is called `list`.
+
+    ```python
+    nilai = [10, 20, 30, 40]
+    ```
+
+    ## Indexes start at zero
+
+    This confuses people at first. In the list above, `nilai[0]` is `10`, not `nilai[1]`.
+    The fourth element (`40`) sits at `nilai[3]`.
+
+    This is not a prank. An index is really a **distance from the start**: the first
+    element is 0 steps from the beginning, the second is 1 step, and so on. That way of
+    thinking is what later lets an element's address be computed directly.
+
+    So if an array holds n elements, the valid indexes are 0 through n − 1. Asking for
+    `nilai[4]` on a four-element list raises `IndexError` — not an empty value, an
+    error. That is good news: an error that shouts is far easier to find than one that
+    stays quiet.
+
+    ## Why reading by index is O(1)
+
+    Because every box is the same size and they sit side by side, the computer does not
+    need to search. It computes the address with a single multiplication:
+
+    ```
+    address of element i = start address + i × size of one box
+    ```
+
+    No loop, no checking one by one. That is why `nilai[2]` takes the same time whether
+    the array holds ten elements or ten million.
+
+    Compare that with finding a particular **value** — say, "is the number 42 in this
+    list?". An array keeps no map from value to position, so the only way is to check
+    from the front, one by one. That is `O(n)`. Notice the difference: **reading a
+    position you already know** is `O(1)`; **finding a position you do not know** is
+    `O(n)`.
+
+    ## Dynamic arrays: a size that can change
+
+    A classic array in a low-level language has a fixed size: order ten boxes, get ten
+    boxes, no more. Python's `list` is not a classic array — it is a **dynamic array**,
+    and its size can grow.
+
+    Here is how. A `list` keeps two numbers: how many elements are filled (`size`) and
+    how many fit (`capacity`). The capacity is deliberately kept larger than the size,
+    so there is spare room.
+
+    ```python
+    # The internal state after adding 3 elements to an empty list:
+    #   size     = 3
+    #   capacity = 4      ← one spare slot
+    #   contents = [10, 20, 30, _]
+    ```
+
+    As long as a spare slot exists, adding an element at the back just writes into the
+    next slot — **O(1)**. When the spare runs out, the `list` allocates a larger array,
+    copies everything over, then adds the new element. That copying is itself `O(n)`.
+
+    If copying is `O(n)`, why do we call adding at the back `O(1)`? Because the copying
+    is **rare**. And "rare" here is not a guess: if the new capacity is always **some
+    multiple** of the old one (rather than a few slots larger), then each copy already
+    done is smaller than the next one, so the total elements copied along the way stays
+    proportional to n — not n². Spread across all the additions, the average cost is
+    O(1). An average cost like this is called **amortized** — occasionally expensive,
+    cheap on average.
+
+    Exactly how much it grows is an internal detail of each language. Python's `list`
+    grows by about 1.125×, many other languages use 2×. What matters is not the number
+    but the property: **there is always a fixed factor greater than 1**. If the capacity
+    were increased by a single slot each time, the whole contents would be copied on
+    every addition, and the cost would fall back to `O(n²)`.
+
+    ## The cost of inserting and removing
+
+    This is where an array shows its weakness. Because elements sit side by side in
+    order, inserting in the middle means every element to its right must **shift** one
+    step:
+
+    ```
+    Before:  [A] [B] [C] [D] [E]
+    Insert X at index 2:
+    shift C,D,E right by one:  [A] [B] [ ] [C] [D] [E]
+    place X:                   [A] [B] [X] [C] [D] [E]
+    ```
+
+    If you insert at index 0, **the whole** array shifts — `O(n)`. If you insert at the
+    end, nothing shifts — `O(1)`. Removing works the same way, only the shift goes left.
+
+    This is why a Queue (Topic 4) is not implemented with a plain array: taking from the
+    front means shifting everything else every time, and that is expensive.
+
+    ## Strings: rows of characters that cannot change
+
+    A string is a row of characters, and reading it by index is also `O(1)`:
+
+    ```python
+    teks = "halo"
+    print(teks[1])      # a
+    ```
+
+    The difference from an array: a string is **immutable** — it cannot be changed after
+    it is created.
+
+    ```python
+    teks = "halo"
+    teks[0] = "H"       # TypeError: 'str' object does not support item assignment
+    ```
+
+    To "change" it, you actually build a **new** string:
+
+    ```python
+    teks = "halo"
+    teks = "H" + teks[1:]      # teks is now "Halo" — a new string
+    ```
+
+    Immutability is not a defect. Because a string cannot change, it is safe to share:
+    two parts of a program holding the same string cannot surprise each other. But it
+    carries one consequence you must know.
+
+    ## Trap: joining strings inside a loop
+
+    Look at the way a beginner most naturally builds up text:
+
+    ```python
+    teks = ""
+    for baris in daftar_baris:
+        teks += baris
+    ```
+
+    It looks like appending to the end, the way an array does. **It is not.** Because
+    strings are immutable, `teks += baris` builds a **new** string as long as the two
+    combined, then copies the whole old contents into it. For n lines, the number of
+    characters copied is 1 + 2 + 3 + … + n, which is `O(n²)`.
+
+    The right way: collect the pieces into a `list` first, then join once at the end.
+
+    ```python
+    potongan = []
+    for baris in daftar_baris:
+        potongan.append(baris)
+    teks = "".join(potongan)        # O(n)
+    ```
+
+    `join` can compute the total length once, allocate one place once, then copy each
+    piece exactly once. That is `O(n)` — a difference you will not feel on a hundred
+    lines, but will feel in seconds on a hundred thousand.
+
+    ## Complexity table
+
+    | Operation | Time | Why |
+    |---|---|---|
+    | Read an element by index | O(1) | The address is computed directly, no search |
+    | Add an element at the back | O(1) amortized | Writes into a spare slot; occasionally copies |
+    | Insert an element in the middle | O(n) | Every element to its right shifts |
+    | Remove an element in the middle | O(n) | Every element to its right shifts |
+    | Find one value | O(n) | Checked one by one from the front |
+    | Read a single character | O(1) | Same as an array |
+    | Concatenate two strings | O(n) | The new string is copied whole |
+    | Compare two strings | O(n) | Characters compared until one differs |
+
+    ## Traps that catch people
+
+    **Assuming indexes start at 1.** Writing `nilai[1]` for "the first element" is the
+    most common mistake, and the result is not an error — it is just off by one, which
+    makes it hard to see. The only cure is habit.
+
+    **Assuming removing is always cheap.** `list.pop()` with no argument takes from the
+    back and is indeed `O(1)`. `list.pop(0)` takes from the front and is `O(n)`. The two
+    calls look almost identical; the costs are far apart. Removing from the front n
+    times becomes `O(n²)`.
+
+    **Assuming every array operation is O(1).** Only **reading by index** and **adding
+    at the end** are `O(1)`. The moment you insert, remove, or search, the cost is
+    `O(n)`.
+
+    **Joining strings inside a loop.** Covered above, and still the number one trap in
+    this Topic. The `+=` shape looks the same on a string and on a list, but the costs
+    are `O(n²)` against `O(1)`.
+
+    **Assuming `"a" in teks` is O(1).** The `in` operator on a string searches from the
+    front, so it is `O(n)`. On a `set` and a `dict` (Topic 5) it truly is `O(1)`.
+
+    **Forgetting that strings cannot be changed in place.** An algorithm that "swaps
+    characters inside a string" will fail. Convert to a `list` first, do the work, then
+    join it back with `"".join(...)`.
+
+soal:
+  # --- Kuis 1: sisip di tengah → hitung penggeseran -------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi berikut menyisipkan sebuah nilai ke dalam array pada posisi tertentu
+        dengan cara menggeser elemen di kanannya satu per satu, sambil menghitung
+        berapa kali penggeseran terjadi. Berapa nilai yang dikembalikan?
+      en: |
+        The function below inserts a value into an array at a given position by shifting
+        the elements to its right one at a time, counting how many shifts happen. What
+        does it return?
+    kode: |
+      def berapa_geser(daftar, indeks, nilai):
+          geser = 0
+          i = len(daftar)
+          daftar.append(None)
+          while i > indeks:
+              daftar[i] = daftar[i - 1]
+              geser += 1
+              i -= 1
+          daftar[indeks] = nilai
+          return geser
+
+      print(berapa_geser([1, 2, 3, 4, 5], 1, 99))
+    opsi:
+      - teks:
+          id: "1, karena hanya satu nilai yang disisipkan"
+          en: "1, because only one value is inserted"
+        benar: false
+      - teks:
+          id: "4, karena elemen di indeks 1 sampai 4 semuanya bergeser satu langkah"
+          en: "4, because the elements at indexes 1 through 4 each shift one step"
+        benar: true
+      - teks:
+          id: "5, karena seluruh isi array bergeser"
+          en: "5, because the whole array shifts"
+        benar: false
+      - teks:
+          id: "0, karena menyisipkan tidak menggeser apa pun"
+          en: "0, because inserting shifts nothing"
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Array mula-mula berisi lima elemen, lalu satu slot kosong
+        ditambahkan di belakang sehingga panjangnya menjadi enam. Perulangan berjalan
+        dari indeks 5 mundur ke indeks 2, memindahkan tiap elemen satu langkah ke
+        kanan: elemen di indeks 4 → 5, 3 → 4, 2 → 3, 1 → 2. Itu empat kali geser.
+        Setelah itu `99` ditaruh di indeks 1.
+
+        Hasil akhirnya `[1, 99, 2, 3, 4, 5]`.
+
+        **Kompleksitas.** Menyisipkan di tengah array `O(n)`, karena seluruh elemen di
+        sebelah kanannya harus bergeser. Di sini yang bergeser empat dari lima elemen.
+        Kalau posisinya indeks 0, kelimanya bergeser; kalau posisinya di ujung, tidak
+        ada yang bergeser dan biayanya `O(1)`.
+
+        **Kode referensi.**
+
+        ```python
+        def berapa_geser(daftar, indeks, nilai):
+            geser = 0
+            i = len(daftar)
+            daftar.append(None)          # tambah satu slot di belakang
+            while i > indeks:            # geser dari kanan ke kiri
+                daftar[i] = daftar[i - 1]
+                geser += 1
+                i -= 1
+            daftar[indeks] = nilai
+            return geser
+        ```
+
+        **Jebakan umum.** Jawaban 1 berasal dari mengira biaya menyisipkan sama dengan
+        banyaknya nilai yang disisipkan — padahal biayanya ditentukan oleh berapa banyak
+        elemen yang harus **bergeser**, bukan berapa nilai yang masuk. Jawaban 5 berasal
+        dari mengira seluruh array bergeser, padahal elemen di indeks 0 (nilai `1`)
+        tidak pernah berpindah. Jawaban 0 melewatkan bahwa array menyimpan elemennya
+        bersebelahan, sehingga tidak ada celah untuk menaruh nilai baru tanpa menggeser.
+      en: |
+        **Approach.** The array starts with five elements, then one empty slot is added
+        at the back so its length becomes six. The loop runs from index 5 backwards to
+        index 2, moving each element one step right: the element at index 4 → 5, 3 → 4,
+        2 → 3, 1 → 2. That is four shifts. Then `99` is placed at index 1.
+
+        The final result is `[1, 99, 2, 3, 4, 5]`.
+
+        **Complexity.** Inserting in the middle of an array is `O(n)`, because every
+        element to its right must shift. Here four of the five elements shift. If the
+        position were index 0, all five would shift; if it were the end, nothing would
+        shift and the cost would be `O(1)`.
+
+        **Reference code.**
+
+        ```python
+        def berapa_geser(daftar, indeks, nilai):
+            geser = 0
+            i = len(daftar)
+            daftar.append(None)          # add one slot at the back
+            while i > indeks:            # shift from right to left
+                daftar[i] = daftar[i - 1]
+                geser += 1
+                i -= 1
+            daftar[indeks] = nilai
+            return geser
+        ```
+
+        **Common trap.** The answer 1 comes from thinking the cost of inserting equals
+        the number of values inserted — but the cost is set by how many elements must
+        **shift**, not how many values go in. The answer 5 comes from thinking the whole
+        array shifts, when the element at index 0 (the value `1`) never moves. The
+        answer 0 overlooks that an array stores its elements side by side, so there is no
+        gap in which to place a new value without shifting.
+
+  # --- Kuis 2: hapus dari depan berulang → O(n²) ---------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Kamu menyimpan 10.000 nilai di dalam sebuah array, lalu mengambilnya satu per
+        satu **selalu dari depan** sampai habis. Setiap pengambilan terlihat murah
+        karena hanya membuang satu elemen. Benarkah total biaya seluruh pengambilan itu
+        murah?
+      en: |
+        You store 10,000 values in an array, then take them out one by one **always from
+        the front** until it is empty. Each removal looks cheap because it discards only
+        one element. Is the total cost of all the removals really cheap?
+    opsi:
+      - teks:
+          id: Tidak — setiap pengambilan dari depan menggeser seluruh elemen yang tersisa, sehingga totalnya O(n²)
+          en: No — every removal from the front shifts all the remaining elements, so the total is O(n²)
+        benar: true
+      - teks:
+          id: Ya — mengambil satu elemen selalu O(1), jadi totalnya O(n)
+          en: Yes — removing a single element is always O(1), so the total is O(n)
+        benar: false
+      - teks:
+          id: Ya — totalnya O(n) karena setiap elemen hanya diambil sekali
+          en: Yes — the total is O(n) because each element is taken out only once
+        benar: false
+      - teks:
+          id: Tidak — totalnya O(n log n) karena jumlah elemen yang tersisa makin sedikit
+          en: No — the total is O(n log n) because the remaining elements keep shrinking
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Karena array menyimpan elemennya bersebelahan tanpa celah,
+        membuang elemen di indeks 0 memaksa seluruh elemen sesudahnya bergeser satu
+        langkah ke kiri. Pengambilan pertama menggeser 9.999 elemen, berikutnya 9.998,
+        lalu 9.997, dan seterusnya sampai nol.
+
+        **Kompleksitas.** Jumlah penggeserannya 9.999 + 9.998 + … + 1, yaitu sekitar
+        n²/2 — kelasnya `O(n²)`. Setiap pengambilan **tampak** `O(1)` karena hanya satu
+        elemen yang dibuang, tetapi biaya sebenarnya tersembunyi pada penggeserannya.
+        Untuk 10.000 nilai, penggeserannya sekitar 50 juta langkah, bukan 10.000.
+
+        **Kode referensi.**
+
+        ```python
+        # Yang mahal — hapus dari depan berulang kali
+        while daftar:
+            nilai = daftar.pop(0)        # O(n) setiap kali → total O(n²)
+
+
+        # Yang murah — hapus dari belakang berulang kali
+        while daftar:
+            nilai = daftar.pop()         # O(1) setiap kali → total O(n)
+        ```
+
+        **Jebakan umum.** Jawaban "selalu O(1)" mengira biaya `pop` hanya sebesar
+        pekerjaan yang terlihat (membuang satu nilai), padahal biaya tersembunyinya
+        adalah penggeseran. Jawaban "totalnya O(n) karena setiap elemen diambil sekali"
+        memakai alasan yang benar untuk kesimpulan yang salah: setiap elemen memang
+        diambil sekali, tetapi elemen yang **tidak** diambil pun ikut bergeser berkali-kali.
+        Jawaban "O(n log n)" keliru karena jumlah elemen yang tersisa berkurang **satu**
+        per langkah, bukan separuh. Kalau butuh mengambil dari depan berulang kali,
+        `collections.deque` melakukannya `O(1)` per pengambilan.
+      en: |
+        **Approach.** Because an array stores its elements side by side with no gaps,
+        discarding the element at index 0 forces every element after it to shift one step
+        left. The first removal shifts 9,999 elements, the next 9,998, then 9,997, and so
+        on down to zero.
+
+        **Complexity.** The total shifts are 9,999 + 9,998 + … + 1, which is about n²/2 —
+        class `O(n²)`. Each removal **looks** `O(1)` because only one element is
+        discarded, but the real cost hides in the shifting. For 10,000 values, the
+        shifting is about 50 million steps, not 10,000.
+
+        **Reference code.**
+
+        ```python
+        # The expensive way — removing from the front repeatedly
+        while daftar:
+            nilai = daftar.pop(0)        # O(n) each time → total O(n²)
+
+
+        # The cheap way — removing from the back repeatedly
+        while daftar:
+            nilai = daftar.pop()         # O(1) each time → total O(n)
+        ```
+
+        **Common trap.** The answer "always O(1)" assumes the cost of `pop` is only the
+        visible work (discarding one value), when the hidden cost is the shifting. The
+        answer "the total is O(n) because each element is taken out once" uses a correct
+        reason for a wrong conclusion: each element is indeed taken once, but the
+        elements that are **not** taken also shift, over and over. The answer
+        "O(n log n)" is wrong because the remaining count drops by **one** each step, not
+        by half. If you need to take from the front repeatedly, `collections.deque` does
+        it in `O(1)` per removal.
+
+  # --- Kuis 3: balik di tempat → hitung pertukaran --------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi berikut membalik urutan isi array **di tempat**, dengan menukar elemen
+        paling kiri dengan paling kanan lalu bergerak ke dalam, sambil menghitung berapa
+        kali pertukaran terjadi. Berapa nilai yang dikembalikan?
+      en: |
+        The function below reverses an array **in place**, swapping the leftmost element
+        with the rightmost then moving inward, counting how many swaps happen. What does
+        it return?
+    kode: |
+      def hitung(daftar):
+          kiri, kanan = 0, len(daftar) - 1
+          langkah = 0
+          while kiri < kanan:
+              daftar[kiri], daftar[kanan] = daftar[kanan], daftar[kiri]
+              kiri += 1
+              kanan -= 1
+              langkah += 1
+          return langkah
+
+      print(hitung([1, 2, 3, 4, 5, 6]))
+    opsi:
+      - teks:
+          id: "6, karena ada enam elemen yang dipertukarkan"
+          en: "6, because six elements are swapped"
+        benar: false
+      - teks:
+          id: "3, karena enam elemen habis dalam tiga pasang"
+          en: "3, because six elements are used up in three pairs"
+        benar: true
+      - teks:
+          id: "5, karena perulangannya berputar sebanyak n − 1 kali"
+          en: "5, because the loop turns n − 1 times"
+        benar: false
+      - teks:
+          id: "2, karena hanya elemen di pinggir yang bertukar"
+          en: "2, because only the outer elements swap"
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Lacak penandanya. Mula-mula `kiri = 0`, `kanan = 5`. Pertukaran
+        1 menukar indeks 0 dengan 5, lalu `kiri = 1`, `kanan = 4`. Pertukaran 2 menukar
+        indeks 1 dengan 4, lalu `kiri = 2`, `kanan = 3`. Pertukaran 3 menukar indeks 2
+        dengan 3, lalu `kiri = 3`, `kanan = 2`. Karena `kiri < kanan` sudah tidak benar,
+        perulangan berhenti dan mengembalikan 3.
+
+        Hasil akhirnya `[6, 5, 4, 3, 2, 1]`.
+
+        **Kompleksitas.** Waktu `O(n)` — setiap elemen disentuh paling banyak sekali.
+        Ruang `O(1)` — hanya dua penanda posisi yang dipakai, berapa pun panjang
+        array-nya. Inilah contoh pertukaran yang khas: kelas waktunya `O(n)`, tetapi
+        ruang tambahannya tetap.
+
+        **Kode referensi.**
+
+        ```python
+        def hitung(daftar):
+            kiri, kanan = 0, len(daftar) - 1
+            langkah = 0
+            while kiri < kanan:
+                daftar[kiri], daftar[kanan] = daftar[kanan], daftar[kiri]
+                kiri += 1
+                kanan -= 1
+                langkah += 1
+            return langkah
+        ```
+
+        **Jebakan umum.** Jawaban 6 mengira setiap elemen dihitung satu per satu,
+        padahal satu pertukaran memindahkan **dua** elemen sekaligus. Jawaban 5 berasal
+        dari mengira perulangannya berputar n − 1 kali seperti mencari nilai maksimum;
+        di sini dua penanda berjalan berlawanan, jadi mereka bertemu di tengah. Jawaban 2
+        hanya menghitung pertukaran yang terlihat di layar saat mencoba dengan array
+        pendek. Perhatikan juga bahwa `[1, 2, 3, 4, 5]` (lima elemen) menghasilkan 2,
+        bukan 3 — elemen tengahnya tidak perlu dipertukarkan dengan siapa pun.
+      en: |
+        **Approach.** Trace the markers. Initially `kiri = 0`, `kanan = 5`. Swap 1
+        exchanges index 0 with 5, then `kiri = 1`, `kanan = 4`. Swap 2 exchanges index 1
+        with 4, then `kiri = 2`, `kanan = 3`. Swap 3 exchanges index 2 with 3, then
+        `kiri = 3`, `kanan = 2`. Since `kiri < kanan` is no longer true, the loop stops
+        and returns 3.
+
+        The final result is `[6, 5, 4, 3, 2, 1]`.
+
+        **Complexity.** Time `O(n)` — each element is touched at most once. Space `O(1)`
+        — only two position markers are used, however long the array is. This is the
+        typical trade: the time class is `O(n)`, but the extra space stays constant.
+
+        **Reference code.**
+
+        ```python
+        def hitung(daftar):
+            kiri, kanan = 0, len(daftar) - 1
+            langkah = 0
+            while kiri < kanan:
+                daftar[kiri], daftar[kanan] = daftar[kanan], daftar[kiri]
+                kiri += 1
+                kanan -= 1
+                langkah += 1
+            return langkah
+        ```
+
+        **Common trap.** The answer 6 assumes every element is counted one by one, when
+        a single swap moves **two** elements at once. The answer 5 comes from assuming
+        the loop turns n − 1 times as it does when finding the maximum; here two markers
+        walk toward each other, so they meet in the middle. The answer 2 counts only the
+        swaps visible on screen when trying a short array. Note also that
+        `[1, 2, 3, 4, 5]` (five elements) returns 2, not 3 — its middle element never
+        needs to swap with anyone.
+
+  # --- Kuis 4: menyambung string di dalam perulangan ------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Kamu menyusun satu teks laporan dari 100.000 baris dengan cara yang paling
+        wajar: mulai dari teks kosong, lalu menambahkan setiap baris dengan `teks +=
+        baris` di dalam perulangan. Programnya berjalan sangat lambat, padahal setiap
+        barisnya pendek. Apa penyebabnya, dan apa yang sebaiknya dipakai?
+      en: |
+        You build one report string from 100,000 lines the most natural way: start from
+        an empty string, then add each line with `teks += baris` inside a loop. The
+        program runs very slowly, even though each line is short. What causes it, and
+        what should you use instead?
+    opsi:
+      - teks:
+          id: Karena string imutabel — setiap `+=` membuat string baru sepanjang gabungan dan menyalin seluruh isi lama, sehingga totalnya O(n²); pakai `"".join(...)`
+          en: Because strings are immutable — every `+=` builds a new string as long as the combination and copies all the old contents, so the total is O(n²); use `"".join(...)`
+        benar: true
+      - teks:
+          id: Karena Python tidak punya tipe string yang efisien untuk teks panjang
+          en: Because Python has no efficient string type for long text
+        benar: false
+      - teks:
+          id: Karena 100.000 baris terlalu besar untuk dimuat ke memori
+          en: Because 100,000 lines are too large to hold in memory
+        benar: false
+      - teks:
+          id: Karena `+=` selalu O(n) dan `join` juga O(n), jadi keduanya sama saja
+          en: Because `+=` is always O(n) and `join` is also O(n), so the two are the same
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** String di Python imutabel: tidak bisa diubah setelah dibuat.
+        Karena itu `teks += baris` bukan menambahkan sesuatu ke ujung `teks`, melainkan
+        membuat string **baru** sepanjang `teks` ditambah `baris`, lalu menyalin seluruh
+        isi `teks` yang lama ke sana.
+
+        **Kompleksitas.** Untuk n baris, karakter yang disalin adalah 1 + 2 + 3 + … + n,
+        yaitu `O(n²)`. Untuk 100.000 baris, itu sekitar lima miliar penyalinan karakter.
+        `"".join(potongan)` menghitung total panjangnya sekali, mengalokasikan satu
+        tempat sekali, lalu menyalin setiap potongan tepat sekali — `O(n)`. Bedanya
+        kuadratik lawan linear.
+
+        **Kode referensi.**
+
+        ```python
+        # Yang mahal — O(n²), karena setiap += menyalin seluruh teks lama
+        teks = ""
+        for baris in daftar_baris:
+            teks += baris
+
+
+        # Yang murah — O(n), karena join menyalin setiap potongan sekali
+        potongan = []
+        for baris in daftar_baris:
+            potongan.append(baris)
+        teks = "".join(potongan)
+        ```
+
+        **Jebakan umum.** Jawaban "Python tidak punya tipe string yang efisien" salah:
+        `str` Python sama efisiennya dengan bahasa lain; yang mahal adalah **polanya**,
+        bukan tipe datanya — bahasa lain yang string-nya juga imutabel mengalami hal
+        yang sama. Jawaban "terlalu besar untuk memori" salah karena memori bukan
+        penyebabnya; `"".join(...)` memuat teks yang sama besarnya dan justru cepat.
+        Jawaban "keduanya sama-sama O(n)" membandingkan biaya satu operasi `+=` (yang
+        memang `O(n)`) tanpa mengalikannya dengan n kali pengulangan — kesalahan yang
+        persis diajarkan Topik 1: **isi perulangan juga berbiaya**. Perhatikan bahwa
+        jebakan ini hanya muncul pada string; `+=` pada `list` justru `O(1)` amortized,
+        dan itulah sebabnya bentuk keduanya terlihat sama tetapi biayanya berbeda jauh.
+      en: |
+        **Approach.** Python strings are immutable: they cannot be changed after being
+        created. So `teks += baris` does not add something to the end of `teks`; it
+        builds a **new** string as long as `teks` plus `baris`, then copies all of the old
+        `teks` into it.
+
+        **Complexity.** For n lines, the characters copied are 1 + 2 + 3 + … + n, which
+        is `O(n²)`. For 100,000 lines, that is about five billion character copies.
+        `"".join(potongan)` computes the total length once, allocates one place once, then
+        copies each piece exactly once — `O(n)`. The difference is quadratic against
+        linear.
+
+        **Reference code.**
+
+        ```python
+        # The expensive way — O(n²), because every += copies the whole old text
+        teks = ""
+        for baris in daftar_baris:
+            teks += baris
+
+
+        # The cheap way — O(n), because join copies each piece once
+        potongan = []
+        for baris in daftar_baris:
+            potongan.append(baris)
+        teks = "".join(potongan)
+        ```
+
+        **Common trap.** The answer "Python has no efficient string type" is wrong:
+        Python's `str` is as efficient as any other language's; what is expensive is the
+        **pattern**, not the data type — any language with immutable strings hits the
+        same thing. The answer "too large for memory" is wrong because memory is not the
+        cause; `"".join(...)` holds the same amount of text and is fast. The answer "both
+        are O(n)" compares the cost of a single `+=` (which is indeed `O(n)`) without
+        multiplying it by n repetitions — exactly the mistake Topic 1 teaches against:
+        **the loop body costs too**. Note that this trap only appears with strings; `+=`
+        on a `list` is `O(1)` amortized, which is why the two shapes look the same but
+        their costs are far apart.
+
+  # --- Kuis 5: memilih operasi yang O(1) ------------------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah array berisi 1.000.000 nilai. Manakah operasi berikut yang waktunya
+        **O(1)** — sama saja berapa pun panjang array-nya?
+      en: |
+        An array holds 1,000,000 values. Which of the following operations takes
+        **O(1)** time — the same no matter how long the array is?
+    opsi:
+      - teks:
+          id: Mengambil nilai di indeks 500.000
+          en: Reading the value at index 500,000
+        benar: true
+      - teks:
+          id: Memeriksa apakah nilai 42 ada di dalam array
+          en: Checking whether the value 42 is in the array
+        benar: false
+      - teks:
+          id: Menyisipkan nilai baru di indeks 0
+          en: Inserting a new value at index 0
+        benar: false
+      - teks:
+          id: Menghapus nilai di indeks 500.000
+          en: Removing the value at index 500,000
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Array menyimpan elemennya bersebelahan dan sama besar, sehingga
+        alamat elemen ke-i bisa dihitung dengan satu perkalian: `alamat_awal + i ×
+        ukuran_kotak`. Mengambil nilai di indeks mana pun karena itu tidak butuh
+        pencarian sama sekali.
+
+        **Kompleksitas.** Mengambil per indeks `O(1)` — inilah satu-satunya operasi pada
+        daftar jawaban yang biayanya tidak berubah saat array memanjang. Memeriksa
+        keberadaan nilai `O(n)`, karena harus diperiksa satu per satu dari depan.
+        Menyisipkan di indeks 0 `O(n)`, karena **seluruh** sejuta elemen bergeser satu
+        langkah. Menghapus di indeks 500.000 `O(n)`, karena sekitar setengah juta elemen
+        di kanannya bergeser.
+
+        **Kode referensi.**
+
+        ```python
+        data = [0] * 1_000_000
+
+        data[500_000]        # O(1)  — alamatnya dihitung langsung
+        42 in data           # O(n)  — diperiksa satu per satu
+        data.insert(0, 7)    # O(n)  — sejuta elemen bergeser
+        del data[500_000]    # O(n)  — setengah juta elemen bergeser
+        ```
+
+        **Jebakan umum.** Ketiga jawaban yang salah adalah jebakan yang berbeda-beda.
+        Memeriksa keberadaan nilai terasa seperti "melihat ke dalam array", padahal array
+        tidak menyimpan peta nilai ke posisi — jadi harus dicari. Menyisipkan di indeks 0
+        terasa murah karena indeks 0 adalah posisi yang paling mudah disebut, padahal
+        justru posisi itulah yang menggeser paling banyak elemen. Menghapus di indeks
+        500.000 terasa seperti membuang satu nilai saja, padahal biayanya tersembunyi
+        pada penggeseran. Aturan yang perlu diingat: pada array, **mengambil posisi yang
+        sudah diketahui** itu `O(1)`; **mencari posisi, menyisipkan, atau menghapus** itu
+        `O(n)`.
+      en: |
+        **Approach.** An array stores its elements side by side and equally sized, so the
+        address of element i can be computed with a single multiplication:
+        `start address + i × box size`. Reading the value at any index therefore needs no
+        search at all.
+
+        **Complexity.** Reading by index is `O(1)` — the only operation among the answers
+        whose cost does not change as the array grows. Checking whether a value is present
+        is `O(n)`, because it must be checked one by one from the front. Inserting at
+        index 0 is `O(n)`, because **all** one million elements shift one step. Removing
+        at index 500,000 is `O(n)`, because about half a million elements to its right
+        shift.
+
+        **Reference code.**
+
+        ```python
+        data = [0] * 1_000_000
+
+        data[500_000]        # O(1)  — the address is computed directly
+        42 in data           # O(n)  — checked one by one
+        data.insert(0, 7)    # O(n)  — a million elements shift
+        del data[500_000]    # O(n)  — half a million elements shift
+        ```
+
+        **Common trap.** The three wrong answers are three different traps. Checking
+        whether a value is present feels like "looking inside the array", when an array
+        keeps no map from value to position — so it must be searched. Inserting at index 0
+        feels cheap because index 0 is the easiest position to name, when it is exactly
+        the position that shifts the most elements. Removing at index 500,000 feels like
+        discarding a single value, when the cost hides in the shifting. The rule to
+        remember: on an array, **reading a position you already know** is `O(1)`;
+        **finding a position, inserting, or removing** is `O(n)`.
+
+  # --- Soal Kode: array dinamis dari nol -----------------------------------------
+  #
+  # Bentuknya memenuhi `design-tree.md` apa adanya ("implementasi struktur data dari
+  # nol") — array memang struktur data, jadi tidak ada penyimpangan yang perlu dicatat
+  # dan tidak ada ADR baru. Bandingkan dengan Big-O (#16), yang butuh ADR-0023.
+  #
+  # Yang diminta: menulis sendiri kelas daftar dinamis, lengkap dengan penggeseran
+  # elemennya, lalu memakainya untuk menjalankan rangkaian perintah. Penggeseran itu
+  # inti pelajarannya: pemelajar merasakan sendiri mengapa sisip dan hapus di tengah
+  # O(n), sedangkan tambah di belakang dan ambil per indeks O(1).
+  - tipe: soal-kode
+    skenario:
+      id: |
+        Tulis dari nol sebuah array dinamis — sebuah kelas yang menampung nilai dalam
+        satu deretan dan menyediakan operasi dasarnya sendiri. Kamu menerima daftar
+        perintah, dan harus mengembalikan daftar hasil untuk setiap perintah yang
+        menghasilkan nilai.
+
+        Setiap perintah adalah daftar. Perintah `["tambah", x]` menaruh `x` di
+        **belakang** dan tidak menghasilkan nilai. Perintah `["ambil", i]` mengembalikan
+        nilai di indeks `i`. Perintah `["sisip", i, x]` menyisipkan `x` pada indeks `i`,
+        **menggeser** elemen di kanannya satu langkah. Perintah `["hapus", i]`
+        membuang elemen di indeks `i`, menggeser elemen di kanannya satu langkah ke
+        kiri, dan mengembalikan nilai yang dibuang. Perintah `["ukuran"]` mengembalikan
+        banyaknya elemen. Perintah `["isi"]` mengembalikan seluruh isi sebagai daftar
+        biasa, dari indeks 0 sampai terakhir.
+
+        Untuk perintah yang tidak menghasilkan nilai, catat `None`.
+
+        Jangan memakai `list` sebagai pengganti kelasnya untuk menyimpan data —
+        implementasikan sendiri `tambah`, `ambil`, `sisip`, `hapus`, dan `ukuran`,
+        supaya kamu merasakan mekanisme penggeserannya. Kamu boleh memakai `list` biasa
+        hanya untuk mengumpulkan hasil perintah.
+      en: |
+        Write from scratch a dynamic array — a class that holds values in one row and
+        provides its own basic operations. You receive a list of commands, and must
+        return a list of results for each command that produces a value.
+
+        Each command is a list. The command `["tambah", x]` puts `x` at the **back** and
+        produces no value. The command `["ambil", i]` returns the value at index `i`. The
+        command `["sisip", i, x]` inserts `x` at index `i`, **shifting** the elements to
+        its right one step. The command `["hapus", i]` removes the element at index `i`,
+        shifting the elements to its right one step left, and returns the removed value.
+        The command `["ukuran"]` returns how many elements there are. The command
+        `["isi"]` returns the whole contents as a plain list, from index 0 to the last.
+
+        For commands that produce no value, record `None`.
+
+        Do not use `list` in place of the class to store the data — implement `tambah`,
+        `ambil`, `sisip`, `hapus`, and `ukuran` yourself, so that you feel the shifting
+        mechanism. You may use a plain `list` only to collect the command results.
+    fungsi: proses
+    test_case:
+      # Kasus 1 — tambah di belakang, ambil per indeks, ukuran.
+      - argumen:
+          - - ["tambah", 10]
+            - ["tambah", 20]
+            - ["tambah", 30]
+            - ["ambil", 0]
+            - ["ambil", 2]
+            - ["ukuran"]
+        diharapkan: [null, null, null, 10, 30, 3]
+      # Kasus 2 — sisip di tengah menggeser elemen di kanannya.
+      - argumen:
+          - - ["tambah", 1]
+            - ["tambah", 2]
+            - ["tambah", 3]
+            - ["sisip", 1, 99]
+            - ["isi"]
+            - ["ukuran"]
+        diharapkan: [null, null, null, null, [1, 99, 2, 3], 4]
+      # Kasus 3 — sisip di depan dan di ujung: dua ujung yang biayanya berbeda.
+      - argumen:
+          - - ["tambah", 2]
+            - ["sisip", 0, 1]
+            - ["sisip", 2, 3]
+            - ["isi"]
+        diharapkan: [null, null, null, [1, 2, 3]]
+      # Kasus 4 — hapus di tengah mengembalikan nilai yang dibuang, lalu menggeser.
+      - argumen:
+          - - ["tambah", "a"]
+            - ["tambah", "b"]
+            - ["tambah", "c"]
+            - ["hapus", 1]
+            - ["isi"]
+            - ["ukuran"]
+        diharapkan: [null, null, null, "b", ["a", "c"], 2]
+      # Kasus 5 — hapus berulang dari depan; inilah penggeseran yang mahal.
+      - argumen:
+          - - ["tambah", 1]
+            - ["tambah", 2]
+            - ["tambah", 3]
+            - ["tambah", 4]
+            - ["hapus", 0]
+            - ["hapus", 0]
+            - ["isi"]
+            - ["ukuran"]
+        diharapkan: [null, null, null, null, 1, 2, [3, 4], 2]
+    solusi_referensi: |
+      class Daftar:
+          def __init__(self):
+              self._data = []
+
+          def tambah(self, nilai):
+              self._data.append(nilai)
+
+          def ambil(self, indeks):
+              return self._data[indeks]
+
+          def sisip(self, indeks, nilai):
+              # Tambah satu slot di belakang, lalu geser isinya ke kanan
+              # mulai dari ujung sampai posisi yang dituju kosong.
+              self._data.append(None)
+              i = len(self._data) - 1
+              while i > indeks:
+                  self._data[i] = self._data[i - 1]
+                  i -= 1
+              self._data[indeks] = nilai
+
+          def hapus(self, indeks):
+              nilai = self._data[indeks]
+              # Geser isinya ke kiri untuk menutup lubang yang ditinggalkan.
+              i = indeks
+              while i < len(self._data) - 1:
+                  self._data[i] = self._data[i + 1]
+                  i += 1
+              self._data.pop()
+              return nilai
+
+          def ukuran(self):
+              return len(self._data)
+
+          def isi(self):
+              return list(self._data)
+
+
+      def proses(perintah):
+          daftar = Daftar()
+          hasil = []
+          for perintah_satu in perintah:
+              operasi = perintah_satu[0]
+              if operasi == "tambah":
+                  daftar.tambah(perintah_satu[1])
+                  hasil.append(None)
+              elif operasi == "ambil":
+                  hasil.append(daftar.ambil(perintah_satu[1]))
+              elif operasi == "sisip":
+                  daftar.sisip(perintah_satu[1], perintah_satu[2])
+                  hasil.append(None)
+              elif operasi == "hapus":
+                  hasil.append(daftar.hapus(perintah_satu[1]))
+              elif operasi == "ukuran":
+                  hasil.append(daftar.ukuran())
+              elif operasi == "isi":
+                  hasil.append(daftar.isi())
+          return hasil
