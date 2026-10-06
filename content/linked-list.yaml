@@ -1,0 +1,1693 @@
+# Topik 3 — Linked List.
+#
+# Topik ketiga di Jalur, `prasyarat: [1, 2]` (Big-O, Array & String). Materi di sini
+# memakai dua hal yang diajarkan Topik sebelumnya: notasi O(...) dari Topik 1, dan
+# perbandingan dengan array dari Topik 2. Itu sebabnya keduanya jadi prasyarat.
+#
+# **Tidak ada penyimpangan yang perlu dicatat.** `docs/design-tree.md` menetapkan Soal
+# Kode berbentuk "implementasi struktur data dari nol". Linked List **adalah** struktur
+# data, jadi bentuk itu bisa dipakai apa adanya di sini — sama seperti Array & String
+# (#17), dan berbeda dari Big-O (#16), yang bukan struktur data dan karena itu butuh
+# ADR-0023. Berkas ini tidak menuntut ADR baru.
+#
+# **Pembahasan hanya untuk kelima Kuis.** Soal Kode di sini tidak punya Pembahasan,
+# karena skema di issue #1 — dan `frontend/src/lib/konten/tipe.ts` — tidak punya field
+# `penjelasan` pada `SoalKode`. Pemilik sudah memutuskan (2026-10-06) bahwa cukup 5
+# Pembahasan per Topik, sama seperti #10, #16, dan #17.
+#
+# Semua Soal dan Pembahasan di sini ditulis original, sesuai ADR-0005. Tidak ada teks
+# LeetCode yang disalin maupun diterjemahkan.
+#
+# **Setiap angka di berkas ini sudah dijalankan, bukan dibaca.** Yang diperiksa dengan
+# menjalankan Python: jumlah simpul yang dikunjungi pada Kuis 1 (4), jumlah langkah
+# membangun list pada Kuis 3 (10 untuk n=6, rumus (n-1)(n-2)/2), kegagalan menghapus
+# kepala tanpa cabang khusus pada Kuis 4, dan kelima test case Soal Kode. Sesi #16 dan
+# #17 sama-sama menemukan cacat nyata lewat cara ini; sesi ini menemukan satu
+# (rumus langkah Kuis 3 yang mula-mula ditulis n(n-1)/2, padahal hasil terukurnya
+# (n-1)(n-2)/2).
+#
+# `nomor`, `slug`, `judul`, dan `prasyarat` harus sama dengan content/jalur.yaml —
+# validator menolak build kalau berbeda.
+
+nomor: 3
+slug: linked-list
+judul:
+  id: Linked List
+  en: Linked List
+prasyarat: [1, 2]
+
+# Sumber terstruktur untuk ekspor CSV/Anki (ticket #14). Isinya struktur data Topik ini
+# beserta biaya operasinya. `waktu` dan `ruang` memakai notasi O(...) apa adanya —
+# notasi itu sama di kedua bahasa, jadi menerjemahkannya hanya menghasilkan dua salinan
+# yang bisa menyimpang tanpa menambah informasi.
+#
+# **Nilai di sini wajib sama dengan tabel di bagian "Tabel kompleksitas" di Materi.**
+# ADR-0019 mencatat bahwa keduanya memang bisa menyimpang dan tidak ada gerbang yang
+# membandingkannya — yang menjaganya adalah disiplin saat menyunting.
+kompleksitas:
+  - struktur:
+      id: Linked List (tunggal)
+      en: Linked List (singly)
+    ruang: O(n)
+    operasi:
+      - nama: { id: Ambil elemen ke-i, en: Read the element at position i }
+        waktu: O(n)
+      - nama: { id: Tambah atau buang di depan, en: Add or remove at the front }
+        waktu: O(1)
+      - nama: { id: Tambah di belakang tanpa penunjuk ekor, en: Add at the back without a tail pointer }
+        waktu: O(n)
+      - nama: { id: Tambah atau buang setelah simpul yang sudah dipegang, en: Add or remove right after a node you already hold }
+        waktu: O(1)
+      - nama: { id: Tambah atau buang di posisi ke-i, en: Add or remove at position i }
+        waktu: O(n)
+      - nama: { id: Cari satu nilai, en: Find one value }
+        waktu: O(n)
+
+  - struktur:
+      id: Linked List (ganda)
+      en: Linked List (doubly)
+    ruang: O(n)
+    operasi:
+      - nama: { id: Ambil elemen ke-i, en: Read the element at position i }
+        waktu: O(n)
+      - nama: { id: Tambah atau buang di depan, en: Add or remove at the front }
+        waktu: O(1)
+      - nama: { id: Mundur ke simpul sebelumnya, en: Step back to the previous node }
+        waktu: O(1)
+      - nama: { id: Cari satu nilai, en: Find one value }
+        waktu: O(n)
+
+# Istilah yang layak dihafal. `istilah` adalah pasangan Indonesia–English; `definisi`
+# menjelaskannya di kedua bahasa. Setiap pasangan di bawah ini berbeda antara kedua
+# bahasa, jadi setiap istilah menghasilkan dua kartu: definisinya, dan pasangannya.
+istilah:
+  - istilah: { id: Simpul, en: Node }
+    definisi:
+      id: Satu kotak di dalam linked list. Ia menyimpan satu nilai, dan menyimpan penunjuk ke kotak berikutnya.
+      en: One box inside a linked list. It holds one value, and holds a pointer to the next box.
+  - istilah: { id: Penunjuk, en: Pointer }
+    definisi:
+      id: Nilai yang menyimpan alamat kotak lain, bukan datanya. Di Python ini berupa acuan ke objek; kalau tidak menunjuk ke mana-mana, isinya `None`.
+      en: A value that stores the address of another box, not its data. In Python it is a reference to an object; when it points nowhere, it is `None`.
+  - istilah: { id: Kepala, en: Head }
+    definisi:
+      id: Simpul pertama sebuah linked list, dan satu-satunya pintu masuknya. Kalau penunjuk ini hilang, seluruh isi list tidak bisa dijangkau lagi.
+      en: The first node of a linked list, and its only entrance. If this pointer is lost, the whole list can no longer be reached.
+  - istilah: { id: Ekor, en: Tail }
+    definisi:
+      id: Simpul terakhir sebuah linked list. Simpul ini yang penunjuknya bernilai `None`. Kalau penunjuk ke ekor disimpan, menambah di belakang menjadi O(1).
+      en: The last node of a linked list. It is the node whose pointer is `None`. If a pointer to the tail is kept, adding at the back becomes O(1).
+  - istilah: { id: Penelusuran, en: Traversal }
+    definisi:
+      id: Berjalan dari satu simpul ke simpul berikutnya mengikuti penunjuk, mulai dari kepala. Inilah satu-satunya cara mengelilingi linked list, dan sebabnya mengambil elemen ke-i berbiaya O(n).
+      en: Walking from one node to the next by following pointers, starting at the head. It is the only way to move through a linked list, and the reason reading the element at position i costs O(n).
+  - istilah: { id: Senarai Berantai, en: Linked list }
+    definisi:
+      id: Struktur data berisi deretan simpul yang saling terhubung oleh penunjuk, bukan disimpan bersebelahan. Nama lainnya yang lebih sering dipakai adalah Linked List.
+      en: A data structure made of a chain of nodes linked by pointers, rather than stored side by side.
+  - istilah: { id: Senarai Berantai Tunggal, en: Singly linked list }
+    definisi:
+      id: Linked list yang setiap simpulnya hanya menunjuk ke depan. Ia bisa dimajukan tetapi tidak bisa dimundurkan.
+      en: A linked list where each node points forward only. It can be walked forward but not backward.
+  - istilah: { id: Senarai Berantai Ganda, en: Doubly linked list }
+    definisi:
+      id: Linked list yang setiap simpulnya menunjuk ke depan dan ke belakang. Bisa dimundurkan, dengan harga satu penunjuk tambahan per simpul.
+      en: A linked list where each node points both forward and backward. It can be walked backward, at the price of one extra pointer per node.
+
+materi:
+  id: |
+    ## Kotak yang menunjuk ke kotak lain
+
+    Di Topik 2 kamu melihat array: sederet kotak yang **bersebelahan** dan punya nomor,
+    sehingga kamu bisa langsung membuka kotak nomor 7 tanpa membuka yang lain.
+
+    Linked list memilih jalan yang berbeda. Kotaknya **tidak** bersebelahan. Setiap
+    kotak menyimpan dua hal: nilainya, dan **alamat kotak berikutnya**. Untuk sampai ke
+    kotak ke-7, kamu harus mulai dari kotak pertama dan mengikuti penunjuknya satu per
+    satu.
+
+    Satu kotak seperti itu disebut **simpul** (*node*):
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.berikutnya = None      # belum menunjuk ke mana-mana
+    ```
+
+    Perhatikan bahwa sebuah simpul hanya tahu **satu** hal tentang tetangganya: di mana
+    kotak berikutnya. Ia tidak tahu di mana kotak sebelumnya, dan tidak tahu ada berapa
+    kotak seluruhnya.
+
+    Analogi yang sering dipakai: perburuan harta karun. Petunjuk pertama memberitahu
+    letak petunjuk kedua, petunjuk kedua memberitahu letak petunjuk ketiga, dan
+    seterusnya. Kamu tidak bisa melompat langsung ke petunjuk ketujuh — kamu harus
+    mulai dari yang pertama.
+
+    ## Kepala adalah satu-satunya pintu masuk
+
+    Kalau simpul hanya tahu letak simpul berikutnya, bagaimana kamu menemukan simpul
+    pertama? Jawabannya: kamu menyimpan penunjuk ke sana. Penunjuk itu disebut
+    **kepala** (*head*), dan ia adalah satu-satunya pintu masuk ke seluruh list.
+
+    ```python
+    A = Simpul("A")
+    B = Simpul("B")
+    C = Simpul("C")
+
+    A.berikutnya = B        # A menunjuk ke B
+    B.berikutnya = C        # B menunjuk ke C
+    C.berikutnya = None     # C adalah simpul terakhir
+
+    kepala = A              # pintu masuknya adalah A
+    ```
+
+    Keadaan di atas bisa digambar seperti ini. Tanda `→` berarti "menunjuk ke":
+
+    ```
+    kepala
+      │
+      ▼
+    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+    │ nilai: "A"  │    │ nilai: "B"  │    │ nilai: "C"  │
+    │ next: ──────┼───▶│ next: ──────┼───▶│ next: None  │
+    └─────────────┘    └─────────────┘    └─────────────┘
+    ```
+
+    Simpul terakhir adalah yang penunjuknya bernilai `None` — tanda bahwa list sudah
+    habis. List yang kosong cukup diwakili oleh `kepala = None`.
+
+    **Konsekuensi yang harus kamu sadari sejak awal:** kepala adalah satu-satunya
+    peganganmu. Kalau penunjuk itu tertimpa dan tidak ada salinannya, seluruh simpul
+    di belakangnya masih ada di memori tetapi **tidak bisa dijangkau lagi**. Ini bukan
+    kesalahan yang melempar pesan; programnya hanya diam dan hasilnya salah.
+
+    ## Menelusuri: satu-satunya cara berkeliling
+
+    Karena setiap simpul hanya menunjuk ke depan, satu-satunya cara mengelilingi linked
+    list adalah berjalan mengikuti penunjuk dari kepala. Cara ini disebut
+    **penelusuran** (*traversal*), dan polanya selalu sama:
+
+    ```python
+    sekarang = kepala
+    while sekarang is not None:
+        print(sekarang.nilai)
+        sekarang = sekarang.berikutnya
+    ```
+
+    Dua hal tentang perulangan ini yang mudah salah:
+
+    - Syaratnya `sekarang is not None`, bukan `sekarang.berikutnya is not None`.
+      Memakai bentuk kedua membuat simpul **terakhir tidak pernah diproses** — kesalahan
+      yang tidak melempar error, hanya kehilangan satu elemen di ujung.
+    - `sekarang = sekarang.berikutnya` harus ada di akhir. Kalau lupa, perulangannya
+      tidak pernah maju dan berputar selamanya.
+
+    Sekarang perhatikan biayanya. Untuk mencapai posisi ke-i, kamu harus melewati
+    simpul posisi 0, 1, 2, sampai i — yaitu **i + 1 simpul**:
+
+    ```
+    posisi 0 → 1 simpul dikunjungi
+    posisi 1 → 2 simpul dikunjungi
+    posisi 2 → 3 simpul dikunjungi
+    posisi 3 → 4 simpul dikunjungi
+    ```
+
+    Inilah perbedaan terpenting dengan array. Pada array, mengambil elemen ke-i adalah
+    `O(1)` karena alamatnya bisa dihitung langsung. Pada linked list, mengambil elemen
+    ke-i adalah **`O(n)`** karena tidak ada cara lain selain berjalan dari kepala.
+
+    ## Menambah dan membuang tanpa menggeser
+
+    Di sinilah linked list menang. Ingat dari Topik 2 bahwa menyisipkan di tengah array
+    itu `O(n)` karena semua elemen di kanannya harus **digeser** — array tidak punya
+    celah.
+
+    Linked list tidak menyimpan elemennya bersebelahan, jadi tidak ada yang perlu
+    digeser. Yang dilakukan hanyalah memutus satu tautan dan menyambung yang baru.
+
+    Untuk menyisipkan sebuah simpul **tepat setelah** simpul yang sudah kamu pegang:
+
+    ```python
+    baru = Simpul("X")
+    baru.berikutnya = sekarang.berikutnya    # simpul baru menunjuk ke sisa list
+    sekarang.berikutnya = baru               # simpul lama menunjuk ke simpul baru
+    ```
+
+    Hanya dua penunjuk yang berubah, berapa pun panjang list-nya:
+
+    ```
+    Sebelum:   [A] ──▶ [C] ──▶ [D]
+    Sisip X setelah A:
+    Langkah 1: [X] ──▶ [C] ──▶ [D]      (baru.berikutnya = sekarang.berikutnya)
+    Langkah 2: [A] ──▶ [X] ──▶ [C] ──▶ [D]   (sekarang.berikutnya = baru)
+    ```
+
+    Untuk **membuang** simpul setelah simpul yang kamu pegang, cukup satu penunjuk:
+    simpul sebelumnya langsung menunjuk ke simpul sesudah yang dibuang. Simpul yang
+    dibuang tidak perlu dibersihkan secara khusus — selama tidak ada yang menunjuknya,
+    Python akan membuangnya sendiri.
+
+    ```python
+    sekarang.berikutnya = sekarang.berikutnya.berikutnya    # lompati satu simpul
+    ```
+
+    **Tetapi ada syaratnya, dan syarat itu penting.** Kedua operasi di atas murah
+    (`O(1)`) hanya kalau kamu **sudah memegang** simpul tempat kamu bekerja. Kalau yang
+    kamu punya adalah "posisi ke-i", kamu harus berjalan dari kepala dulu untuk
+    mencapainya — dan itu `O(n)`. Jadi:
+
+    - "sisipkan setelah simpul yang sedang saya pegang" → `O(1)`
+    - "sisipkan pada posisi ke-5000" → `O(n)`, karena menelusurinya yang mahal
+
+    Ini persis kebalikan dari array, dan itulah pertukarannya.
+
+    ## Kasus kepala: kenapa butuh penanganan sendiri
+
+    Ada satu tempat di mana "cukup ubah penunjuk sebelumnya" tidak bisa dipakai:
+    membuang **simpul pertama**.
+
+    Alasannya sederhana. Untuk membuang sebuah simpul, kita mengubah `berikutnya` milik
+    simpul **sebelumnya**. Simpul pertama tidak punya simpul sebelumnya. Tidak ada yang
+    bisa kita ubah untuk melewatinya.
+
+    Jadi simpul pertama hanya bisa dibuang dengan satu cara: **memindahkan penunjuk
+    kepala** ke simpul kedua.
+
+    ```python
+    if kepala is not None and kepala.nilai == nilai:
+        kepala = kepala.berikutnya       # kepala pindah ke simpul kedua
+        return True
+    ```
+
+    Kalau cabang ini dilupakan, gejalanya halus dan menipu: fungsi hapus berjalan tanpa
+    error, mengembalikan "berhasil" atau "gagal" seperti biasa, tetapi nilai yang berada
+    di simpul pertama **tetap ada**. Perulangan hapus biasa mulai memeriksa dari
+    `sekarang.berikutnya`, sehingga simpul pertama tidak pernah jadi kandidat.
+
+    Kabar baiknya, sisi lain dari cerita ini menyenangkan: menambah di **depan** justru
+    paling murah, karena kepala sudah kamu pegang.
+
+    ```python
+    baru = Simpul(nilai)
+    baru.berikutnya = kepala        # simpul baru menunjuk ke list lama
+    kepala = baru                   # kepala pindah ke simpul baru
+    ```
+
+    Dua penugasan, tanpa penelusuran, berapa pun panjang list-nya — `O(1)`.
+
+    ## Simpul terakhir, dan penunjuk ekor
+
+    Sisi sebaliknya tidak semurah itu. **Simpul terakhir** — yang penunjuknya bernilai
+    `None` — tidak bisa dijangkau langsung. Kalau yang kamu pegang hanya kepala,
+    menambah di **belakang** menuntut kamu berjalan dari kepala sampai ujung dulu:
+
+    ```python
+    sekarang = kepala
+    while sekarang.berikutnya is not None:   # berjalan sampai simpul terakhir
+        sekarang = sekarang.berikutnya
+    sekarang.berikutnya = baru
+    ```
+
+    Yang mahal bukan menyambungnya — itu hanya satu penunjuk — melainkan **mencapai**
+    simpul terakhir. Untuk list berisi n simpul, itu n − 1 langkah, jadi `O(n)`. Kalau
+    kamu menambah di belakang berulang kali, biayanya menumpuk menjadi `O(n²)`.
+
+    Obatnya sederhana: simpan juga penunjuk ke simpul terakhir. Penunjuk itu disebut
+    **ekor** (*tail*), dan ia pasangan dari kepala — kepala adalah pintu masuk depan,
+    ekor adalah pegangan di ujung belakang.
+
+    ```python
+    kepala = None
+    ekor = None
+    ```
+
+    Dengan ekor dipegang, menambah di belakang tidak perlu berjalan sama sekali:
+    simpul terakhir sudah kamu punya, tinggal menyambung dan memindahkan ekor.
+
+    ```python
+    baru = Simpul(nilai)
+    if ekor is None:            # list masih kosong
+        kepala = ekor = baru
+    else:
+        ekor.berikutnya = baru  # sambungkan di ujung
+        ekor = baru             # ekor pindah ke simpul baru
+    ```
+
+    Harga yang dibayar: satu penunjuk tambahan yang harus **dijaga tetap benar**. Setiap
+    kali list berubah, ekor harus ikut diperbarui — dan itu sumber kesalahan tersendiri.
+    Kalau ekornya lupa dipindahkan, penambahan berikutnya menyambung ke tempat yang
+    salah. Karena itu banyak implementasi memilih **tidak** menyimpan ekor dan menerima
+    `O(n)` di belakang, terutama kalau menambah di belakang jarang dilakukan.
+
+    ## Array atau Linked List?
+
+    Keduanya menyimpan deretan nilai, tetapi menukar keunggulan di tempat yang
+    berbeda. Tidak ada yang lebih baik secara umum; yang ada adalah mana yang cocok
+    untuk pemakaianmu.
+
+    | | Array | Linked List |
+    |---|---|---|
+    | Ambil elemen ke-i | O(1) — alamat dihitung langsung | O(n) — harus menelusuri |
+    | Tambah/buang di depan | O(n) — semua bergeser | O(1) — ubah dua penunjuk |
+    | Tambah/buang di tengah, sudah dipegang | O(n) — semua di kanan bergeser | O(1) — putus dan sambung |
+    | Cari satu nilai | O(n) — diperiksa satu per satu | O(n) — sama |
+    | Memori per elemen | Padat, tanpa penunjuk tambahan | Satu penunjuk tambahan per simpul |
+    | Kedekatan di memori | Bersebelahan, ramah cache | Tersebar, penunjuk melompat |
+
+    Baris terakhir sering diremehkan. Pada array, membaca elemen berturut-turut berarti
+    membaca alamat memori yang berdekatan, dan prosesor menyukainya. Pada linked list,
+    setiap simpul bisa berada di tempat yang jauh, sehingga mengikuti penunjuk berarti
+    melompat ke sana kemari. **Kelas kompleksitasnya sama-sama `O(n)`, tetapi biaya
+    nyatanya bisa berbeda** — dan itulah sebabnya array sering tetap menang di
+    praktiknya, walaupun secara teori keduanya setara.
+
+    Aturan praktisnya: pakai array kalau yang sering kamu lakukan adalah **membaca
+    berdasarkan posisi**. Pakai linked list kalau yang sering kamu lakukan adalah
+    **menambah dan membuang di ujung-ujungnya**, sementara posisi tidak penting.
+
+    ## Varian: tunggal, ganda, sirkular
+
+    Yang dibahas di atas adalah bentuk paling sederhana, **linked list tunggal**: satu
+    penunjuk per simpul, hanya ke depan. Ada dua varian yang perlu kamu kenali.
+
+    **Linked list ganda** (*doubly linked list*) menambahkan penunjuk kedua ke simpul
+    **sebelumnya**:
+
+    ```python
+    class SimpulGanda:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.sebelumnya = None
+            self.berikutnya = None
+    ```
+
+    Dengan itu kamu bisa berjalan mundur. Harganya: satu penunjuk tambahan per simpul.
+    Untuk list berisi sejuta simpul, itu sejuta penunjuk tambahan — nyata, tetapi
+    biasanya masih wajar dibanding kemudahan yang didapat.
+
+    **Linked list sirkular** (*circular linked list*) tidak punya ujung: penunjuk simpul
+    terakhir kembali ke simpul pertama, bukan `None`. Berguna untuk sesuatu yang
+    berputar, seperti daftar giliran. Konsekuensinya, perulangan `while sekarang is not
+    None` **tidak akan pernah berhenti** pada list seperti ini — kamu butuh syarat
+    berhenti yang lain.
+
+    ## Tabel kompleksitas
+
+    | Operasi | Waktu | Kenapa |
+    |---|---|---|
+    | Ambil elemen ke-i | O(n) | Harus menelusuri dari kepala, i + 1 simpul |
+    | Tambah atau buang di depan | O(1) | Kepala sudah dipegang; ubah dua penunjuk |
+    | Tambah di belakang tanpa penunjuk ekor | O(n) | Harus menelusuri sampai simpul terakhir |
+    | Tambah atau buang setelah simpul yang dipegang | O(1) | Putus satu tautan, sambung yang baru |
+    | Tambah atau buang di posisi ke-i | O(n) | Menelusuri ke posisi itu yang mahal |
+    | Cari satu nilai | O(n) | Diperiksa satu per satu dari kepala |
+    | Mundur ke simpul sebelumnya (ganda) | O(1) | Ada penunjuknya |
+    | Mundur ke simpul sebelumnya (tunggal) | Tidak bisa | Tidak ada penunjuknya |
+
+    ## Jebakan yang sering terjadi
+
+    **Mengira akses per posisi itu O(1).** Kebiasaan dari array terbawa. Pada linked
+    list, `ambil ke-5000` berarti berjalan melewati 5000 simpul. Kalau kodemu sering
+    melakukan ini, linked list adalah pilihan yang salah.
+
+    **Mengira menyisipkan di tengah itu selalu O(1).** Benar hanya kalau kamu sudah
+    memegang simpul tempat menyisipkan. Menyisipkan "pada posisi ke-i" tetap `O(n)`.
+
+    **Lupa menangani simpul pertama saat membuang.** Sudah dibahas di atas. Gejalanya
+    senyap: tidak ada error, nilainya hanya tidak ikut terbuang.
+
+    **Kehilangan kepala.** Ini jebakan yang paling mahal. Perhatikan:
+
+    ```python
+    sekarang = kepala
+    while sekarang is not None:
+        sekarang = sekarang.berikutnya
+
+    # `sekarang` sekarang None, dan `kepala` masih menunjuk simpul pertama — aman.
+    ```
+
+    Bandingkan dengan yang ini:
+
+    ```python
+    while kepala is not None:
+        kepala = kepala.berikutnya
+
+    # `kepala` sekarang None. Seluruh list tidak bisa dijangkau lagi.
+    ```
+
+    Bentuk kedua memindahkan **pegangan**-nya, bukan salinannya. Kalau kamu perlu
+    berjalan tanpa kehilangan kepala, selalu mulai dari variabel salinan seperti
+    `sekarang = kepala`.
+
+    **Salah menulis syarat perulangan penelusuran.** `while sekarang.berikutnya is not
+    None` melewatkan simpul terakhir. `while sekarang is not None` adalah bentuk yang
+    benar untuk "kunjungi semuanya".
+
+    **Membuat lingkaran tanpa sengaja.** Kalau sebuah simpul ditautkan kembali ke
+    simpul yang sudah ada di depannya, penelusuran tidak akan pernah selesai. Ini mudah
+    terjadi saat menukar urutan simpul dengan ceroboh.
+
+    **Menyimpan simpul, bukan nilainya, lalu mengubah simpulnya.** Karena semua
+    penunjuk menunjuk ke objek yang sama, mengubah `sekarang.nilai` juga mengubah nilai
+    yang terlihat dari tempat lain. Itu sering justru yang diinginkan — tetapi harus
+    disadari, bukan ditemukan secara tidak sengaja.
+
+  en: |
+    ## Boxes that point to other boxes
+
+    In Topic 2 you met the array: a row of boxes that sit **side by side** and have
+    numbers, so you can open box number 7 directly without opening the others.
+
+    A linked list takes a different road. Its boxes are **not** side by side. Each box
+    stores two things: its value, and **the address of the next box**. To reach the
+    seventh box you must start at the first and follow the pointers one by one.
+
+    One such box is called a **node**:
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.berikutnya = None      # not pointing anywhere yet
+    ```
+
+    Notice that a node knows only **one** thing about its neighbours: where the next
+    box is. It does not know where the previous box is, and it does not know how many
+    boxes there are in total.
+
+    A common analogy is a treasure hunt. The first clue tells you where the second clue
+    is, the second tells you where the third is, and so on. You cannot jump straight to
+    the seventh clue — you have to start at the first.
+
+    ## The head is the only entrance
+
+    If a node knows only where the next node is, how do you find the first node? The
+    answer: you keep a pointer to it. That pointer is called the **head**, and it is the
+    only entrance to the whole list.
+
+    ```python
+    A = Simpul("A")
+    B = Simpul("B")
+    C = Simpul("C")
+
+    A.berikutnya = B        # A points to B
+    B.berikutnya = C        # B points to C
+    C.berikutnya = None     # C is the last node
+
+    kepala = A              # the entrance is A
+    ```
+
+    The state above looks like this. The `→` sign means "points to":
+
+    ```
+    kepala
+      │
+      ▼
+    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+    │ nilai: "A"  │    │ nilai: "B"  │    │ nilai: "C"  │
+    │ next: ──────┼───▶│ next: ──────┼───▶│ next: None  │
+    └─────────────┘    └─────────────┘    └─────────────┘
+    ```
+
+    The last node is the one whose pointer is `None` — the sign that the list has ended.
+    An empty list is simply `kepala = None`.
+
+    **A consequence you should notice from the start:** the head is your only grip. If
+    that pointer is overwritten and no copy of it exists, every node behind it is still
+    in memory but can **no longer be reached**. This is not a mistake that throws a
+    message; the program simply stays quiet and the result is wrong.
+
+    ## Traversal: the only way around
+
+    Because each node points forward only, the only way to move through a linked list is
+    to walk along the pointers from the head. This walk is called **traversal**, and the
+    pattern is always the same:
+
+    ```python
+    sekarang = kepala
+    while sekarang is not None:
+        print(sekarang.nilai)
+        sekarang = sekarang.berikutnya
+    ```
+
+    Two things about this loop are easy to get wrong:
+
+    - The condition is `sekarang is not None`, not `sekarang.berikutnya is not None`.
+      Using the second form means the **last node is never processed** — a mistake that
+      throws no error, it just loses one element at the end.
+    - `sekarang = sekarang.berikutnya` must be at the end. Forget it, and the loop never
+      advances and spins forever.
+
+    Now look at the cost. To reach position i you must pass through the nodes at
+    positions 0, 1, 2, up to i — that is **i + 1 nodes**:
+
+    ```
+    position 0 → 1 node visited
+    position 1 → 2 nodes visited
+    position 2 → 3 nodes visited
+    position 3 → 4 nodes visited
+    ```
+
+    This is the most important difference from an array. On an array, reading the
+    element at position i is `O(1)` because its address can be computed directly. On a
+    linked list, reading the element at position i is **`O(n)`** because there is no
+    other way but to walk from the head.
+
+    ## Adding and removing without shifting
+
+    This is where a linked list wins. Recall from Topic 2 that inserting in the middle
+    of an array is `O(n)` because every element to its right must **shift** — an array
+    has no gaps.
+
+    A linked list does not store its elements side by side, so nothing needs to shift.
+    All you do is cut one link and join a new one.
+
+    To insert a node **right after** a node you already hold:
+
+    ```python
+    baru = Simpul("X")
+    baru.berikutnya = sekarang.berikutnya    # the new node points to the rest
+    sekarang.berikutnya = baru               # the old node points to the new node
+    ```
+
+    Only two pointers change, however long the list is:
+
+    ```
+    Before:    [A] ──▶ [C] ──▶ [D]
+    Insert X after A:
+    Step 1:    [X] ──▶ [C] ──▶ [D]           (baru.berikutnya = sekarang.berikutnya)
+    Step 2:    [A] ──▶ [X] ──▶ [C] ──▶ [D]   (sekarang.berikutnya = baru)
+    ```
+
+    To **remove** the node after a node you hold, one pointer is enough: the previous
+    node simply points to the node after the one being removed. The removed node needs
+    no special cleanup — as long as nothing points to it, Python discards it for you.
+
+    ```python
+    sekarang.berikutnya = sekarang.berikutnya.berikutnya    # skip one node
+    ```
+
+    **But there is a condition, and it matters.** Both operations above are cheap
+    (`O(1)`) only if you **already hold** the node you are working at. If all you have
+    is "position i", you must first walk from the head to reach it — and that is `O(n)`.
+    So:
+
+    - "insert after the node I am holding" → `O(1)`
+    - "insert at position 5,000" → `O(n)`, because reaching it is the expensive part
+
+    This is exactly the reverse of an array, and that is the trade.
+
+    ## The head case: why it needs its own handling
+
+    There is one place where "just change the previous pointer" cannot be used:
+    removing the **first node**.
+
+    The reason is simple. To remove a node, we change the `berikutnya` of the node
+    **before** it. The first node has no node before it. There is nothing we can change
+    to skip past it.
+
+    So the first node can be removed in exactly one way: **move the head pointer** to
+    the second node.
+
+    ```python
+    if kepala is not None and kepala.nilai == nilai:
+        kepala = kepala.berikutnya       # the head moves to the second node
+        return True
+    ```
+
+    Forget this branch and the symptom is subtle and misleading: the delete function
+    runs without error and returns "removed" or "not found" as usual, but the value in
+    the first node **is still there**. An ordinary delete loop starts checking from
+    `sekarang.berikutnya`, so the first node is never a candidate.
+
+    The good news is that the other side of the story is pleasant: adding at the
+    **front** is the cheapest operation of all, because the head is already in your
+    hand.
+
+    ```python
+    baru = Simpul(nilai)
+    baru.berikutnya = kepala        # the new node points to the old list
+    kepala = baru                   # the head moves to the new node
+    ```
+
+    Two assignments, no traversal, however long the list is — `O(1)`.
+
+    ## The last node, and the tail pointer
+
+    The other side is not that cheap. The **last node** — the one whose pointer is
+    `None` — cannot be reached directly. If the only thing you hold is the head, adding
+    at the **back** means walking from the head to the end first:
+
+    ```python
+    sekarang = kepala
+    while sekarang.berikutnya is not None:   # walk to the last node
+        sekarang = sekarang.berikutnya
+    sekarang.berikutnya = baru
+    ```
+
+    The expensive part is not joining it — that is one pointer — but **reaching** the
+    last node. For a list of n nodes, that is n − 1 steps, so `O(n)`. If you add at the
+    back repeatedly, the cost piles up into `O(n²)`.
+
+    The cure is simple: keep a pointer to the last node as well. That pointer is called
+    the **tail**, and it is the partner of the head — the head is the entrance at the
+    front, the tail is the grip at the back.
+
+    ```python
+    kepala = None
+    ekor = None
+    ```
+
+    With the tail held, adding at the back needs no walking at all: the last node is
+    already in your hand, so you only join and move the tail.
+
+    ```python
+    baru = Simpul(nilai)
+    if ekor is None:            # the list is still empty
+        kepala = ekor = baru
+    else:
+        ekor.berikutnya = baru  # join it at the end
+        ekor = baru             # the tail moves to the new node
+    ```
+
+    The price paid: one extra pointer that must be **kept correct**. Every time the list
+    changes, the tail must be updated too — and that is a source of mistakes in its own
+    right. Forget to move the tail and the next addition joins in the wrong place. That
+    is why many implementations choose **not** to keep a tail and accept `O(n)` at the
+    back, especially when adding at the back is rare.
+
+    ## Array or linked list?
+
+    Both store a sequence of values, but they trade their advantages in different
+    places. Neither is better in general; the question is which one fits your use.
+
+    | | Array | Linked list |
+    |---|---|---|
+    | Read the element at position i | O(1) — the address is computed directly | O(n) — it must be traversed |
+    | Add/remove at the front | O(n) — everything shifts | O(1) — change two pointers |
+    | Add/remove in the middle, already held | O(n) — everything to the right shifts | O(1) — cut and join |
+    | Find one value | O(n) — checked one by one | O(n) — the same |
+    | Memory per element | Dense, no extra pointer | One extra pointer per node |
+    | Memory locality | Side by side, cache-friendly | Scattered, pointers jump |
+
+    That last row is often underrated. On an array, reading consecutive elements means
+    reading nearby memory addresses, and the processor likes that. On a linked list,
+    each node can sit far away, so following pointers means jumping around. **The
+    complexity class is `O(n)` for both, but the real cost can differ** — which is why
+    arrays often still win in practice even though the theory calls them equal.
+
+    The rule of thumb: use an array when what you do most is **read by position**. Use a
+    linked list when what you do most is **add and remove at the ends**, while position
+    does not matter.
+
+    ## Variants: singly, doubly, circular
+
+    What we covered above is the simplest form, the **singly linked list**: one pointer
+    per node, forward only. There are two variants worth knowing.
+
+    A **doubly linked list** adds a second pointer to the **previous** node:
+
+    ```python
+    class SimpulGanda:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.sebelumnya = None
+            self.berikutnya = None
+    ```
+
+    With that you can walk backward. The price: one extra pointer per node. For a list
+    of a million nodes, that is a million extra pointers — real, but usually still
+    reasonable against the convenience gained.
+
+    A **circular linked list** has no end: the last node's pointer goes back to the
+    first node instead of `None`. Useful for something that rotates, such as a turn
+    order. The consequence is that a `while sekarang is not None` loop **never stops**
+    on such a list — you need a different stopping condition.
+
+    ## Complexity table
+
+    | Operation | Time | Why |
+    |---|---|---|
+    | Read the element at position i | O(n) | Must traverse from the head, i + 1 nodes |
+    | Add or remove at the front | O(1) | The head is already held; change two pointers |
+    | Add at the back without a tail pointer | O(n) | Must traverse to the last node |
+    | Add or remove right after a held node | O(1) | Cut one link, join a new one |
+    | Add or remove at position i | O(n) | Reaching that position is the expensive part |
+    | Find one value | O(n) | Checked one by one from the head |
+    | Step back to the previous node (doubly) | O(1) | The pointer exists |
+    | Step back to the previous node (singly) | Impossible | The pointer does not exist |
+
+    ## Traps that catch people
+
+    **Assuming access by position is O(1).** The array habit carries over. On a linked
+    list, `read the 5,000th` means walking past 5,000 nodes. If your code does this
+    often, a linked list is the wrong choice.
+
+    **Assuming inserting in the middle is always O(1).** True only when you already hold
+    the node you are inserting at. Inserting "at position i" is still `O(n)`.
+
+    **Forgetting the first node when removing.** Covered above. The symptom is silent:
+    no error, the value simply is not removed.
+
+    **Losing the head.** This is the most expensive trap. Notice:
+
+    ```python
+    sekarang = kepala
+    while sekarang is not None:
+        sekarang = sekarang.berikutnya
+
+    # `sekarang` is now None, and `kepala` still points at the first node — safe.
+    ```
+
+    Compare it with this:
+
+    ```python
+    while kepala is not None:
+        kepala = kepala.berikutnya
+
+    # `kepala` is now None. The whole list can no longer be reached.
+    ```
+
+    The second form moves the **grip** itself, not a copy of it. When you need to walk
+    without losing the head, always start from a copy such as `sekarang = kepala`.
+
+    **Writing the traversal condition wrong.** `while sekarang.berikutnya is not None`
+    skips the last node. `while sekarang is not None` is the correct form for "visit
+    them all".
+
+    **Accidentally creating a cycle.** If a node is linked back to a node already ahead
+    of it, traversal never finishes. This is easy to do while reordering nodes
+    carelessly.
+
+    **Storing the node, not its value, then changing the node.** Because every pointer
+    refers to the same object, changing `sekarang.nilai` also changes the value seen
+    from everywhere else. That is often exactly what you want — but it should be a
+    decision, not a discovery.
+
+soal:
+  # --- Kuis 1: biaya mencapai posisi ke-i -----------------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi berikut menelusuri sebuah linked list tunggal dari kepala, menghitung
+        berapa simpul yang dikunjungi sampai mencapai posisi yang diminta. Berapa nilai
+        yang dicetak?
+      en: |
+        The function below walks a singly linked list from the head, counting how many
+        nodes are visited before it reaches the requested position. What value is
+        printed?
+    kode: |
+      class Simpul:
+          def __init__(self, nilai):
+              self.nilai = nilai
+              self.berikutnya = None
+
+
+      def hitung_dikunjungi(kepala, posisi):
+          sekarang = kepala
+          dikunjungi = 0
+          while sekarang is not None:
+              dikunjungi += 1
+              if dikunjungi == posisi + 1:
+                  return dikunjungi
+              sekarang = sekarang.berikutnya
+          return -1
+
+
+      A = Simpul("A")
+      B = Simpul("B")
+      C = Simpul("C")
+      D = Simpul("D")
+      E = Simpul("E")
+      A.berikutnya = B
+      B.berikutnya = C
+      C.berikutnya = D
+      D.berikutnya = E
+
+      print(hitung_dikunjungi(A, 3))
+    opsi:
+      - teks:
+          id: "3, karena posisi yang diminta adalah 3"
+          en: "3, because the requested position is 3"
+        benar: false
+      - teks:
+          id: "4, karena mencapai posisi 3 berarti melewati simpul posisi 0, 1, 2, dan 3"
+          en: "4, because reaching position 3 means passing through the nodes at positions 0, 1, 2, and 3"
+        benar: true
+      - teks:
+          id: "5, karena seluruh simpul dikunjungi"
+          en: "5, because every node is visited"
+        benar: false
+      - teks:
+          id: "-1, karena posisi 3 tidak ada di dalam list"
+          en: "-1, because position 3 does not exist in the list"
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Lacak perulangannya. `sekarang` mulai dari simpul `A` dan
+        `dikunjungi` mulai dari 0. Setiap putaran menambah `dikunjungi` satu lebih
+        dulu, baru memeriksa apakah ia sudah sama dengan `posisi + 1`.
+
+        - Putaran 1: `dikunjungi` menjadi 1, diperiksa `1 == 4` → belum. Maju ke `B`.
+        - Putaran 2: `dikunjungi` menjadi 2, diperiksa `2 == 4` → belum. Maju ke `C`.
+        - Putaran 3: `dikunjungi` menjadi 3, diperiksa `3 == 4` → belum. Maju ke `D`.
+        - Putaran 4: `dikunjungi` menjadi 4, diperiksa `4 == 4` → ya. Kembalikan 4.
+
+        Simpul yang dilewati adalah `A` (posisi 0), `B` (posisi 1), `C` (posisi 2), dan
+        `D` (posisi 3). Itu empat simpul.
+
+        **Kompleksitas.** Untuk mencapai posisi ke-i, linked list tunggal harus
+        menelusuri dari kepala dan melewati i + 1 simpul. Jadi biayanya `O(n)`. Di sini
+        i = 3 sehingga yang dilewati empat simpul. Kalau posisinya 0, cukup satu simpul;
+        kalau list-nya berisi sejuta simpul dan posisinya yang terakhir, yang dilewati
+        juga sejuta. Perhatikan bahwa `+ 1` inilah yang membuat posisi 0 pun tetap
+        butuh satu kunjungan — tidak ada cara melewatinya, karena kepala adalah
+        satu-satunya pintu masuk.
+
+        **Kode referensi.**
+
+        ```python
+        def hitung_dikunjungi(kepala, posisi):
+            sekarang = kepala
+            dikunjungi = 0
+            while sekarang is not None:
+                dikunjungi += 1
+                if dikunjungi == posisi + 1:
+                    return dikunjungi
+                sekarang = sekarang.berikutnya
+            return -1
+        ```
+
+        **Jebakan umum.** Jawaban 3 menganggap "posisi 3" sama dengan "3 simpul",
+        padahal menghitung posisi mulai dari 0 berarti simpul ke-4 adalah yang
+        dimaksud. Jawaban 5 mengira seluruh list harus dilalui, padahal perulangannya
+        berhenti begitu posisi yang dicari tercapai — kalau posisinya 0, sisanya tidak
+        pernah disentuh. Jawaban -1 salah karena posisi 3 memang ada: list berisi lima
+        simpul, jadi posisi yang sah adalah 0 sampai 4. Nilai -1 memang disiapkan untuk
+        posisi di luar rentang, tetapi itu bukan kasus di sini. Perhatikan bahwa
+        memeriksa `posisi + 1` adalah cara membandingkan **hitungan** (yang mulai dari
+        1) dengan **posisi** (yang mulai dari 0); mencampur keduanya adalah sumber
+        kesalahan yang paling sering pada linked list.
+      en: |
+        **Approach.** Trace the loop. `sekarang` starts at node `A` and `dikunjungi`
+        starts at 0. Each turn increases `dikunjungi` by one first, then checks whether
+        it has reached `posisi + 1`.
+
+        - Turn 1: `dikunjungi` becomes 1, check `1 == 4` → not yet. Move to `B`.
+        - Turn 2: `dikunjungi` becomes 2, check `2 == 4` → not yet. Move to `C`.
+        - Turn 3: `dikunjungi` becomes 3, check `3 == 4` → not yet. Move to `D`.
+        - Turn 4: `dikunjungi` becomes 4, check `4 == 4` → yes. Return 4.
+
+        The nodes passed are `A` (position 0), `B` (position 1), `C` (position 2), and
+        `D` (position 3). That is four nodes.
+
+        **Complexity.** To reach position i, a singly linked list must traverse from the
+        head and pass i + 1 nodes. So the cost is `O(n)`. Here i = 3, so four nodes are
+        passed. If the position were 0, one node would be enough; if the list held a
+        million nodes and the position were the last one, a million would be passed.
+        Note that this `+ 1` is what makes even position 0 cost one visit — there is no
+        way around it, because the head is the only entrance.
+
+        **Reference code.**
+
+        ```python
+        def hitung_dikunjungi(kepala, posisi):
+            sekarang = kepala
+            dikunjungi = 0
+            while sekarang is not None:
+                dikunjungi += 1
+                if dikunjungi == posisi + 1:
+                    return dikunjungi
+                sekarang = sekarang.berikutnya
+            return -1
+        ```
+
+        **Common trap.** The answer 3 treats "position 3" as "3 nodes", when counting
+        positions from 0 means the fourth node is the one meant. The answer 5 assumes
+        the whole list must be walked, when the loop stops as soon as the requested
+        position is reached — if the position were 0, the rest would never be touched.
+        The answer -1 is wrong because position 3 does exist: the list holds five nodes,
+        so the valid positions are 0 through 4. The value -1 is indeed prepared for
+        positions outside the range, but that is not the case here. Note that checking
+        `posisi + 1` is how a **count** (which starts at 1) is compared with a
+        **position** (which starts at 0); mixing the two is the most common source of
+        mistakes with linked lists.
+
+  # --- Kuis 2: kenapa depan O(1) dan belakang O(n) --------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Kamu memegang sebuah linked list tunggal berisi 100.000 simpul, dan yang kamu
+        punya hanyalah penunjuk ke **kepala** — tidak ada penunjuk ke simpul terakhir.
+        Menambahkan satu nilai baru di **depan** selesai seketika. Menambahkan satu
+        nilai baru di **belakang** terasa lambat. Keduanya sama-sama satu penambahan.
+        Kenapa berbeda?
+      en: |
+        You hold a singly linked list of 100,000 nodes, and all you have is a pointer to
+        the **head** — there is no pointer to the last node. Adding one new value at the
+        **front** finishes instantly. Adding one new value at the **back** feels slow.
+        Both are a single addition. Why the difference?
+    opsi:
+      - teks:
+          id: Karena menambah di depan hanya mengubah dua penunjuk tanpa bergerak, sedangkan menambah di belakang harus menelusuri 100.000 simpul satu per satu dari kepala untuk menemukan simpul terakhir
+          en: Because adding at the front only changes two pointers without moving, while adding at the back must walk all 100,000 nodes one by one from the head to find the last node
+        benar: true
+      - teks:
+          id: Karena menambah di belakang harus menggeser seluruh 100.000 simpul satu langkah ke kanan
+          en: Because adding at the back must shift all 100,000 nodes one step to the right
+        benar: false
+      - teks:
+          id: Karena menambah di depan memakai lebih sedikit memori daripada menambah di belakang
+          en: Because adding at the front uses less memory than adding at the back
+        benar: false
+      - teks:
+          id: Karena menambah di belakang harus menyalin seluruh isi list ke tempat yang lebih besar
+          en: Because adding at the back must copy the whole list to a larger place
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Menambah di depan hanya menyentuh dua penunjuk, dan tidak
+        bergerak sama sekali:
+
+        ```python
+        baru = Simpul(nilai)
+        baru.berikutnya = kepala      # penunjuk 1
+        kepala = baru                 # penunjuk 2
+        ```
+
+        Kepala sudah kamu pegang, jadi tidak ada yang perlu dicari. Menambah di
+        belakang berbeda: kamu harus menemukan simpul terakhir lebih dulu, dan
+        satu-satunya cara adalah berjalan dari kepala mengikuti penunjuk sampai
+        bertemu simpul yang `berikutnya` bernilai `None`. Untuk list berisi 100.000
+        simpul, itu 99.999 langkah sebelum satu simpul baru bisa disambungkan.
+
+        **Kompleksitas.** Menambah di depan `O(1)` — jumlah penugasan tetap dua, berapa
+        pun panjang list-nya. Menambah di belakang tanpa penunjuk ekor `O(n)` — yang
+        mahal bukan menyambungnya, melainkan **mencapai** simpul terakhir. Kalau
+        penunjuk ke ekor disimpan juga, menambah di belakang kembali menjadi `O(1)`,
+        karena simpul terakhir sudah dipegang. Itu kompromi yang lazim dipakai.
+
+        **Kode referensi.**
+
+        ```python
+        # Yang mahal — O(n), karena harus mencari simpul terakhir
+        def tambah_belakang(kepala, nilai):
+            baru = Simpul(nilai)
+            if kepala is None:
+                return baru
+            sekarang = kepala
+            while sekarang.berikutnya is not None:   # berjalan sampai ujung
+                sekarang = sekarang.berikutnya
+            sekarang.berikutnya = baru
+            return kepala
+
+
+        # Yang murah — O(1), karena kepala sudah dipegang
+        def tambah_depan(kepala, nilai):
+            baru = Simpul(nilai)
+            baru.berikutnya = kepala
+            return baru
+        ```
+
+        **Jebakan umum.** Jawaban "harus menggeser seluruh simpul" membawa kebiasaan
+        dari array: pada linked list **tidak ada** yang digeser, karena simpulnya tidak
+        bersebelahan. Yang mahal adalah menelusuri, bukan menggeser — dan itu dua hal
+        yang berbeda walaupun sama-sama `O(n)`. Jawaban "memakai lebih sedikit memori"
+        keliru karena jumlah simpul yang dibuat sama pada kedua kasus. Jawaban "harus
+        menyalin isi list" juga kebiasaan dari array dinamis: linked list tidak pernah
+        menyalin isinya, karena ia tidak butuh tempat yang bersebelahan.
+      en: |
+        **Approach.** Adding at the front touches only two pointers, and does not move
+        at all:
+
+        ```python
+        baru = Simpul(nilai)
+        baru.berikutnya = kepala      # pointer 1
+        kepala = baru                 # pointer 2
+        ```
+
+        The head is already in your hand, so there is nothing to search for. Adding at
+        the back is different: you must find the last node first, and the only way is to
+        walk from the head along the pointers until you meet the node whose `berikutnya`
+        is `None`. For a list of 100,000 nodes, that is 99,999 steps before a single new
+        node can be joined on.
+
+        **Complexity.** Adding at the front is `O(1)` — the number of assignments stays
+        at two, however long the list is. Adding at the back without a tail pointer is
+        `O(n)` — the expensive part is not joining it, but **reaching** the last node.
+        If a pointer to the tail is kept as well, adding at the back becomes `O(1)`
+        again, because the last node is already held. That is a common trade.
+
+        **Reference code.**
+
+        ```python
+        # The expensive way — O(n), because the last node must be found
+        def tambah_belakang(kepala, nilai):
+            baru = Simpul(nilai)
+            if kepala is None:
+                return baru
+            sekarang = kepala
+            while sekarang.berikutnya is not None:   # walk to the end
+                sekarang = sekarang.berikutnya
+            sekarang.berikutnya = baru
+            return kepala
+
+
+        # The cheap way — O(1), because the head is already held
+        def tambah_depan(kepala, nilai):
+            baru = Simpul(nilai)
+            baru.berikutnya = kepala
+            return baru
+        ```
+
+        **Common trap.** The answer "must shift all the nodes" carries over the array
+        habit: in a linked list **nothing** shifts, because the nodes are not side by
+        side. What is expensive is traversing, not shifting — and those are two
+        different things even though both are `O(n)`. The answer "uses less memory" is
+        wrong because the same number of nodes is created in both cases. The answer
+        "must copy the whole list" is also an array habit: a linked list never copies
+        its contents, because it does not need a contiguous place.
+
+  # --- Kuis 3: membangun list dari belakang → hitung langkah ----------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi berikut menambahkan nilai satu per satu ke **belakang** sebuah linked
+        list, dan setiap kali ia mencatat berapa simpul yang harus ditelusuri untuk
+        menemukan simpul terakhir. Berapa nilai `total` yang dicetak?
+      en: |
+        The function below adds values one by one to the **back** of a linked list, and
+        each time it records how many nodes it had to walk to find the last node. What
+        value of `total` is printed?
+    kode: |
+      class Simpul:
+          def __init__(self, nilai):
+              self.nilai = nilai
+              self.berikutnya = None
+
+
+      def tambah_belakang(kepala, nilai):
+          baru = Simpul(nilai)
+          if kepala is None:
+              return baru, 0
+          langkah = 0
+          sekarang = kepala
+          while sekarang.berikutnya is not None:
+              sekarang = sekarang.berikutnya
+              langkah += 1
+          sekarang.berikutnya = baru
+          return kepala, langkah
+
+
+      kepala = None
+      total = 0
+      for nilai in range(1, 7):
+          kepala, langkah = tambah_belakang(kepala, nilai)
+          total += langkah
+
+      print(total)
+    opsi:
+      - teks:
+          id: "15, karena jumlah langkahnya 1 + 2 + 3 + 4 + 5"
+          en: "15, because the steps are 1 + 2 + 3 + 4 + 5"
+        benar: false
+      - teks:
+          id: "10, karena dua penambahan pertama tidak menelusuri apa pun, lalu bertambah satu setiap kali: 0 + 0 + 1 + 2 + 3 + 4"
+          en: "10, because the first two additions walk nothing, then it grows by one each time: 0 + 0 + 1 + 2 + 3 + 4"
+        benar: true
+      - teks:
+          id: "6, karena ada enam penambahan dan masing-masing satu langkah"
+          en: "6, because there are six additions and each takes one step"
+        benar: false
+      - teks:
+          id: "21, karena setiap penambahan berjalan dari kepala sampai ujung"
+          en: "21, because every addition walks from the head all the way to the end"
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Catat langkahnya satu per satu. Perulangannya menambahkan
+        nilai 1 sampai 6.
+
+        - Nilai 1: list masih kosong, jadi `kepala is None` dan fungsi langsung
+          mengembalikan 0 langkah. Kini list berisi satu simpul.
+        - Nilai 2: list berisi satu simpul. Perulangan `while` langsung berhenti karena
+          simpul itu adalah simpul terakhir. 0 langkah. Kini dua simpul.
+        - Nilai 3: harus melewati satu simpul. 1 langkah. Kini tiga simpul.
+        - Nilai 4: 2 langkah. Kini empat simpul.
+        - Nilai 5: 3 langkah. Kini lima simpul.
+        - Nilai 6: 4 langkah. Kini enam simpul.
+
+        Totalnya 0 + 0 + 1 + 2 + 3 + 4 = **10**.
+
+        **Kompleksitas.** Untuk n penambahan, total langkahnya 0 + 0 + 1 + 2 + … + (n − 2),
+        yaitu `(n − 1)(n − 2) / 2` — kelasnya `O(n²)`. Untuk n = 6 hasilnya 5 × 4 / 2 =
+        10. Untuk n = 10.000 hasilnya 49.985.001 langkah, bukan 10.000. Inilah alasan
+        sebenarnya orang menyimpan penunjuk ekor: satu penunjuk tambahan mengubah
+        seluruh rangkaian ini menjadi `O(n)`.
+
+        **Kode referensi.**
+
+        ```python
+        def tambah_belakang(kepala, nilai):
+            baru = Simpul(nilai)
+            if kepala is None:
+                return baru, 0
+            langkah = 0
+            sekarang = kepala
+            while sekarang.berikutnya is not None:
+                sekarang = sekarang.berikutnya
+                langkah += 1
+            sekarang.berikutnya = baru
+            return kepala, langkah
+        ```
+
+        **Jebakan umum.** Jawaban 15 berasal dari pola `n(n − 1) / 2` yang dipakai
+        terburu-buru — pola itu muncul kalau penambahan pertama pun dihitung menelusuri
+        satu simpul, padahal list yang kosong tidak punya simpul untuk ditelusuri, dan
+        penambahan kedua berhenti seketika karena list baru berisi satu simpul. Dua suku
+        nol di awal itulah bedanya. Jawaban 6 mengira setiap penambahan berbiaya sama,
+        padahal biayanya bertambah seiring list memanjang — inilah inti pelajaran
+        Topik 1 tentang biaya di dalam perulangan. Jawaban 21 terlalu besar karena
+        mengira setiap penambahan berjalan sampai ujung list yang sedang tumbuh.
+      en: |
+        **Approach.** Record the steps one by one. The loop adds the values 1 through 6.
+
+        - Value 1: the list is still empty, so `kepala is None` and the function returns
+          0 steps at once. The list now holds one node.
+        - Value 2: the list holds one node. The `while` loop stops immediately because
+          that node is the last node. 0 steps. Now two nodes.
+        - Value 3: one node must be passed. 1 step. Now three nodes.
+        - Value 4: 2 steps. Now four nodes.
+        - Value 5: 3 steps. Now five nodes.
+        - Value 6: 4 steps. Now six nodes.
+
+        The total is 0 + 0 + 1 + 2 + 3 + 4 = **10**.
+
+        **Complexity.** For n additions, the total steps are 0 + 0 + 1 + 2 + … + (n − 2),
+        which is `(n − 1)(n − 2) / 2` — class `O(n²)`. For n = 6 the result is 5 × 4 / 2 =
+        10. For n = 10,000 the result is 49,985,001 steps, not 10,000. This is the real
+        reason people keep a tail pointer: one extra pointer turns this whole series
+        into `O(n)`.
+
+        **Reference code.**
+
+        ```python
+        def tambah_belakang(kepala, nilai):
+            baru = Simpul(nilai)
+            if kepala is None:
+                return baru, 0
+            langkah = 0
+            sekarang = kepala
+            while sekarang.berikutnya is not None:
+                sekarang = sekarang.berikutnya
+                langkah += 1
+            sekarang.berikutnya = baru
+            return kepala, langkah
+        ```
+
+        **Common trap.** The answer 15 comes from the pattern `n(n − 1) / 2` applied in
+        haste — that pattern appears if the first addition is counted as walking one
+        node, when an empty list has no node to walk, and the second addition stops at
+        once because the list holds a single node. Those two zero terms at the start are
+        the difference. The answer 6 assumes every addition costs the same, when the
+        cost grows as the list lengthens — this is the heart of what Topic 1 teaches
+        about cost inside a loop. The answer 21 is too large because it assumes every
+        addition walks to the end of the growing list.
+
+  # --- Kuis 4: menghapus simpul pertama butuh cabang sendiri ----------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah fungsi menghapus sebuah simpul berdasarkan nilainya. Caranya: berjalan
+        dari kepala, dan begitu menemukan simpul yang `berikutnya` bernilai sama dengan
+        yang dicari, ia memutus tautannya. Fungsi ini berhasil menghapus nilai yang ada
+        di tengah, tetapi **diam-diam gagal** ketika nilai yang dicari kebetulan ada di
+        simpul pertama. Kenapa?
+      en: |
+        A function removes a node by its value. Its method: walk from the head, and as
+        soon as it finds a node whose `berikutnya` holds the value being sought, it cuts
+        that link. The function removes values in the middle successfully, but **quietly
+        fails** when the value being sought happens to be in the first node. Why?
+    opsi:
+      - teks:
+          id: Karena simpul pertama tidak punya simpul sebelumnya yang tautannya bisa diputus; ia hanya bisa dibuang dengan memindahkan penunjuk kepala ke simpul kedua
+          en: Because the first node has no previous node whose link could be cut; it can only be removed by moving the head pointer to the second node
+        benar: true
+      - teks:
+          id: Karena simpul pertama tidak menyimpan nilai, hanya penunjuk ke simpul kedua
+          en: Because the first node stores no value, only a pointer to the second node
+        benar: false
+      - teks:
+          id: Karena untuk membuang simpul pertama, list harus ditelusuri sampai simpul terakhir lebih dulu supaya ujungnya bisa ditautkan ke simpul kedua
+          en: Because to remove the first node, the list must first be walked to the last node so that its end can be linked to the second node
+        benar: false
+      - teks:
+          id: Karena simpul pertama harus dipindahkan ke belakang dulu sebelum bisa dibuang
+          en: Because the first node must be moved to the back before it can be removed
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Untuk membuang sebuah simpul, kita mengubah `berikutnya` milik
+        simpul **sebelumnya** supaya melompatinya:
+
+        ```python
+        sekarang.berikutnya = sekarang.berikutnya.berikutnya
+        ```
+
+        Perhatikan bahwa yang diubah adalah simpul **sebelum** yang dibuang. Simpul
+        pertama tidak punya simpul sebelumnya, jadi tidak ada yang bisa diubah untuk
+        melewatinya. Ia hanya bisa dibuang dengan memindahkan **kepala**:
+
+        ```python
+        if kepala is not None and kepala.nilai == nilai:
+            kepala = kepala.berikutnya
+            return True
+        ```
+
+        Kalau cabang ini tidak ada, perulangan hapus mulai memeriksa dari
+        `sekarang.berikutnya` — dan simpul pertama tidak pernah menjadi kandidat. Fungsi
+        selesai tanpa error dan melaporkan "tidak ditemukan", padahal nilainya ada di
+        depan sekali.
+
+        **Kompleksitas.** Menghapus simpul pertama `O(1)`, karena kepala sudah dipegang
+        dan hanya penunjuk itu yang berpindah. Mencari nilai yang ada di tengah tetap
+        `O(n)`, karena harus ditelusuri. Jadi operasi hapus secara keseluruhan `O(n)` —
+        tetapi yang mahal adalah **mencarinya**, bukan menghapusnya.
+
+        **Kode referensi.**
+
+        ```python
+        def hapus(kepala, nilai):
+            # Kasus khusus: yang dibuang adalah simpul pertama.
+            if kepala is not None and kepala.nilai == nilai:
+                return kepala.berikutnya
+
+            sekarang = kepala
+            while sekarang is not None and sekarang.berikutnya is not None:
+                if sekarang.berikutnya.nilai == nilai:
+                    sekarang.berikutnya = sekarang.berikutnya.berikutnya
+                    return kepala
+                sekarang = sekarang.berikutnya
+            return kepala          # tidak ditemukan; list tidak berubah
+        ```
+
+        **Jebakan umum.** Jawaban "simpul pertama tidak menyimpan nilai" keliru:
+        simpul pertama sama seperti simpul lain, ia menyimpan nilai **dan** penunjuk.
+        Jawaban "harus ditelusuri sampai simpul terakhir dulu" mengarang pekerjaan yang
+        tidak ada: menambah atau membuang di depan justru **tidak menyentuh** simpul
+        terakhir sama sekali — kepala adalah satu-satunya yang perlu berpindah, dan itu
+        `O(1)`. Jawaban "harus dipindahkan ke belakang" juga mengarang langkah yang
+        tidak ada; tidak ada yang perlu dipindahkan, hanya penunjuk kepala yang
+        berpindah. Perhatikan bahwa gejalanya memang benar — simpul pertama tidak
+        pernah ikut terbuang — tetapi yang harus kamu kenali adalah **sebabnya**:
+        perulangan memeriksa `sekarang.berikutnya`, sehingga simpul pertama tidak pernah
+        menjadi kandidat. Cara lain yang lazim dipakai untuk menghindari kasus khusus
+        ini adalah menambahkan satu **simpul penjaga** di depan kepala, sehingga setiap
+        simpul punya simpul sebelumnya — tetapi itu menambah satu simpul yang tidak
+        menyimpan data.
+      en: |
+        **Approach.** To remove a node we change the `berikutnya` of the node **before**
+        it so that it skips over it:
+
+        ```python
+        sekarang.berikutnya = sekarang.berikutnya.berikutnya
+        ```
+
+        Notice that what changes is the node **before** the one being removed. The first
+        node has no node before it, so there is nothing to change in order to skip past
+        it. It can only be removed by moving the **head**:
+
+        ```python
+        if kepala is not None and kepala.nilai == nilai:
+            kepala = kepala.berikutnya
+            return True
+        ```
+
+        Without this branch, the delete loop starts checking from `sekarang.berikutnya`
+        — and the first node is never a candidate. The function finishes without error
+        and reports "not found", when the value is sitting right at the front.
+
+        **Complexity.** Removing the first node is `O(1)`, because the head is already
+        held and only that pointer moves. Finding a value in the middle is still `O(n)`,
+        because it must be traversed. So the delete operation overall is `O(n)` — but
+        the expensive part is **finding** it, not removing it.
+
+        **Reference code.**
+
+        ```python
+        def hapus(kepala, nilai):
+            # Special case: the node being removed is the first one.
+            if kepala is not None and kepala.nilai == nilai:
+                return kepala.berikutnya
+
+            sekarang = kepala
+            while sekarang is not None and sekarang.berikutnya is not None:
+                if sekarang.berikutnya.nilai == nilai:
+                    sekarang.berikutnya = sekarang.berikutnya.berikutnya
+                    return kepala
+                sekarang = sekarang.berikutnya
+            return kepala          # not found; the list is unchanged
+        ```
+
+        **Common trap.** The answer "the first node stores no value" is wrong: the first
+        node is like any other, it stores a value **and** a pointer. The answer "the
+        list must first be walked to the last node" invents work that does not exist:
+        adding or removing at the front does **not touch** the last node at all — the
+        head is the only thing that needs to move, and that is `O(1)`. The answer "must
+        be moved to the back" also invents a step that does not exist; nothing needs
+        moving, only the head pointer. Note that the symptom is indeed real — the first
+        node never gets removed — but what you must recognise is the **cause**: the loop
+        checks `sekarang.berikutnya`, so the first node is never a candidate. Another
+        common way to avoid this special case is to add a **sentinel node** in front of
+        the head, so that every node has a predecessor — but that adds one node that
+        stores no data.
+
+  # --- Kuis 5: tunggal vs ganda — biaya tombol mundur -----------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah pemutar musik menyimpan daftar lagunya sebagai linked list **tunggal**.
+        Setiap lagu hanya menyimpan penunjuk ke lagu berikutnya. Kamu ingin menambahkan
+        tombol "lagu sebelumnya". Apa yang harus diubah, dan apa harganya?
+      en: |
+        A music player stores its playlist as a **singly** linked list. Each song holds
+        only a pointer to the next song. You want to add a "previous song" button. What
+        has to change, and what does it cost?
+    opsi:
+      - teks:
+          id: Setiap simpul harus menyimpan penunjuk kedua ke lagu sebelumnya, sehingga tombol "sebelumnya" bekerja O(1); harganya satu penunjuk tambahan per lagu
+          en: Each node must store a second pointer to the previous song, so the "previous" button works in O(1); the price is one extra pointer per song
+        benar: true
+      - teks:
+          id: Tidak ada yang perlu diubah, karena penunjuk ke lagu berikutnya sudah cukup untuk mundur — cukup dibaca dari arah sebaliknya
+          en: Nothing needs to change, because the pointer to the next song is already enough to go back — it just has to be read in the other direction
+        benar: false
+      - teks:
+          id: Daftar lagunya harus diubah menjadi array, karena linked list tidak bisa mundur sama sekali
+          en: The playlist must be turned into an array, because a linked list cannot go back at all
+        benar: false
+      - teks:
+          id: Cukup menambahkan penunjuk "sebelumnya" hanya pada simpul terakhir, supaya bisa mulai mundur dari sana
+          en: It is enough to add a "previous" pointer only on the last node, so that going back can start from there
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Pada linked list tunggal, setiap simpul hanya menyimpan satu
+        penunjuk, dan arahnya ke depan. Tidak ada cara mengetahui simpul sebelumnya:
+        informasinya memang tidak disimpan di mana pun. Menambah penunjuk ke simpul
+        sebelumnya membuatnya menjadi **linked list ganda**:
+
+        ```python
+        class SimpulGanda:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.sebelumnya = None
+                self.berikutnya = None
+        ```
+
+        Dengan penunjuk itu, mundur satu langkah tinggal membacanya — tidak perlu
+        menelusuri apa pun.
+
+        **Kompleksitas.** Mundur ke simpul sebelumnya menjadi `O(1)`, karena
+        penunjuknya sudah ada. Harga memori: satu penunjuk tambahan **per simpul**, jadi
+        untuk n lagu ada n penunjuk tambahan. Operasi lain tidak berubah — mencari satu
+        nilai tetap `O(n)`, karena penunjuk mundur tidak membantu menemukan nilai.
+
+        **Kode referensi.**
+
+        ```python
+        # Tunggal — tidak bisa mundur: tidak ada penunjuk ke simpul sebelumnya
+        class Simpul:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.berikutnya = None
+
+
+        # Ganda — mundur O(1)
+        class SimpulGanda:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.sebelumnya = None
+                self.berikutnya = None
+        ```
+
+        **Jebakan umum.** Jawaban "cukup dibaca dari arah sebaliknya" keliru karena
+        penunjuk bekerja satu arah: kalau `B.berikutnya = C`, itu tidak berarti `C` tahu
+        tentang `B`. Jawaban "harus diubah menjadi array" terlalu jauh — linked list
+        **bisa** mundur, asal penunjuknya ditambahkan; mengubah ke array justru
+        mengorbankan keunggulan menambah dan membuang di depan yang mungkin masih
+        dipakai. Jawaban "cukup pada simpul terakhir" salah karena mundur bisa dimulai
+        dari mana saja, bukan hanya dari lagu terakhir; menambahkan penunjuk itu di satu
+        simpul saja membuat langkah berikutnya langsung buntu. Perhatikan juga bahwa
+        linked list sirkular adalah pilihan ketiga: simpul terakhir menunjuk kembali ke
+        kepala, sehingga mundur dari lagu pertama membawa ke lagu terakhir.
+      en: |
+        **Approach.** In a singly linked list, each node holds only one pointer, and it
+        points forward. There is no way to know the previous node: that information is
+        simply not stored anywhere. Adding a pointer to the previous node turns it into a
+        **doubly linked list**:
+
+        ```python
+        class SimpulGanda:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.sebelumnya = None
+                self.berikutnya = None
+        ```
+
+        With that pointer, stepping back is just reading it — nothing needs to be
+        traversed.
+
+        **Complexity.** Stepping back to the previous node becomes `O(1)`, because the
+        pointer already exists. The memory price: one extra pointer **per node**, so for
+        n songs there are n extra pointers. The other operations do not change — finding
+        one value is still `O(n)`, because a backward pointer does not help locate a
+        value.
+
+        **Reference code.**
+
+        ```python
+        # Singly — cannot go back: there is no pointer to the previous node
+        class Simpul:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.berikutnya = None
+
+
+        # Doubly — stepping back is O(1)
+        class SimpulGanda:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.sebelumnya = None
+                self.berikutnya = None
+        ```
+
+        **Common trap.** The answer "just read it in the other direction" is wrong
+        because a pointer works one way: if `B.berikutnya = C`, that does not mean `C`
+        knows about `B`. The answer "must be turned into an array" goes too far — a
+        linked list **can** go backward, as long as the pointer is added; switching to an
+        array would give up the cheap add-and-remove-at-the-front that may still be in
+        use. The answer "only on the last node" is wrong because going back can start
+        from anywhere, not only from the last song; adding that pointer on a single node
+        leaves the very next step stuck. Note also that a circular linked list is a third
+        option: the last node points back to the head, so going back from the first song
+        brings you to the last one.
+
+  # --- Soal Kode: linked list tunggal dari nol ------------------------------------
+  #
+  # Yang diminta: menulis sendiri simpul dan linked list tunggal, lengkap dengan
+  # penelusuran dan pemutusan tautannya, lalu memakainya untuk menjalankan rangkaian
+  # perintah. Pemutusan tautan itu inti pelajarannya: pemelajar merasakan sendiri
+  # mengapa menambah dan membuang di depan O(1) (tanpa menggeser apa pun), mengapa
+  # mencapai posisi ke-i O(n) (harus menelusuri), dan mengapa membuang simpul pertama
+  # butuh perlakuan sendiri (kepala harus berpindah).
+  - tipe: soal-kode
+    skenario:
+      id: |
+        Tulis dari nol sebuah linked list tunggal — sebuah kelas yang menampung nilai
+        dalam deretan simpul yang saling menunjuk, dan menyediakan operasi dasarnya
+        sendiri. Kamu menerima daftar perintah, dan harus mengembalikan daftar hasil
+        untuk setiap perintah yang menghasilkan nilai.
+
+        Setiap perintah adalah daftar. Perintah `["tambah_depan", x]` menaruh `x` di
+        **depan** dan tidak menghasilkan nilai. Perintah `["tambah_belakang", x]`
+        menaruh `x` di **belakang** dan tidak menghasilkan nilai. Perintah
+        `["cari", x]` mengembalikan **posisi** `x` yang pertama ditemukan, atau `-1`
+        kalau tidak ada. Perintah `["hapus", x]` membuang simpul pertama yang bernilai
+        `x` dan mengembalikan `True` kalau ada yang dibuang, `False` kalau tidak ada.
+        Perintah `["ukuran"]` mengembalikan banyaknya simpul. Perintah `["ke_list"]`
+        mengembalikan seluruh isi sebagai daftar biasa, dari depan sampai belakang.
+
+        Untuk perintah yang tidak menghasilkan nilai, catat `None`.
+
+        Jangan memakai `list` sebagai pengganti kelasnya untuk menyimpan data —
+        implementasikan sendiri `tambah_depan`, `tambah_belakang`, `cari`, `hapus`,
+        `ukuran`, dan `ke_list`, supaya kamu merasakan mekanisme penunjuknya. Kamu boleh
+        memakai `list` biasa hanya untuk mengumpulkan hasil perintah.
+
+        Ingat bahwa `hapus` pada simpul **pertama** tidak bisa memakai cara yang sama
+        dengan simpul di tengah: tidak ada simpul sebelumnya yang tautannya bisa
+        diputus.
+      en: |
+        Write from scratch a singly linked list — a class that holds values in a chain
+        of nodes pointing at one another, and provides its own basic operations. You
+        receive a list of commands, and must return a list of results for each command
+        that produces a value.
+
+        Each command is a list. The command `["tambah_depan", x]` puts `x` at the
+        **front** and produces no value. The command `["tambah_belakang", x]` puts `x`
+        at the **back** and produces no value. The command `["cari", x]` returns the
+        **position** of the first `x` found, or `-1` if there is none. The command
+        `["hapus", x]` removes the first node holding `x` and returns `True` if
+        something was removed, `False` if not. The command `["ukuran"]` returns how many
+        nodes there are. The command `["ke_list"]` returns the whole contents as a plain
+        list, from front to back.
+
+        For commands that produce no value, record `None`.
+
+        Do not use `list` in place of the class to store the data — implement
+        `tambah_depan`, `tambah_belakang`, `cari`, `hapus`, `ukuran`, and `ke_list`
+        yourself, so that you feel the pointer mechanism. You may use a plain `list`
+        only to collect the command results.
+
+        Remember that `hapus` on the **first** node cannot use the same approach as a
+        node in the middle: there is no previous node whose link could be cut.
+    fungsi: proses
+    test_case:
+      # Kasus 1 — tambah_depan membangun urutan TERBALIK; ke_list dan ukuran.
+      - argumen:
+          - - ["tambah_depan", 10]
+            - ["tambah_depan", 20]
+            - ["tambah_depan", 30]
+            - ["ke_list"]
+            - ["ukuran"]
+        diharapkan: [null, null, null, [30, 20, 10], 3]
+      # Kasus 2 — tambah_belakang membangun urutan sesuai pemasukan.
+      - argumen:
+          - - ["tambah_belakang", 1]
+            - ["tambah_belakang", 2]
+            - ["tambah_belakang", 3]
+            - ["ke_list"]
+            - ["ukuran"]
+        diharapkan: [null, null, null, [1, 2, 3], 3]
+      # Kasus 3 — cari mengembalikan posisi; -1 kalau tidak ada.
+      - argumen:
+          - - ["tambah_belakang", "a"]
+            - ["tambah_belakang", "b"]
+            - ["tambah_belakang", "c"]
+            - ["cari", "b"]
+            - ["cari", "z"]
+            - ["cari", "a"]
+            - ["cari", "c"]
+        diharapkan: [null, null, null, 1, -1, 0, 2]
+      # Kasus 4 — hapus di tengah: putus dan sambung. hapus nilai tidak ada -> False.
+      - argumen:
+          - - ["tambah_belakang", 5]
+            - ["tambah_belakang", 6]
+            - ["tambah_belakang", 7]
+            - ["hapus", 6]
+            - ["ke_list"]
+            - ["hapus", 99]
+            - ["ukuran"]
+        diharapkan: [null, null, null, true, [5, 7], false, 2]
+      # Kasus 5 — hapus di KEPALA: kepala harus pindah. Campur depan dan belakang.
+      - argumen:
+          - - ["tambah_depan", 1]
+            - ["tambah_depan", 2]
+            - ["tambah_belakang", 3]
+            - ["hapus", 2]
+            - ["ke_list"]
+            - ["ukuran"]
+        diharapkan: [null, null, null, true, [1, 3], 2]
+    solusi_referensi: |
+      class Simpul:
+          def __init__(self, nilai):
+              self.nilai = nilai
+              self.berikutnya = None
+
+
+      class DaftarTaut:
+          def __init__(self):
+              self.kepala = None
+              self._ukuran = 0
+
+          def tambah_depan(self, nilai):
+              # Dua penunjuk, tanpa penelusuran — kepala sudah dipegang.
+              baru = Simpul(nilai)
+              baru.berikutnya = self.kepala
+              self.kepala = baru
+              self._ukuran += 1
+
+          def tambah_belakang(self, nilai):
+              baru = Simpul(nilai)
+              if self.kepala is None:
+                  self.kepala = baru
+              else:
+                  # Telusuri sampai simpul terakhir, lalu sambungkan di sana.
+                  sekarang = self.kepala
+                  while sekarang.berikutnya is not None:
+                      sekarang = sekarang.berikutnya
+                  sekarang.berikutnya = baru
+              self._ukuran += 1
+
+          def cari(self, nilai):
+              sekarang = self.kepala
+              posisi = 0
+              while sekarang is not None:
+                  if sekarang.nilai == nilai:
+                      return posisi
+                  sekarang = sekarang.berikutnya
+                  posisi += 1
+              return -1
+
+          def hapus(self, nilai):
+              # Kasus khusus: yang dibuang adalah simpul pertama. Ia tidak punya
+              # simpul sebelumnya, jadi hanya kepala yang bisa dipindahkan.
+              if self.kepala is not None and self.kepala.nilai == nilai:
+                  self.kepala = self.kepala.berikutnya
+                  self._ukuran -= 1
+                  return True
+
+              # Simpul di tengah atau di belakang: putus tautan simpul sebelumnya.
+              sebelumnya = self.kepala
+              while sebelumnya is not None and sebelumnya.berikutnya is not None:
+                  if sebelumnya.berikutnya.nilai == nilai:
+                      sebelumnya.berikutnya = sebelumnya.berikutnya.berikutnya
+                      self._ukuran -= 1
+                      return True
+                  sebelumnya = sebelumnya.berikutnya
+              return False
+
+          def ukuran(self):
+              return self._ukuran
+
+          def ke_list(self):
+              hasil = []
+              sekarang = self.kepala
+              while sekarang is not None:
+                  hasil.append(sekarang.nilai)
+                  sekarang = sekarang.berikutnya
+              return hasil
+
+
+      def proses(perintah):
+          daftar = DaftarTaut()
+          hasil = []
+          for satu in perintah:
+              operasi = satu[0]
+              if operasi == "tambah_depan":
+                  daftar.tambah_depan(satu[1])
+                  hasil.append(None)
+              elif operasi == "tambah_belakang":
+                  daftar.tambah_belakang(satu[1])
+                  hasil.append(None)
+              elif operasi == "cari":
+                  hasil.append(daftar.cari(satu[1]))
+              elif operasi == "hapus":
+                  hasil.append(daftar.hapus(satu[1]))
+              elif operasi == "ukuran":
+                  hasil.append(daftar.ukuran())
+              elif operasi == "ke_list":
+                  hasil.append(daftar.ke_list())
+          return hasil
