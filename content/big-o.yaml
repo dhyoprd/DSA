@@ -1,0 +1,1050 @@
+# Topik 1 — Big-O & Kompleksitas.
+#
+# Topik pertama di Jalur, dan yang paling berbeda bentuknya dari Topik lain: isinya
+# bukan sebuah struktur data, melainkan **cara mengukur** semua struktur dan algoritma
+# yang menyusul. Karena itu ia tidak punya prasyarat.
+#
+# **Penyimpangan yang disengaja.** `docs/design-tree.md` menetapkan Soal Kode berbentuk
+# "implementasi struktur data dari nol". Big-O bukan struktur data, jadi bentuk itu
+# tidak bisa dipakai apa adanya. Yang dipilih: pemelajar menulis **dua pencarian dari
+# nol** dan mengembalikan **jumlah langkah** masing-masing, sehingga perbedaan O(n) dan
+# O(log n) terasa sebagai angka, bukan sebagai klaim. Keputusan ini dicatat di
+# `docs/adr/0023-bentuk-soal-kode-big-o-dan-kompleksitas-algoritma.md`.
+#
+# Penyimpangan kedua ada di field `kompleksitas`: ia berisi **algoritma yang
+# dianalisis** (pencarian linear, pencarian biner, perulangan bersarang, pengurutan),
+# bukan struktur data. Field-nya tetap `struktur` karena skema di issue #1 dan ADR-0019
+# membekukannya; mengubah nama field akan menyentuh validator dan penyusun CSV hanya
+# demi satu Topik. Alasan lengkapnya di ADR-0023.
+#
+# Semua Soal dan Pembahasan di sini ditulis original, sesuai ADR-0005. Tidak ada teks
+# LeetCode yang disalin maupun diterjemahkan.
+#
+# `nomor`, `slug`, `judul`, dan `prasyarat` harus sama dengan content/jalur.yaml —
+# validator menolak build kalau berbeda.
+
+nomor: 1
+slug: big-o
+judul:
+  id: Big-O & Kompleksitas
+  en: Big-O & Complexity
+prasyarat: []
+
+# Sumber terstruktur untuk ekspor CSV/Anki (ticket #14). Isinya **algoritma yang
+# dianalisis** di Materi, bukan struktur data — lihat catatan di kepala berkas.
+#
+# `waktu` dan `ruang` memakai notasi O(...) apa adanya: notasi itu sama di kedua
+# bahasa, jadi menerjemahkannya hanya akan menghasilkan dua salinan yang bisa
+# menyimpang tanpa menambah informasi.
+kompleksitas:
+  - struktur:
+      id: Pencarian linear
+      en: Linear search
+    ruang: O(1)
+    operasi:
+      - nama: { id: Periksa satu elemen, en: Check one element }
+        waktu: O(1)
+      - nama: { id: Cari satu nilai, en: Find one value }
+        waktu: O(n)
+
+  - struktur:
+      id: Pencarian biner
+      en: Binary search
+    ruang: O(1)
+    operasi:
+      - nama: { id: Bandingkan satu elemen tengah, en: Compare one middle element }
+        waktu: O(1)
+      - nama: { id: Cari satu nilai, en: Find one value }
+        waktu: O(log n)
+
+  - struktur:
+      id: Perulangan bersarang
+      en: Nested loop
+    ruang: O(1)
+    operasi:
+      - nama: { id: Bandingkan semua pasangan, en: Compare every pair }
+        waktu: O(n²)
+
+  - struktur:
+      id: Pengurutan
+      en: Sorting
+    ruang: O(n)
+    operasi:
+      - nama: { id: Urutkan seluruh data, en: Sort all the data }
+        waktu: O(n log n)
+
+# Istilah yang layak dihafal. `istilah` adalah pasangan Indonesia–English; `definisi`
+# menjelaskannya di kedua bahasa. Istilah yang tidak punya padanan Indonesia — mis.
+# "Big-O" — tetap dicatat, tetapi pasangannya sama di kedua bahasa; kartu
+# "Big-O → Big-O" tidak dihasilkan karena tidak menguji apa pun.
+istilah:
+  - istilah: { id: Notasi O besar, en: Big-O notation }
+    definisi:
+      id: Cara menuliskan bagaimana waktu atau memori sebuah algoritma tumbuh seiring bertambahnya ukuran data, dengan mengabaikan angka tetap dan suku yang kecil.
+      en: A way of writing how an algorithm's time or memory grows as the input size increases, ignoring constant factors and smaller terms.
+  - istilah: { id: Kompleksitas waktu, en: Time complexity }
+    definisi:
+      id: Gambaran berapa banyak langkah yang dikerjakan sebuah algoritma sebagai fungsi dari ukuran data.
+      en: A description of how many steps an algorithm performs as a function of the input size.
+  - istilah: { id: Kompleksitas ruang, en: Space complexity }
+    definisi:
+      id: Gambaran berapa banyak memori tambahan yang dipakai sebuah algoritma sebagai fungsi dari ukuran data, di luar data masukannya sendiri.
+      en: A description of how much extra memory an algorithm uses as a function of the input size, beyond the input itself.
+  - istilah: { id: Kasus terburuk, en: Worst case }
+    definisi:
+      id: Keadaan data yang membuat sebuah algoritma bekerja paling lama. Big-O biasanya menggambarkan kasus ini, karena ia batas yang selalu berlaku.
+      en: The input arrangement that makes an algorithm work the longest. Big-O usually describes this case, because it is the bound that always holds.
+  - istilah: { id: Laju pertumbuhan, en: Growth rate }
+    definisi:
+      id: Seberapa cepat waktu kerja bertambah ketika ukuran data bertambah. Dua algoritma dibandingkan lewat laju pertumbuhannya, bukan lewat waktu detiknya.
+      en: How quickly the running time increases as the input grows. Two algorithms are compared by their growth rate, not by their time in seconds.
+  - istilah: { id: Pencarian linear, en: Linear search }
+    definisi:
+      id: Mencari satu nilai dengan memeriksa elemen satu per satu dari awal, sehingga waktu kerjanya tumbuh sebanding dengan banyaknya data.
+      en: Finding a value by checking elements one by one from the start, so its running time grows in proportion to the amount of data.
+  - istilah: { id: Pencarian biner, en: Binary search }
+    definisi:
+      id: Mencari satu nilai pada data terurut dengan membuang separuh sisanya setiap langkah, sehingga waktu kerjanya tumbuh sangat lambat.
+      en: Finding a value in sorted data by discarding half of what remains each step, so its running time grows very slowly.
+
+materi:
+  id: |
+    ## Kenapa perlu ukuran, bukan stopwatch
+
+    Bayangkan kamu menulis dua program untuk mencari satu nama di daftar kontak, lalu
+    menjalankan keduanya di laptopmu. Program pertama selesai dalam 0,02 detik, program
+    kedua 0,05 detik. Apakah program pertama lebih baik?
+
+    Belum tentu. Mungkin laptopmu kebetulan cepat, atau daftarnya baru berisi lima
+    puluh nama. Angka "0,02 detik" bergantung pada mesin, bahasa pemrograman, dan
+    besarnya data — ia tidak bisa dipindahkan ke komputer lain.
+
+    Yang bisa dipindahkan adalah **cara pertumbuhannya**: kalau daftarnya menjadi
+    seribu kali lebih panjang, berapa kali lebih lama program itu bekerja? Pertanyaan
+    itulah yang dijawab Big-O. Ia tidak menjawab "berapa detik", tetapi "seberapa cepat
+    biayanya naik".
+
+    Ini Topik pertama karena semua Topik berikutnya memakainya. Setiap kali kita
+    membandingkan dua cara menyimpan atau mencari data — array lawan linked list, hash
+    table lawan pencarian berurutan — pertanyaannya selalu sama: mana yang tumbuh lebih
+    lambat saat datanya membesar.
+
+    ## Arti `O(...)` sebenarnya
+
+    `O(n)` **bukan** berarti "butuh n detik". Ia berarti "waktu kerjanya tumbuh
+    sebanding dengan n". Kalau n digandakan, waktu kerjanya kira-kira ikut tergandakan.
+
+    Notasi ini menuliskan batas atas dari pertumbuhan itu, dengan dua penyederhanaan
+    yang sengaja dilakukan:
+
+    - **Angka tetap dibuang.** Mengalikan setiap langkah dengan 10 tidak mengubah
+      kelasnya. Sebuah perulangan yang isinya sepuluh kali lebih berat tetap `O(n)`.
+    - **Suku yang kecil dibuang.** `O(n + 100)` ditulis `O(n)`, karena saat n menjadi
+      besar, angka 100 tidak lagi berarti apa-apa.
+
+    Kedua penyederhanaan itu bukan kelalaian. Justru itulah gunanya: ia membuang hal
+    yang berbeda-beda di setiap komputer, dan menyisakan hal yang sama di semua
+    komputer — **bentuk pertumbuhannya**.
+
+    ## Kelas yang perlu kamu kenali
+
+    Hampir semua algoritma yang akan kamu temui masuk ke salah satu kelas berikut.
+    Urutannya dari yang paling cepat tumbuh lambat ke yang paling cepat meledak.
+
+    | Kelas | Namanya | Kalau n menjadi 2 kali lipat | Contoh |
+    |---|---|---|---|
+    | O(1) | Waktu tetap | tidak berubah | Mengambil elemen di indeks tertentu |
+    | O(log n) | Logaritmik | bertambah 1 langkah | Pencarian biner |
+    | O(n) | Linear | menjadi 2 kali | Memeriksa seluruh array satu per satu |
+    | O(n log n) | Linearitmik | sedikit lebih dari 2 kali | Pengurutan yang efisien |
+    | O(n²) | Kuadratik | menjadi 4 kali | Perulangan di dalam perulangan |
+    | O(2ⁿ) | Eksponensial | menjadi kuadrat dari sebelumnya | Menghitung semua himpunan bagian |
+
+    Perhatikan kolom ketiga — di situlah bedanya terasa. Pada `O(n²)`, menggandakan
+    data membuat pekerjaannya **empat kali** lebih berat. Pada `O(2ⁿ)`, menggandakan
+    data tidak lagi masuk akal: n = 40 saja sudah melewati satu triliun langkah.
+
+    Angka konkretnya mungkin lebih meyakinkan. Untuk satu juta data:
+
+    | Kelas | Perkiraan langkah |
+    |---|---|
+    | O(log n) | sekitar 20 |
+    | O(n) | satu juta |
+    | O(n²) | satu triliun |
+
+    Dua puluh langkah lawan satu juta langkah. Itulah sebabnya memilih kelas yang
+    benar jauh lebih penting daripada menulis kode yang rapi.
+
+    ## Cara membaca kode dan menebak kelasnya
+
+    Kamu tidak perlu menghitung langkah satu per satu. Ada beberapa pola yang menutupi
+    hampir semua kasus.
+
+    **Satu perulangan atas n data → `O(n)`.** Berapa pun isi perulangannya, asal
+    jumlah putarannya sebanding dengan n, kelasnya linear.
+
+    ```python
+    def cari_linear(daftar, target):
+        for nilai in daftar:        # berputar sampai n kali
+            if nilai == target:
+                return True
+        return False
+    ```
+
+    **Perulangan di dalam perulangan → `O(n²)`.** Setiap putaran luar menjalankan
+    seluruh putaran dalam, jadi jumlah langkahnya n kali n.
+
+    ```python
+    def ada_pasangan_sama(daftar):
+        for i in range(len(daftar)):
+            for j in range(len(daftar)):    # berputar n kali, untuk setiap i
+                if i != j and daftar[i] == daftar[j]:
+                    return True
+        return False
+    ```
+
+    **Dua perulangan berurutan, bukan bersarang → tetap `O(n)`.** Keduanya dijumlah,
+    bukan dikali: `O(n) + O(n)` tetap `O(n)`, karena angka tetap dibuang.
+
+    **Membagi dua setiap langkah → `O(log n)`.** Ini yang paling sering membuat orang
+    terkejut. Perulangan berikut tidak berputar n kali, melainkan sebanyak berapa kali
+    n bisa dibagi dua sampai habis:
+
+    ```python
+    def berapa_kali_dibagi_dua(n):
+        langkah = 0
+        while n > 1:
+            n = n // 2      # setiap putaran membuang separuh sisanya
+            langkah += 1
+        return langkah
+    ```
+
+    Untuk n = 1.000.000, perulangan itu hanya berputar **19 kali** — sekitar 20 kalau
+    dibulatkan. Inilah yang membuat pencarian biner begitu cepat: setiap langkah membuang
+    separuh data yang tersisa.
+
+    ## Waktu dan ruang
+
+    Sejauh ini kita membicarakan **kompleksitas waktu** — berapa banyak langkah yang
+    dikerjakan. Ada ukuran kedua yang sama pentingnya: **kompleksitas ruang**, yaitu
+    berapa banyak memori **tambahan** yang dipakai, di luar data masukannya sendiri.
+
+    Sebuah fungsi yang hanya membaca data dan menghitung sesuatu biasanya `O(1)`:
+    ia tidak menyimpan apa pun yang tumbuh mengikuti n.
+
+    ```python
+    def jumlahkan(angka):
+        total = 0                   # satu variabel, tidak peduli sebesar apa angka
+        for nilai in angka:
+            total += nilai
+        return total
+    ```
+
+    Sebuah fungsi yang membuat daftar baru sebesar masukannya adalah `O(n)`:
+
+    ```python
+    def salinan_terbalik(angka):
+        hasil = []                  # tumbuh sebesar angka
+        for nilai in angka:
+            hasil.insert(0, nilai)
+        return hasil
+    ```
+
+    `insert(0, ...)` di atas menyisipkan di depan, yang menggeser seluruh isi daftar —
+    sehingga fungsinya justru `O(n²)` dari sisi waktu, walau ruangnya `O(n)`. Satu
+    fungsi bisa punya kelas waktu dan kelas ruang yang berbeda, dan keduanya perlu
+    disebut terpisah.
+
+    Pertukaran antara keduanya sering menjadi pilihan nyata. Menghitung ada-tidaknya
+    duplikat bisa `O(n²)` tanpa memori tambahan, atau `O(n)` dengan memori `O(n)`
+    (memakai sebuah `set`). Kelas waktunya membaik, kelas ruangnya memburuk.
+
+    ## Kasus terburuk, terbaik, dan rata-rata
+
+    Satu algoritma bisa punya lebih dari satu jawaban, tergantung datanya. Pencarian
+    linear untuk mencari nilai yang ada di posisi pertama hanya butuh satu langkah —
+    itu **kasus terbaik**. Mencari nilai yang ada di posisi terakhir, atau yang tidak
+    ada sama sekali, butuh n langkah — itu **kasus terburuk**.
+
+    Big-O yang ditulis di buku dan di tabel biasanya adalah **kasus terburuk**. Alasannya
+    praktis: kasus terbaik terlalu optimistis untuk diandalkan. Data yang kamu terima
+    di dunia nyata tidak akan sopan menaruh jawabannya di depan.
+
+    ## Jebakan yang sering terjadi
+
+    **Mengira `O(n)` berarti lambat.** Tidak ada hubungannya dengan lambat. `O(n)` bisa
+    jauh lebih cepat daripada `O(log n)` untuk data yang sangat kecil — yang dibicarakan
+    Big-O adalah bagaimana keduanya tumbuh saat data membesar. Untuk n = 5, apa pun
+    kelasnya, semuanya selesai dalam sekejap.
+
+    **Membuang konstanta, lalu menganggap keduanya sama.** `O(n)` dan `O(2n)` memang
+    satu kelas, dan itu benar untuk perbandingan jangka panjang. Tetapi kalau datamu
+    selamanya kecil, algoritma dengan konstanta lebih kecil bisa menang. Big-O adalah
+    alat untuk memilih arah, bukan angka akhir.
+
+    **Menjumlahkan perulangan yang seharusnya dikalikan.** Dua perulangan bersarang
+    adalah n × n, bukan n + n. Perbedaan antara `O(n)` dan `O(n²)` inilah yang paling
+    sering salah dibaca, dan akibatnya paling mahal.
+
+    **Lupa bahwa isi perulangan juga berbiaya.** `O(n)` mengasumsikan setiap putaran
+    berbiaya tetap. Kalau di dalam perulangan ada operasi yang sendiri `O(n)` — misalnya
+    `insert(0, ...)` pada daftar Python, atau pencarian dengan `in` pada daftar —
+    seluruhnya menjadi `O(n²)`, walau kelihatannya hanya satu perulangan.
+
+    **Menganggap Big-O menjanjikan kecepatan pasti.** Ia menggambarkan pertumbuhan, bukan
+    waktu. Dua program `O(n)` bisa berbeda sepuluh kali dalam detik, dan keduanya tetap
+    sama-sama `O(n)`.
+
+  en: |
+    ## Why we need a measure, not a stopwatch
+
+    Imagine you write two programs to find one name in a contact list, then run both on
+    your laptop. The first finishes in 0.02 seconds, the second in 0.05 seconds. Is the
+    first one better?
+
+    Not necessarily. Maybe your laptop happens to be fast, or the list only holds fifty
+    names so far. A figure like "0.02 seconds" depends on the machine, the programming
+    language, and the size of the data — it does not transfer to another computer.
+
+    What does transfer is the **way it grows**: if the list becomes a thousand times
+    longer, how many times longer does the program work? That is the question Big-O
+    answers. It does not answer "how many seconds", but "how fast does the cost rise".
+
+    This is the first Topic because every Topic after it uses it. Whenever we compare
+    two ways of storing or finding data — array versus linked list, hash table versus a
+    sequential scan — the question is always the same: which one grows more slowly as
+    the data gets bigger.
+
+    ## What `O(...)` actually means
+
+    `O(n)` does **not** mean "it takes n seconds". It means "its running time grows in
+    proportion to n". If n doubles, the running time roughly doubles too.
+
+    The notation describes an upper bound on that growth, with two simplifications made
+    on purpose:
+
+    - **Constant factors are dropped.** Multiplying every step by 10 does not change the
+      class. A loop whose body is ten times heavier is still `O(n)`.
+    - **Smaller terms are dropped.** `O(n + 100)` is written `O(n)`, because once n gets
+      large, the 100 stops meaning anything.
+
+    Neither simplification is sloppiness. That is exactly the point: it removes what
+    differs between computers, and keeps what is the same on every computer — the
+    **shape of the growth**.
+
+    ## The classes you need to recognise
+
+    Almost every algorithm you will meet falls into one of the classes below. They are
+    ordered from the slowest-growing to the fastest-exploding.
+
+    | Class | Name | When n doubles | Example |
+    |---|---|---|---|
+    | O(1) | Constant time | nothing changes | Reading an element at a given index |
+    | O(log n) | Logarithmic | one more step | Binary search |
+    | O(n) | Linear | doubles | Checking a whole array one by one |
+    | O(n log n) | Linearithmic | a little more than double | An efficient sort |
+    | O(n²) | Quadratic | becomes four times | A loop inside a loop |
+    | O(2ⁿ) | Exponential | becomes the square of before | Enumerating every subset |
+
+    Look at the third column — that is where the difference bites. With `O(n²)`,
+    doubling the data makes the work **four times** heavier. With `O(2ⁿ)`, doubling the
+    data stops being reasonable: n = 40 alone already passes a trillion steps.
+
+    Concrete numbers may be more convincing. For one million items:
+
+    | Class | Roughly how many steps |
+    |---|---|
+    | O(log n) | about 20 |
+    | O(n) | one million |
+    | O(n²) | one trillion |
+
+    Twenty steps against one million steps. That is why choosing the right class matters
+    far more than writing tidy code.
+
+    ## How to read code and guess its class
+
+    You do not need to count steps one by one. A few patterns cover almost every case.
+
+    **One loop over n items → `O(n)`.** Whatever is inside the loop, as long as the
+    number of turns is proportional to n, the class is linear.
+
+    ```python
+    def cari_linear(daftar, target):
+        for nilai in daftar:        # turns up to n times
+            if nilai == target:
+                return True
+        return False
+    ```
+
+    **A loop inside a loop → `O(n²)`.** Each outer turn runs the whole inner loop, so
+    the number of steps is n times n.
+
+    ```python
+    def ada_pasangan_sama(daftar):
+        for i in range(len(daftar)):
+            for j in range(len(daftar)):    # turns n times, for every i
+                if i != j and daftar[i] == daftar[j]:
+                    return True
+        return False
+    ```
+
+    **Two loops one after another, not nested → still `O(n)`.** They are added, not
+    multiplied: `O(n) + O(n)` is still `O(n)`, because constant factors are dropped.
+
+    **Halving every step → `O(log n)`.** This one surprises people most. The loop below
+    does not turn n times; it turns as many times as n can be halved before running out:
+
+    ```python
+    def berapa_kali_dibagi_dua(n):
+        langkah = 0
+        while n > 1:
+            n = n // 2      # each turn throws away half of what remains
+            langkah += 1
+        return langkah
+    ```
+
+    For n = 1,000,000, that loop turns only **19 times** — about 20 when rounded. This is
+    what makes binary search so fast: each step throws away half of the remaining data.
+
+    ## Time and space
+
+    So far we have talked about **time complexity** — how many steps are performed.
+    There is a second measure just as important: **space complexity**, the amount of
+    **extra** memory used, beyond the input itself.
+
+    A function that only reads data and computes something is usually `O(1)`: it stores
+    nothing that grows with n.
+
+    ```python
+    def jumlahkan(angka):
+        total = 0                   # one variable, however large angka is
+        for nilai in angka:
+            total += nilai
+        return total
+    ```
+
+    A function that builds a new list the size of its input is `O(n)`:
+
+    ```python
+    def salinan_terbalik(angka):
+        hasil = []                  # grows with angka
+        for nilai in angka:
+            hasil.insert(0, nilai)
+        return hasil
+    ```
+
+    The `insert(0, ...)` above inserts at the front, which shifts the whole list — so the
+    function is actually `O(n²)` in time, even though its space is `O(n)`. One function
+    can have different time and space classes, and both need to be stated separately.
+
+    The trade-off between them is often a real choice. Checking for duplicates can be
+    `O(n²)` with no extra memory, or `O(n)` with `O(n)` memory (using a `set`). The time
+    class improves; the space class gets worse.
+
+    ## Worst case, best case, and average
+
+    One algorithm can have more than one answer, depending on the data. Linear search
+    for a value sitting in the first position needs a single step — that is the **best
+    case**. Searching for a value in the last position, or one that is not there at all,
+    needs n steps — that is the **worst case**.
+
+    The Big-O written in books and tables is usually the **worst case**. The reason is
+    practical: the best case is too optimistic to rely on. Real-world data will not
+    politely put its answer at the front.
+
+    ## Traps that catch people
+
+    **Thinking `O(n)` means slow.** It has nothing to do with slow. `O(n)` can be far
+    faster than `O(log n)` for very small data — what Big-O discusses is how the two
+    grow as the data gets bigger. For n = 5, whatever the class, everything finishes in
+    an instant.
+
+    **Dropping the constant, then treating two things as equal.** `O(n)` and `O(2n)`
+    are indeed one class, and that is correct for long-run comparisons. But if your data
+    is forever small, the algorithm with the smaller constant can win. Big-O is a tool
+    for choosing a direction, not a final number.
+
+    **Adding loops that should be multiplied.** Two nested loops are n × n, not n + n.
+    The difference between `O(n)` and `O(n²)` is the most commonly misread, and the most
+    expensive.
+
+    **Forgetting that the loop body costs too.** `O(n)` assumes each turn costs a fixed
+    amount. If the loop body holds an operation that is itself `O(n)` — such as
+    `insert(0, ...)` on a Python list, or a lookup with `in` on a list — the whole thing
+    becomes `O(n²)`, even though it looks like a single loop.
+
+    **Assuming Big-O promises a definite speed.** It describes growth, not time. Two
+    `O(n)` programs can differ tenfold in seconds and still both be `O(n)`.
+
+soal:
+  # --- Kuis 1: perulangan bersarang → hitung jumlah langkah ---------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah fungsi menerima daftar angka dan menghitung berapa kali isi
+        perulangannya dijalankan. Fungsi itu dipanggil dengan daftar berisi 10 angka.
+        Berapa kali variabel `total` bertambah?
+      en: |
+        A function receives a list of numbers and counts how many times its loop body
+        runs. It is called with a list of 10 numbers. How many times does the variable
+        `total` increase?
+    kode: |
+      def hitung(angka):
+          total = 0
+          for a in angka:
+              for b in angka:
+                  total += 1
+          return total
+
+      print(hitung([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
+    opsi:
+      - teks:
+          id: "10 kali, karena perulangan luarnya berputar 10 kali"
+          en: "10 times, because the outer loop turns 10 times"
+        benar: false
+      - teks:
+          id: "20 kali, karena ada dua perulangan"
+          en: "20 times, because there are two loops"
+        benar: false
+      - teks:
+          id: "100 kali, karena setiap putaran luar menjalankan seluruh putaran dalam"
+          en: "100 times, because every outer turn runs the whole inner loop"
+        benar: true
+      - teks:
+          id: "55 kali, karena pasangan yang sama tidak dihitung dua kali"
+          en: "55 times, because matching pairs are not counted twice"
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Perulangan luar berputar 10 kali. Untuk **setiap** putaran itu,
+        perulangan dalam berputar 10 kali lagi. Karena keduanya bersarang, jumlahnya
+        dikalikan: 10 × 10 = 100.
+
+        **Kompleksitas.** Bentuk ini `O(n²)`. Kalau daftarnya berisi 1.000 angka,
+        langkahnya menjadi 1.000.000 — naik seribu kali lipat hanya karena datanya naik
+        seribu kali lipat.
+
+        **Kode referensi.**
+
+        ```python
+        def hitung(angka):
+            total = 0
+            for a in angka:          # n putaran
+                for b in angka:      # n putaran, untuk setiap a
+                    total += 1
+            return total
+        ```
+
+        **Jebakan umum.** Jawaban 20 berasal dari menjumlahkan dua perulangan, padahal
+        perulangan bersarang **dikalikan**. Jawaban 55 berasal dari mengira pasangan
+        yang sama dibuang — pada kode ini `a` dan `b` tidak dibandingkan satu sama lain,
+        jadi tidak ada pasangan yang dilewati. Perhatikan bahwa `a` dan `b` sama-sama
+        tidak dipakai di dalam perulangan; yang dihitung hanyalah berapa kali badannya
+        berjalan.
+      en: |
+        **Approach.** The outer loop turns 10 times. For **each** of those turns, the
+        inner loop turns another 10 times. Because they are nested, the counts multiply:
+        10 × 10 = 100.
+
+        **Complexity.** This shape is `O(n²)`. If the list held 1,000 numbers, the steps
+        would become 1,000,000 — a thousand-fold increase just because the data grew a
+        thousand-fold.
+
+        **Reference code.**
+
+        ```python
+        def hitung(angka):
+            total = 0
+            for a in angka:          # n turns
+                for b in angka:      # n turns, for every a
+                    total += 1
+            return total
+        ```
+
+        **Common trap.** The answer 20 comes from adding the two loops, when nested loops
+        are **multiplied**. The answer 55 comes from assuming matching pairs are skipped
+        — in this code `a` and `b` are never compared, so no pair is skipped. Note that
+        neither `a` nor `b` is used inside the loop; what is counted is simply how many
+        times the body runs.
+
+  # --- Kuis 2: linear lawan biner pada data besar --------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Kamu menyimpan satu juta nama dalam sebuah daftar yang **sudah terurut**. Setiap
+        kali ada permintaan mencari satu nama, kamu harus menemukannya secepat mungkin.
+        Dua cara tersedia: memeriksa nama satu per satu dari awal, atau membuka nama di
+        tengah lalu membuang separuh daftar yang tidak mungkin berisi nama itu. Cara mana
+        yang sebaiknya dipakai, dan mengapa?
+      en: |
+        You store one million names in a list that is **already sorted**. Every time a
+        request comes in to find one name, you must find it as quickly as possible. Two
+        ways are available: checking names one by one from the start, or opening the name
+        in the middle and discarding the half that cannot contain it. Which way should you
+        use, and why?
+    opsi:
+      - teks:
+          id: Memeriksa satu per satu, karena daftarnya sudah terurut
+          en: Checking one by one, because the list is already sorted
+        benar: false
+      - teks:
+          id: Membuang separuh tiap langkah, karena langkahnya tumbuh O(log n) — sekitar 20 langkah untuk sejuta nama
+          en: Discarding half each step, because its steps grow O(log n) — about 20 steps for a million names
+        benar: true
+      - teks:
+          id: Memeriksa satu per satu, karena membuang separuh daftar tidak selalu menemukan nama yang dicari
+          en: Checking one by one, because discarding half the list does not always find the name
+        benar: false
+      - teks:
+          id: Keduanya sama saja, karena keduanya akhirnya memeriksa seluruh daftar
+          en: Either is fine, because both end up checking the whole list
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Data yang sudah terurut memungkinkan pencarian biner: buka elemen
+        di tengah, bandingkan dengan yang dicari, lalu buang separuh yang pasti tidak
+        berisi. Setiap langkah membuang separuh sisanya.
+
+        **Kompleksitas.** Pencarian linear `O(n)`: untuk sejuta nama, sampai sejuta
+        langkah. Pencarian biner `O(log n)`: sejuta dibagi dua berulang kali sampai habis
+        hanya butuh sekitar 20 langkah. Selisihnya sekitar lima puluh ribu kali.
+
+        **Kode referensi.**
+
+        ```python
+        def cari_biner(daftar, target):
+            kiri, kanan = 0, len(daftar) - 1
+            while kiri <= kanan:
+                tengah = (kiri + kanan) // 2
+                if daftar[tengah] == target:
+                    return tengah
+                if daftar[tengah] < target:
+                    kiri = tengah + 1
+                else:
+                    kanan = tengah - 1
+            return -1
+        ```
+
+        **Jebakan umum.** Pencarian biner **hanya sah pada data yang sudah terurut** —
+        itu syarat yang mudah terlupa, dan melanggarnya menghasilkan jawaban salah yang
+        tidak memunculkan error apa pun. Jebakan kedua: menganggap keduanya sama karena
+        "sama-sama memeriksa daftar". Pencarian biner tidak pernah memeriksa seluruh
+        daftar; justru itu intinya.
+      en: |
+        **Approach.** Sorted data allows binary search: open the middle element, compare
+        it with the target, then discard the half that certainly cannot contain it. Each
+        step throws away half of what remains.
+
+        **Complexity.** Linear search is `O(n)`: for a million names, up to a million
+        steps. Binary search is `O(log n)`: halving a million repeatedly until it runs
+        out takes only about 20 steps. That is a difference of roughly fifty thousand
+        times.
+
+        **Reference code.**
+
+        ```python
+        def cari_biner(daftar, target):
+            kiri, kanan = 0, len(daftar) - 1
+            while kiri <= kanan:
+                tengah = (kiri + kanan) // 2
+                if daftar[tengah] == target:
+                    return tengah
+                if daftar[tengah] < target:
+                    kiri = tengah + 1
+                else:
+                    kanan = tengah - 1
+            return -1
+        ```
+
+        **Common trap.** Binary search is **only valid on sorted data** — an easy
+        condition to forget, and breaking it produces a wrong answer with no error
+        message at all. A second trap: assuming the two are equivalent because "both
+        check the list". Binary search never checks the whole list; that is precisely the
+        point.
+
+  # --- Kuis 3: membagi dua → hitung langkah (log n) ------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi berikut membagi nilai `n` dengan dua berulang kali sampai nilainya tidak
+        lagi lebih besar dari 1, sambil menghitung berapa putaran yang terjadi. Berapa
+        nilai yang dikembalikan kalau `n` bernilai 8?
+      en: |
+        The function below keeps dividing `n` by two until it is no longer greater than
+        1, counting how many turns happen along the way. What does it return when `n` is
+        8?
+    kode: |
+      def hitung(n):
+          langkah = 0
+          while n > 1:
+              n = n // 2
+              langkah += 1
+          return langkah
+
+      print(hitung(8))
+    opsi:
+      - teks:
+          id: "3, karena 8 → 4 → 2 → 1"
+          en: "3, because 8 → 4 → 2 → 1"
+        benar: true
+      - teks:
+          id: "4, karena 8 dibagi dua empat kali sampai habis"
+          en: "4, because 8 is halved four times until it runs out"
+        benar: false
+      - teks:
+          id: "7, karena nilainya berkurang satu setiap putaran"
+          en: "7, because the value drops by one each turn"
+        benar: false
+      - teks:
+          id: "8, karena perulangannya berputar sebanyak nilai n"
+          en: "8, because the loop turns as many times as the value of n"
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Lacak nilainya: 8 → 4 (putaran 1), 4 → 2 (putaran 2), 2 → 1
+        (putaran 3). Setelah itu `n > 1` bernilai salah, jadi perulangan berhenti dan
+        mengembalikan 3.
+
+        **Kompleksitas.** Bentuk "bagi dua berulang kali" adalah `O(log n)`. Untuk n = 8
+        hasilnya 3, dan untuk n = 1.000.000 hasilnya 19 — bukan sejuta. Itu sekitar 20
+        kalau dibulatkan, dan pembulatan itulah yang biasanya ditulis di tabel.
+
+        **Kode referensi.**
+
+        ```python
+        def hitung(n):
+            langkah = 0
+            while n > 1:
+                n = n // 2       # membuang separuh setiap putaran
+                langkah += 1
+            return langkah
+        ```
+
+        **Jebakan umum.** Jawaban 4 berasal dari ikut menghitung nilai akhir 1 sebagai
+        satu putaran lagi, padahal ketika `n` sudah bernilai 1, syarat `n > 1` gagal dan
+        badan perulangan tidak dijalankan. Jawaban 7 berasal dari mengira nilainya
+        berkurang satu, bukan dibagi dua. Jawaban 8 berasal dari mengira perulangannya
+        linear — inilah jebakan utamanya: bentuk `O(log n)` mudah disangka `O(n)`.
+      en: |
+        **Approach.** Trace the value: 8 → 4 (turn 1), 4 → 2 (turn 2), 2 → 1 (turn 3).
+        After that `n > 1` is false, so the loop stops and returns 3.
+
+        **Complexity.** The shape "halve repeatedly" is `O(log n)`. For n = 8 the result
+        is 3, and for n = 1,000,000 it is 19 — not a million. That is about 20 when
+        rounded, and the rounded figure is what usually appears in tables.
+
+        **Reference code.**
+
+        ```python
+        def hitung(n):
+            langkah = 0
+            while n > 1:
+                n = n // 2       # throws away half every turn
+                langkah += 1
+            return langkah
+        ```
+
+        **Common trap.** The answer 4 comes from counting the final value 1 as one more
+        turn, when `n` already equals 1 the condition `n > 1` fails and the body never
+        runs. The answer 7 comes from assuming the value drops by one instead of being
+        halved. The answer 8 comes from assuming the loop is linear — this is the main
+        trap: the `O(log n)` shape is easily mistaken for `O(n)`.
+
+  # --- Kuis 4: memilih kelas waktu — duplikat -----------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Kamu perlu memeriksa apakah sebuah daftar berisi nilai yang muncul dua kali.
+        Cara pertama: bandingkan setiap elemen dengan setiap elemen lain. Cara kedua:
+        masukkan elemen satu per satu ke sebuah `set`, dan berhenti begitu ada elemen
+        yang sudah ada di dalamnya. Untuk daftar yang bisa berisi ratusan ribu angka,
+        cara mana yang kamu pilih?
+      en: |
+        You need to check whether a list contains a value that appears twice. First way:
+        compare every element with every other element. Second way: insert elements one
+        by one into a `set`, and stop as soon as an element is already in it. For a list
+        that may hold hundreds of thousands of numbers, which do you choose?
+    opsi:
+      - teks:
+          id: Cara pertama, karena tidak memakai memori tambahan
+          en: The first way, because it uses no extra memory
+        benar: false
+      - teks:
+          id: Cara kedua, karena waktu kerjanya O(n) sedangkan cara pertama O(n²)
+          en: The second way, because its running time is O(n) while the first is O(n²)
+        benar: true
+      - teks:
+          id: Cara kedua, karena set otomatis mengurutkan datanya
+          en: The second way, because a set automatically sorts its data
+        benar: false
+      - teks:
+          id: Keduanya sama cepat, karena keduanya membaca seluruh daftar
+          en: Both are equally fast, because both read the whole list
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Cara pertama memeriksa setiap elemen terhadap setiap elemen lain
+        — perulangan bersarang. Cara kedua memakai `set`, yang bisa menjawab "apakah
+        nilai ini sudah ada?" dalam waktu tetap, sehingga cukup sekali jalan melewati
+        daftar.
+
+        **Kompleksitas.** Cara pertama `O(n²)`: untuk 100.000 angka, sampai sepuluh
+        miliar langkah. Cara kedua `O(n)` waktu, tetapi `O(n)` ruang, karena `set` bisa
+        tumbuh sebesar daftarnya. Di sini kelas waktunya yang menentukan, jadi cara kedua
+        yang dipilih.
+
+        **Kode referensi.**
+
+        ```python
+        def ada_duplikat(angka):
+            terlihat = set()
+            for nilai in angka:
+                if nilai in terlihat:      # waktu tetap, rata-rata
+                    return True
+                terlihat.add(nilai)
+            return False
+        ```
+
+        **Jebakan umum.** Jawaban "tidak memakai memori tambahan" benar sebagai fakta,
+        tetapi bukan alasan untuk memilih cara pertama — memori yang dihemat tidak
+        sebanding dengan waktu yang dibuang. Jawaban "set mengurutkan datanya" salah:
+        `set` tidak menjaga urutan, dan urutan pun tidak dibutuhkan di sini. Jawaban
+        "keduanya sama cepat" melewatkan bahwa memeriksa seluruh daftar **satu kali** dan
+        memeriksa **setiap pasangan** adalah dua hal yang sangat berbeda saat datanya
+        besar.
+      en: |
+        **Approach.** The first way checks every element against every other element — a
+        nested loop. The second way uses a `set`, which can answer "is this value already
+        here?" in constant time, so a single pass over the list is enough.
+
+        **Complexity.** The first way is `O(n²)`: for 100,000 numbers, up to ten billion
+        steps. The second is `O(n)` time but `O(n)` space, because the `set` can grow to
+        the size of the list. Here the time class decides, so the second way wins.
+
+        **Reference code.**
+
+        ```python
+        def ada_duplikat(angka):
+            terlihat = set()
+            for nilai in angka:
+                if nilai in terlihat:      # constant time, on average
+                    return True
+                terlihat.add(nilai)
+            return False
+        ```
+
+        **Common trap.** The answer "uses no extra memory" is true as a fact, but not a
+        reason to pick the first way — the memory saved is not worth the time thrown
+        away. The answer "a set sorts its data" is wrong: a `set` keeps no order, and
+        order is not needed here anyway. The answer "both are equally fast" misses that
+        scanning the list **once** and checking **every pair** are two very different
+        things once the data is large.
+
+  # --- Kuis 5: kompleksitas ruang ------------------------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Dua fungsi sama-sama mengembalikan daftar yang isinya terbalik. Fungsi pertama
+        membuat daftar baru lalu mengisinya. Fungsi kedua menukar posisi elemen di dalam
+        daftar yang sama, tanpa membuat daftar baru. Manakah pernyataan yang benar
+        tentang **kompleksitas ruang** keduanya?
+      en: |
+        Two functions both return a list with its contents reversed. The first builds a
+        new list and fills it. The second swaps elements in place inside the same list,
+        without building a new one. Which statement about their **space complexity** is
+        correct?
+    opsi:
+      - teks:
+          id: Fungsi pertama O(n) dan fungsi kedua O(1)
+          en: The first is O(n) and the second is O(1)
+        benar: true
+      - teks:
+          id: Fungsi pertama O(1) dan fungsi kedua O(n)
+          en: The first is O(1) and the second is O(n)
+        benar: false
+      - teks:
+          id: Keduanya O(n), karena keduanya bekerja atas n elemen
+          en: Both are O(n), because both work over n elements
+        benar: false
+      - teks:
+          id: Keduanya O(1), karena keduanya hanya mengembalikan satu daftar
+          en: Both are O(1), because both return a single list
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Yang diukur kompleksitas ruang adalah **memori tambahan** yang
+        dipakai fungsi, di luar data masukannya. Fungsi pertama membuat daftar baru yang
+        panjangnya ikut tumbuh bersama n. Fungsi kedua hanya memakai beberapa variabel
+        penanda posisi, berapa pun panjang daftarnya.
+
+        **Kompleksitas.** Fungsi pertama `O(n)` ruang. Fungsi kedua `O(1)` ruang. Perhatikan
+        bahwa **waktu** keduanya justru berbeda: `balik_di_tempat` `O(n)`, sedangkan
+        `salinan_terbalik` `O(n²)` — karena `insert(0, ...)` menggeser seluruh isi daftar
+        setiap kali dipanggil. Kelas waktu dan kelas ruang adalah dua hal berbeda, dan
+        keduanya perlu disebut terpisah.
+
+        **Kode referensi.**
+
+        ```python
+        def salinan_terbalik(angka):
+            hasil = []                  # daftar baru, tumbuh sebesar angka → O(n)
+            for nilai in angka:
+                hasil.insert(0, nilai)
+            return hasil
+
+
+        def balik_di_tempat(angka):
+            kiri, kanan = 0, len(angka) - 1     # dua variabel → O(1)
+            while kiri < kanan:
+                angka[kiri], angka[kanan] = angka[kanan], angka[kiri]
+                kiri += 1
+                kanan -= 1
+            return angka
+        ```
+
+        **Jebakan umum.** Jawaban "keduanya O(n) karena bekerja atas n elemen" mencampur
+        kompleksitas waktu dengan kompleksitas ruang — membaca n elemen belum tentu
+        memakan memori yang tumbuh mengikuti n. Jawaban "keduanya O(1) karena
+        mengembalikan satu daftar" melewatkan bahwa daftar yang **dibuat** fungsi pertama
+        itulah memori tambahannya. Perhatikan juga bahwa `salinan_terbalik` sebenarnya
+        `O(n²)` dari sisi **waktu**, karena `insert(0, ...)` menggeser seluruh isi daftar
+        setiap kali dipanggil.
+      en: |
+        **Approach.** Space complexity measures the **extra** memory a function uses,
+        beyond its input. The first function builds a new list whose length grows with n.
+        The second uses only a few position variables, however long the list is.
+
+        **Complexity.** The first is `O(n)` space. The second is `O(1)` space. Note that
+        their **time** classes actually differ: `balik_di_tempat` is `O(n)`, while
+        `salinan_terbalik` is `O(n²)` — because `insert(0, ...)` shifts the whole list on
+        every call. The time class and the space class are two different things, and both
+        need to be stated separately.
+
+        **Reference code.**
+
+        ```python
+        def salinan_terbalik(angka):
+            hasil = []                  # a new list, grows with angka → O(n)
+            for nilai in angka:
+                hasil.insert(0, nilai)
+            return hasil
+
+
+        def balik_di_tempat(angka):
+            kiri, kanan = 0, len(angka) - 1     # two variables → O(1)
+            while kiri < kanan:
+                angka[kiri], angka[kanan] = angka[kanan], angka[kiri]
+                kiri += 1
+                kanan -= 1
+            return angka
+        ```
+
+        **Common trap.** The answer "both are O(n) because both work over n elements"
+        conflates time complexity with space complexity — reading n elements does not
+        necessarily use memory that grows with n. The answer "both are O(1) because both
+        return a single list" overlooks that the list the first function **creates** is
+        its extra memory. Note also that `salinan_terbalik` is actually `O(n²)` in
+        **time**, because `insert(0, ...)` shifts the whole list on every call.
+
+  # --- Soal Kode: hitung langkah dua pencarian ----------------------------------
+  #
+  # Bentuknya menyimpang dari `design-tree.md` ("implementasi struktur data dari nol"),
+  # karena Big-O bukan struktur data. Yang diminta: menulis dua pencarian dari nol dan
+  # mengembalikan jumlah langkah masing-masing, sehingga O(n) dan O(log n) terasa
+  # sebagai angka. Keputusannya di ADR-0023.
+  - tipe: soal-kode
+    skenario:
+      id: |
+        Tulis dari nol dua cara mencari satu nilai di dalam sebuah daftar, lalu
+        bandingkan **jumlah langkah** yang dibutuhkan masing-masing. Daftar yang
+        diberikan selalu **sudah terurut menaik**.
+
+        **Cara pertama — pencarian linear.** Periksa elemen dari kiri ke kanan. Hitung
+        setiap elemen yang kamu periksa, termasuk elemen yang akhirnya cocok. Kalau
+        nilainya tidak ada, kamu memeriksa seluruh daftar.
+
+        **Cara kedua — pencarian biner.** Selama batas kiri belum melewati batas kanan,
+        lihat elemen di posisi `(kiri + kanan) // 2`. Hitung setiap elemen tengah yang
+        kamu lihat, termasuk yang akhirnya cocok. Kalau nilai di tengah lebih kecil dari
+        yang dicari, pindahkan batas kiri ke `tengah + 1`. Kalau lebih besar, pindahkan
+        batas kanan ke `tengah - 1`.
+
+        Kembalikan sebuah daftar berisi dua angka: `[jumlah langkah linear, jumlah
+        langkah biner]`.
+
+        Jangan memakai `bisect` dari pustaka bawaan, dan jangan memakai operator `in`
+        untuk mencari — tulis perulangannya sendiri, supaya kamu merasakan bedanya.
+      en: |
+        Write from scratch two ways to find a value inside a list, then compare the
+        **number of steps** each one needs. The list you are given is always **already
+        sorted in ascending order**.
+
+        **First way — linear search.** Check elements from left to right. Count every
+        element you check, including the one that finally matches. If the value is not
+        there, you check the whole list.
+
+        **Second way — binary search.** While the left bound has not passed the right
+        bound, look at the element at position `(kiri + kanan) // 2`. Count every middle
+        element you look at, including the one that finally matches. If the middle value
+        is smaller than the target, move the left bound to `tengah + 1`. If it is larger,
+        move the right bound to `tengah - 1`.
+
+        Return a list of two numbers: `[linear step count, binary step count]`.
+
+        Do not use `bisect` from the standard library, and do not use the `in` operator
+        to search — write the loops yourself, so that you feel the difference.
+    fungsi: proses
+    test_case:
+      # Kasus 1 — nilai ada di tengah. Linear 3 langkah, biner langsung 1.
+      - argumen:
+          - [1, 2, 3, 4, 5]
+          - 3
+        diharapkan: [3, 1]
+      # Kasus 2 — nilai ada di paling kiri. Linear 1 langkah, biner 2 (tengah, lalu kiri).
+      - argumen:
+          - [1, 2, 3, 4, 5]
+          - 1
+        diharapkan: [1, 2]
+      # Kasus 3 — nilai ada di paling kanan. Linear 5, biner 3.
+      - argumen:
+          - [1, 2, 3, 4, 5]
+          - 5
+        diharapkan: [5, 3]
+      # Kasus 4 — nilai tidak ada. Linear memeriksa seluruh daftar, biner berhenti lebih awal.
+      - argumen:
+          - [1, 2, 3, 4, 5]
+          - 6
+        diharapkan: [5, 3]
+      # Kasus 5 — data lebih besar: 16 lawan 5. Inilah yang memperlihatkan bedanya —
+      # linear tumbuh mengikuti n, biner tumbuh mengikuti log n.
+      - argumen:
+          - [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+          - 16
+        diharapkan: [16, 5]
+    solusi_referensi: |
+      def cari_linear(daftar, target):
+          langkah = 0
+          for nilai in daftar:
+              langkah += 1
+              if nilai == target:
+                  return langkah
+          return langkah
+
+
+      def cari_biner(daftar, target):
+          kiri, kanan = 0, len(daftar) - 1
+          langkah = 0
+          while kiri <= kanan:
+              tengah = (kiri + kanan) // 2
+              langkah += 1
+              if daftar[tengah] == target:
+                  return langkah
+              if daftar[tengah] < target:
+                  kiri = tengah + 1
+              else:
+                  kanan = tengah - 1
+          return langkah
+
+
+      def proses(daftar, target):
+          return [cari_linear(daftar, target), cari_biner(daftar, target)]
