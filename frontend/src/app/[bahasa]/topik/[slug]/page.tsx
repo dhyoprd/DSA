@@ -16,6 +16,7 @@ import { DaftarVisualisasi } from "../daftar-visualisasi.tsx";
 import { Catatan } from "../catatan.tsx";
 import { PengalihBahasa } from "../../pengalih-bahasa.tsx";
 import { PengalihTema } from "../../pengalih-tema.tsx";
+import { ProgresProvider } from "../progres-provider.tsx";
 import { Sidebar } from "../sidebar.tsx";
 
 /**
@@ -76,6 +77,21 @@ export default async function HalamanTopik({
   const { jalur, topik: semuaTopik } = konten();
   const navigasi = susunNavigasi(jalur, semuaTopik);
 
+  /*
+   * Jumlah Soal setiap Topik yang punya berkas, dipetakan per slug (ticket #27).
+   *
+   * Dihitung di sini karena hanya server yang membaca konten: jumlah Soal ada di
+   * berkas, bukan di database. `ProgresProvider` memakainya untuk menurunkan status
+   * Topik — dan ia wajib, sebab baris Progres hanya ada untuk Soal yang pernah
+   * disentuh, sehingga panjang baris tidak sama dengan jumlah Soal.
+   *
+   * Dihitung dari `semuaTopik`, bukan hanya Topik yang sedang dibuka: sidebar
+   * menampilkan seluruh Jalur, dan setiap barisnya butuh jumlah Soalnya sendiri.
+   */
+  const jumlahSoal = Object.fromEntries(
+    semuaTopik.map((t) => [t.slug, t.soal.length]),
+  );
+
   // Materi dalam bahasa yang sedang berlaku. Daftar isi disusun dari Markdown yang
   // sama, jadi judul bagiannya pun ikut bahasa yang berlaku.
   const bagian = daftarBagian(topik.materi[b]);
@@ -113,108 +129,121 @@ export default async function HalamanTopik({
         <PengalihTema kamus={kamus} />
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[15rem_minmax(0,1fr)_13rem] lg:gap-12">
-        <aside className="order-1 lg:col-start-1">
-          <Sidebar baris={navigasi} slugAktif={topik.slug} bahasa={b} kamus={kamus} />
-        </aside>
+      {/*
+        `ProgresProvider` membungkus **seluruh** grid (ticket #27), bukan hanya
+        sidebar: sidebar, Kuis, dan Soal Kode sama-sama memakai satu pembacaan Progres.
+        Kalau masing-masing membaca sendiri, halaman tanpa token akan memunculkan satu
+        galat `401` per komponen — dan halaman ini sudah memunculkan 12 dari Catatan
+        dan Kuis sebelum penyambungan ini.
 
-        <main className="order-3 min-w-0 lg:col-start-2 lg:row-start-1">
-          {/* Nomor dan total Topik, supaya posisi dalam Jalur terlihat (user story 5). */}
-          <p
-            className="font-mono text-xs tracking-widest uppercase"
-            style={{ color: "var(--color-muted)" }}
-          >
-            {kamus.topik} {nomor} / {total}
-          </p>
+        Ia komponen klien, tetapi yang diserahkan padanya adalah komponen **server**
+        sebagai `children` — pola yang didokumentasikan Next.js. Isi grid tetap
+        dirender di server; yang hidup di peramban hanya konteksnya.
+      */}
+      <ProgresProvider jumlahSoal={jumlahSoal} kamus={kamus}>
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[15rem_minmax(0,1fr)_13rem] lg:gap-12">
+          <aside className="order-1 lg:col-start-1">
+            <Sidebar baris={navigasi} slugAktif={topik.slug} bahasa={b} kamus={kamus} />
+          </aside>
 
-          <h1 className="mt-3 text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">
-            {topik.judul[b]}
-          </h1>
+          <main className="order-3 min-w-0 lg:col-start-2 lg:row-start-1">
+            {/* Nomor dan total Topik, supaya posisi dalam Jalur terlihat (user story 5). */}
+            <p
+              className="font-mono text-xs tracking-widest uppercase"
+              style={{ color: "var(--color-muted)" }}
+            >
+              {kamus.topik} {nomor} / {total}
+            </p>
 
-          <article className="mt-8 max-w-[68ch] text-base">
-            <MateriMarkdown markdown={topik.materi[b]} idJudul={idJudul} />
-          </article>
+            <h1 className="mt-3 text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">
+              {topik.judul[b]}
+            </h1>
 
-          {/*
-            Visualisasi tepat **di bawah Materi**, sebelum Catatan (ticket #15).
-            Urutannya mengikuti alasan yang sama dengan Catatan dan Kuis: baca
-            konsepnya, lihat mekanismenya bergerak, tulis rangkuman, baru uji diri.
+            <article className="mt-8 max-w-[68ch] text-base">
+              <MateriMarkdown markdown={topik.materi[b]} idJudul={idJudul} />
+            </article>
 
-            Komponennya yang memutuskan apakah ia menampilkan apa pun — Topik tanpa
-            Visualisasi tidak menampilkan judul bagian yang menggantung, dan halaman
-            tidak perlu tahu Topik mana yang punya. Lebarnya dibatasi sama seperti
-            Materi supaya keduanya terasa satu kolom.
-
-            Halaman tetap statis: yang dirender server adalah kerangka Visualisasi, dan
-            animasinya baru hidup setelah React mengambil alih di peramban.
-          */}
-          <div className="max-w-[68ch]">
-            <DaftarVisualisasi slug={topik.slug} bahasa={b} kamus={kamus} />
-          </div>
-
-          {/*
-            Catatan ada **di antara Visualisasi dan Kuis** (ticket #11; posisinya
-            bergeser satu tingkat ketika ticket #15 menyisipkan Visualisasi di atasnya,
-            dan kriteria "tampil di bawah Materi" tetap terpenuhi). Kriteria penerimaan
-            meminta "Tampil di bawah Materi Topik itu", dan user story 59
-            menginginkannya "dalam satu layar" dengan Materi yang dijelaskannya. Ia juga
-            jadi jeda alami: baca konsep, lihat mekanismenya bergerak, tulis rangkuman
-            dengan kata sendiri, baru uji diri lewat Kuis.
-
-            Editornya komponen klien yang memuat sendiri; halaman ini tetap statis.
-            Lebarnya dibatasi sama seperti Materi dan Kuis supaya ketiganya terasa satu
-            kolom.
-          */}
-          <div className="max-w-[68ch]">
             {/*
-              `key={topik.slug}` bukan hiasan. Next.js **mempertahankan keadaan
-              komponen klien** saat berpindah rute kalau komponennya menempati posisi
-              yang sama — `/id/topik/stack` dan `/id/topik/queue` berbagi layout dan
-              sama-sama merender `Catatan` di posisi ini. Tanpa `key`, instance yang
-              sama dipakai ulang dengan `slugTopik` baru, dan penanda "sudah menyalin
-              tulisan awal" di dalamnya membuat editornya menampilkan Catatan Topik
-              **sebelumnya** — bukan yang sedang dibuka. `key` memaksa React memasang
-              instance baru per Topik, jadi keadaan editor selalu milik satu Topik.
-              Ini cara yang didokumentasikan React untuk keadaan yang terikat entitas.
+              Visualisasi tepat **di bawah Materi**, sebelum Catatan (ticket #15).
+              Urutannya mengikuti alasan yang sama dengan Catatan dan Kuis: baca
+              konsepnya, lihat mekanismenya bergerak, tulis rangkuman, baru uji diri.
+
+              Komponennya yang memutuskan apakah ia menampilkan apa pun — Topik tanpa
+              Visualisasi tidak menampilkan judul bagian yang menggantung, dan halaman
+              tidak perlu tahu Topik mana yang punya. Lebarnya dibatasi sama seperti
+              Materi supaya keduanya terasa satu kolom.
+
+              Halaman tetap statis: yang dirender server adalah kerangka Visualisasi, dan
+              animasinya baru hidup setelah React mengambil alih di peramban.
             */}
-            <Catatan
-              key={topik.slug}
-              slugTopik={topik.slug}
-              judulTopik={topik.judul[b]}
-              kamus={kamus}
-            />
-          </div>
+            <div className="max-w-[68ch]">
+              <DaftarVisualisasi slug={topik.slug} bahasa={b} kamus={kamus} />
+            </div>
 
-          {/*
-            Kuis diletakkan di dalam `main`, setelah Materi — urutan yang sama dengan
-            `design-tree.md`: baca konsepnya dulu, baru uji diri. Lebar bacanya
-            dibatasi seperti Materi supaya keduanya terasa satu kolom.
-          */}
-          <div className="max-w-[68ch]">
-            <DaftarKuis topik={topik} bahasa={b} kamus={kamus} />
-          </div>
+            {/*
+              Catatan ada **di antara Visualisasi dan Kuis** (ticket #11; posisinya
+              bergeser satu tingkat ketika ticket #15 menyisipkan Visualisasi di atasnya,
+              dan kriteria "tampil di bawah Materi" tetap terpenuhi). Kriteria penerimaan
+              meminta "Tampil di bawah Materi Topik itu", dan user story 59
+              menginginkannya "dalam satu layar" dengan Materi yang dijelaskannya. Ia juga
+              jadi jeda alami: baca konsep, lihat mekanismenya bergerak, tulis rangkuman
+              dengan kata sendiri, baru uji diri lewat Kuis.
 
-          {/*
-            Soal Kode diletakkan **setelah** Kuis: Kuis menguji pemahaman konsepnya,
-            Soal Kode baru meminta menulis strukturnya. Urutan itu mengikuti
-            `design-tree.md` — Kuis skenario dulu ("tebak output"), implementasi dari
-            nol menyusul. Kalau dibalik, pemelajar yang belum paham konsepnya akan
-            langsung dihadapkan pada editor kosong.
+              Editornya komponen klien yang memuat sendiri; halaman ini tetap statis.
+              Lebarnya dibatasi sama seperti Materi dan Kuis supaya ketiganya terasa satu
+              kolom.
+            */}
+            <div className="max-w-[68ch]">
+              {/*
+                `key={topik.slug}` bukan hiasan. Next.js **mempertahankan keadaan
+                komponen klien** saat berpindah rute kalau komponennya menempati posisi
+                yang sama — `/id/topik/stack` dan `/id/topik/queue` berbagi layout dan
+                sama-sama merender `Catatan` di posisi ini. Tanpa `key`, instance yang
+                sama dipakai ulang dengan `slugTopik` baru, dan penanda "sudah menyalin
+                tulisan awal" di dalamnya membuat editornya menampilkan Catatan Topik
+                **sebelumnya** — bukan yang sedang dibuka. `key` memaksa React memasang
+                instance baru per Topik, jadi keadaan editor selalu milik satu Topik.
+                Ini cara yang didokumentasikan React untuk keadaan yang terikat entitas.
+              */}
+              <Catatan
+                key={topik.slug}
+                slugTopik={topik.slug}
+                judulTopik={topik.judul[b]}
+                kamus={kamus}
+              />
+            </div>
 
-            Komponennya yang memutuskan apakah ia menampilkan apa pun, sehingga Topik
-            tanpa Soal Kode tidak menampilkan judul bagian yang menggantung.
-            Halaman tetap statis: yang dirender server adalah skenario dan kerangka
-            editornya, dan yang interaktif baru hidup setelah React mengambil alih.
-          */}
-          <div className="max-w-[68ch]">
-            <DaftarSoalKode topik={topik} bahasa={b} kamus={kamus} />
-          </div>
-        </main>
+            {/*
+              Kuis diletakkan di dalam `main`, setelah Materi — urutan yang sama dengan
+              `design-tree.md`: baca konsepnya dulu, baru uji diri. Lebar bacanya
+              dibatasi seperti Materi supaya keduanya terasa satu kolom.
+            */}
+            <div className="max-w-[68ch]">
+              <DaftarKuis topik={topik} bahasa={b} kamus={kamus} />
+            </div>
 
-        <aside className="order-2 lg:col-start-3 lg:row-start-1">
-          <DaftarIsi bagian={bagian} kamus={kamus} />
-        </aside>
-      </div>
+            {/*
+              Soal Kode diletakkan **setelah** Kuis: Kuis menguji pemahaman konsepnya,
+              Soal Kode baru meminta menulis strukturnya. Urutan itu mengikuti
+              `design-tree.md` — Kuis skenario dulu ("tebak output"), implementasi dari
+              nol menyusul. Kalau dibalik, pemelajar yang belum paham konsepnya akan
+              langsung dihadapkan pada editor kosong.
+
+              Komponennya yang memutuskan apakah ia menampilkan apa pun, sehingga Topik
+              tanpa Soal Kode tidak menampilkan judul bagian yang menggantung.
+              Halaman tetap statis: yang dirender server adalah skenario dan kerangka
+              editornya, dan yang interaktif baru hidup setelah React mengambil alih.
+            */}
+            <div className="max-w-[68ch]">
+              <DaftarSoalKode topik={topik} bahasa={b} kamus={kamus} />
+            </div>
+          </main>
+
+          <aside className="order-2 lg:col-start-3 lg:row-start-1">
+            <DaftarIsi bagian={bagian} kamus={kamus} />
+          </aside>
+        </div>
+      </ProgresProvider>
     </div>
   );
 }

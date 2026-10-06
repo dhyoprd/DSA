@@ -15,6 +15,8 @@ import {
 } from "@/lib/eksekusi/ringkasan.ts";
 import type { HasilEksekusi, TestCase } from "@/lib/eksekusi/tipe.ts";
 
+import { useProgres } from "./progres-provider.tsx";
+
 /**
  * Editor dan penjalan satu Soal Kode.
  *
@@ -66,6 +68,16 @@ export function SoalKode({ slugTopik, bahasa, indeksSoal, fungsi, testCase, kamu
   const [status, setStatus] = useState<StatusJalan>("diam");
   const [hasil, setHasil] = useState<HasilEksekusi | null>(null);
   const [galat, setGalat] = useState<string | null>(null);
+
+  const { catat } = useProgres();
+
+  /*
+   * Kalimat dari kamus, dihitung sekali dan dipakai dua tempat: menerjemahkan hasil
+   * Eksekusi Kode untuk dicatat (`ringkas` di `jalankan`), dan menggambar hasilnya.
+   * `kalimatDari` memetakan kamus ke bentuk yang dipakai `ringkasan.ts`, jadi
+   * memanggilnya dua kali berarti ada dua pemetaan yang harus dijaga sepakat.
+   */
+  const kalimat = kalimatDari(kamus);
 
   /*
    * Draf dibaca sekali, saat komponen dipasang.
@@ -126,6 +138,19 @@ export function SoalKode({ slugTopik, bahasa, indeksSoal, fungsi, testCase, kamu
         kamus,
       );
       setHasil(balasan);
+
+      /*
+       * Catat hasilnya (ticket #27). Yang dicatat adalah "apakah Soal ini sudah
+       * benar", bukan "apakah kodenya jalan" — jadi ukurannya sama dengan yang
+       * dilihat pemelajar di layar: seluruh test case lulus.
+       *
+       * Kode yang galat sintaks atau lewat waktu tetap tercatat sebagai **satu
+       * percobaan**. Itu memang tujuannya: percobaan yang tidak menghasilkan apa-apa
+       * tetap kemajuan, dan Topiknya berubah ke ◐ supaya pemelajar tahu ia sudah
+       * menyentuhnya. Yang tidak boleh terjadi adalah percobaan itu dihitung sebagai
+       * benar, dan `semuaLulus` tidak mungkin `true` untuk status yang bukan `ok`.
+       */
+      void catat(slugTopik, indeksSoal, ringkas(balasan, kalimat).semuaLulus);
     } catch (kesalahan) {
       // Sampai di sini berarti permintaannya tidak pernah dijalankan (token salah,
       // backend mati, kode terlalu panjang). `api.ts` sudah menerjemahkannya.
@@ -137,7 +162,6 @@ export function SoalKode({ slugTopik, bahasa, indeksSoal, fungsi, testCase, kamu
   }
 
   const sedangJalan = status === "menjalan";
-  const kalimat = kalimatDari(kamus);
 
   return (
     <section className="mt-10" aria-labelledby="soal-kode-judul">

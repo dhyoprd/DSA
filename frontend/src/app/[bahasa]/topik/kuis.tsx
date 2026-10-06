@@ -18,6 +18,7 @@ import {
 import { idSesiKlien, idSesiServer, langgananIdSesi } from "@/lib/kuis/sesi.ts";
 
 import { KotakPenjelasan } from "./kotak-penjelasan.tsx";
+import { useProgres } from "./progres-provider.tsx";
 
 /**
  * Satu Kuis: skenario, opsi yang sudah diacak, Kotak Penjelasan, dan Pembahasan.
@@ -38,10 +39,13 @@ import { KotakPenjelasan } from "./kotak-penjelasan.tsx";
  * ditegakkan oleh `penilaian.ts` (`kotakPenjelasanTampil`, `pembahasanTerbuka`), bukan
  * oleh urutan JSX di sini.
  *
- * **Progres masih tidak dikirim ke backend.** Ticket #8 hanya menghubungkan Kotak
- * Penjelasan; Progres (status Topik di sidebar, jumlah percobaan yang bertahan antar
- * halaman) belum tersambung ke tampilan. Jumlah percobaan di sini tetap hanya dihitung
- * dan ditampilkan selama halaman terbuka.
+ * **Progres dicatat lewat `ProgresProvider`** (ticket #27). Setiap jawaban yang
+ * dikirim — benar maupun salah — dicatat lewat `catat`, sehingga status Topik di
+ * sidebar ikut berubah tanpa permintaan baca kedua. Pencatatannya ada di provider,
+ * bukan di sini: Kuis hanya memberi tahu "Soal ini dijawab benar/salah", dan provider
+ * yang tahu cara mencatatnya. Kegagalan pencatatan tidak ditampilkan di sini — lihat
+ * catatan di provider. Jumlah percobaan yang ditampilkan tetap yang dihitung komponen
+ * ini selama halaman terbuka, bukan angka dari backend.
  *
  * **Teks sudah jadi ReactNode, bukan teks Markdown.** Skenario, opsi, dan Pembahasan
  * ditulis Markdown (backtick untuk istilah teknis, bintang untuk penekanan), dan
@@ -143,8 +147,12 @@ export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik, kamus }: Props
         /*
          * Tulisan yang ada berarti Soal ini sudah pernah dijawab benar — Kotak
          * Penjelasan tidak mungkin terisi tanpanya. Itulah yang memulihkan keadaan
-         * setelah muat ulang; `percobaan` sengaja tidak diarang, karena angka
-         * sebenarnya ada di Progres yang belum tersambung ke tampilan.
+         * setelah muat ulang; `percobaan` sengaja tidak diarang.
+         *
+         * Sejak ticket #27 jumlah percobaan memang **tercatat** di Progres, tetapi
+         * angka di layar tetap yang dihitung komponen ini selama halaman terbuka —
+         * ia tidak dibaca ulang dari backend. Membacanya berarti satu permintaan
+         * Progres per Kuis, dan itu justru yang dihindari penyambungan ini.
          */
         if (baris.diperbarui !== null) {
           setKeadaan((sebelumnya) =>
@@ -185,8 +193,33 @@ export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik, kamus }: Props
   const terbuka = pembahasanTerbuka(keadaan);
   const kotakTampil = kotakPenjelasanTampil(keadaan);
 
+  const { catat } = useProgres();
+
   function jawab(indeksAsli: number) {
-    setKeadaan((sebelumnya) => nilaiJawaban(sebelumnya, indeksAsli, indeksBenar));
+    /*
+     * Sudah benar berarti tidak ada lagi yang bisa dijawab: tombolnya dinonaktifkan,
+     * dan `nilaiJawaban` mengabaikan kiriman berikutnya. Pencatatannya pun dilewati —
+     * kalau tidak, klik ganda pada opsi benar akan menambah `percobaan` di backend
+     * untuk jawaban yang sama, padahal di layar angkanya tidak bertambah.
+     */
+    if (keadaan.benar) return;
+
+    /*
+     * Keadaan berikutnya dihitung **sekali**, lalu dipakai dua tempat: menggambar
+     * hasilnya, dan menentukan apa yang dicatat. `benar` diambil dari hasil
+     * `nilaiJawaban`, bukan dihitung ulang dengan `indeksAsli === indeksBenar` —
+     * aturan "jawaban ini benar" hidup di `penilaian.ts`, dan menghitungnya lagi di
+     * sini berarti ada tempat kedua yang bisa menyimpang dari yang terlihat pemelajar.
+     */
+    const berikutnya = nilaiJawaban(keadaan, indeksAsli, indeksBenar);
+    setKeadaan(berikutnya);
+
+    /*
+     * Dicatat tanpa `await`, dan hasilnya tidak ditunggu: pemelajar tidak boleh
+     * menunggu jaringan untuk melihat hasil jawabannya. Pencatatannya sendiri tidak
+     * melempar — provider menelan kegagalannya.
+     */
+    void catat(slugTopik, indeksSoal, berikutnya.benar);
   }
 
   function bandingkan() {

@@ -4,9 +4,8 @@ import type { Bahasa } from "@/lib/bahasa/bahasa.ts";
 import type { Kamus } from "@/lib/bahasa/kamus.ts";
 import type { BarisNavigasi } from "@/lib/konten/navigasi.ts";
 import { nomorDuaDigit } from "@/lib/konten/nomor.ts";
-import type { StatusProgres } from "@/lib/konten/tipe.ts";
 
-import { PenandaProgres } from "./penanda-progres.tsx";
+import { PenandaProgresTopik } from "./penanda-progres-topik.tsx";
 
 /**
  * Sidebar Jalur: seluruh 12 Topik, urut nomor.
@@ -27,9 +26,12 @@ import { PenandaProgres } from "./penanda-progres.tsx";
  * membuka halaman akan mengubur Materi di HP. Satu daftar, satu DOM — bukan dua
  * salinan yang harus dijaga sepakat.
  *
- * Ini komponen server. Progres diterima sebagai prop, bukan dibaca sendiri, karena
- * datanya baru ada di ticket #7. Bahasa dan kamus juga props (ticket #12), supaya
- * komponen ini tidak perlu tahu cara membacanya.
+ * Ini komponen server. Status Progres **tidak** dibaca di sini, melainkan oleh
+ * `PenandaProgresTopik` — komponen klien kecil per baris yang membacanya dari
+ * `ProgresProvider` (ticket #27). Membacanya di sini berarti React context, dan
+ * context tidak bisa dibaca dari komponen server. Memisahkannya begini menjaga
+ * seluruh daftar Jalur tetap di luar bundel klien: yang menyeberang hanya enam
+ * lambang. Bahasa dan kamus juga props (ticket #12).
  */
 
 interface Props {
@@ -41,17 +43,9 @@ interface Props {
   bahasa: Bahasa;
   /** Kamus bahasa yang sedang berlaku. */
   kamus: Kamus;
-  /**
-   * Status Progres per slug. Slug yang tidak ada di sini dianggap `"belum"`.
-   *
-   * Kosong sampai ada ticket yang menyambungkan endpoint Progres dari #7 ke tampilan.
-   * Ticket #8 sempat disangka yang mengerjakannya, dan itu keliru — #8 mengerjakan
-   * Kotak Penjelasan.
-   */
-  status?: Record<string, StatusProgres>;
 }
 
-export function Sidebar({ baris, slugAktif, bahasa, kamus, status = {} }: Props) {
+export function Sidebar({ baris, slugAktif, bahasa, kamus }: Props) {
   return (
     <nav
       aria-label={`${kamus.jalur}, ${String(baris.length)} ${kamus.topikJamak}`}
@@ -90,7 +84,6 @@ export function Sidebar({ baris, slugAktif, bahasa, kamus, status = {} }: Props)
             <BarisJalur
               item={item}
               aktif={item.slug === slugAktif}
-              status={status[item.slug] ?? "belum"}
               bahasa={bahasa}
               kamus={kamus}
             />
@@ -105,13 +98,11 @@ export function Sidebar({ baris, slugAktif, bahasa, kamus, status = {} }: Props)
 function BarisJalur({
   item,
   aktif,
-  status,
   bahasa,
   kamus,
 }: {
   item: BarisNavigasi;
   aktif: boolean;
-  status: StatusProgres;
   bahasa: Bahasa;
   kamus: Kamus;
 }) {
@@ -119,7 +110,7 @@ function BarisJalur({
 
   const isi = (
     <>
-      <PenandaProgres status={status} kamus={kamus} kelas="text-xs" />
+      <PenandaProgresTopik slug={item.slug} kamus={kamus} kelas="text-xs" />
       <span
         className="font-mono text-xs tabular-nums"
         style={{ color: "var(--color-muted)" }}

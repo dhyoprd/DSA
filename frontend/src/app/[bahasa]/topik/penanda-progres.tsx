@@ -14,11 +14,12 @@ import type { StatusProgres } from "@/lib/konten/tipe.ts";
  * antarmuka hidup di satu tempat. Yang tetap di sini hanyalah lambangnya, karena
  * lambang tidak diterjemahkan.
  *
- * Progres belum punya sumber data di tampilan: endpoint-nya dibangun di ticket #7,
- * tetapi **menyambungkannya ke sidebar belum dikerjakan**. Ticket #8 sempat disangka
- * yang mengerjakannya, dan itu keliru — #8 mengerjakan Kotak Penjelasan. Sampai ada
- * ticket yang menyambungkan Progres, pemanggil memberi `"belum"`, dan komponen ini
- * tidak perlu berubah saat datanya tiba.
+ * **Komponen ini tidak tahu dari mana statusnya datang.** Ia menerimanya sebagai prop,
+ * dan itu yang membuatnya bisa dipakai di mana saja tanpa mengubah apa pun. Sejak
+ * ticket #27 sumbernya adalah `ProgresProvider`: sidebar membacanya lewat
+ * `PenandaProgresTopik` (komponen klien kecil, karena React context tidak bisa dibaca
+ * dari komponen server), dan halaman Topik menerimanya dari prop seperti sebelumnya.
+ * Aturan ○ ◐ ● per Topik hidup di `lib/progres/status.ts` (ADR-0024), bukan di sini.
  */
 
 /** Lambang untuk setiap status. Urutannya tetap: belum → sedang → selesai. */
