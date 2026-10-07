@@ -72,6 +72,26 @@ BACKEND_PORT=8180
   `cargo run` dengan kode terbaru (kompilasi pertama 1-3 menit, setelahnya lebih cepat
   karena `target/` disimpan di volume bernama).
 
+### Setelah menambah dependensi antarmuka
+
+**Menambah paket ke `frontend/package.json` butuh satu langkah tambahan.** Compose
+memasang volume anonim di `/app/node_modules` supaya isi image tidak tertimpa
+`node_modules` milik Windows, yang binary-nya tidak jalan di Linux. Volume anonim itu
+**tidak ikut diperbarui** saat image dibangun ulang — jadi setelah `npm install`,
+container tetap memakai `node_modules` lama dan halaman gagal dengan
+`Module not found: Can't resolve '<paket>'` (HTTP 500 di halaman Topik).
+
+Perbaikannya: buang containernya supaya volumenya terisi ulang dari image baru.
+
+```bash
+docker compose rm -sf frontend
+docker compose up -d --build frontend
+```
+
+Diverifikasi: `docker compose up -d --build frontend` **saja tidak cukup** — paket
+barunya tetap tidak ada di `node_modules` container sampai containernya dibuang.
+Ini terjadi saat `shiki` ditambahkan untuk penyorotan sintaks (ADR-0029).
+
 ### Tanpa Docker
 
 Backend dan antarmuka bisa dijalankan langsung di host, dan itu **lebih cepat**:
