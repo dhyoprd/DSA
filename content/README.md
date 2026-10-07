@@ -102,7 +102,7 @@ ia bekerja pada nilai JavaScript biasa, jadi bisa diuji tanpa membuat berkas con
 
 ## Isi saat ini
 
-Tujuh Topik sudah punya berkas, semuanya tulisan sungguhan:
+Delapan Topik sudah punya berkas, semuanya tulisan sungguhan:
 
 | Berkas | Isi | Ticket |
 |---|---|---|
@@ -113,6 +113,7 @@ Tujuh Topik sudah punya berkas, semuanya tulisan sungguhan:
 | `hash-table.yaml` | Materi, 5 Kuis, 1 Soal Kode | #19 |
 | `rekursi.yaml` | Materi, 5 Kuis, 1 Soal Kode | #20 |
 | `sorting.yaml` | Materi, 5 Kuis, 1 Soal Kode | #21 |
+| `binary-search.yaml` | Materi, 5 Kuis, 1 Soal Kode | #22 |
 
 `stack.yaml` ditulis lebih dulu sebagai pembuktian teknis: #4 menulis Materinya, #6
 menambahkan komponen serta logika penilaian Kuis-nya, dan **#10 mengganti draf Soal
@@ -126,9 +127,13 @@ memenuhinya apa adanya, karena linked list memang struktur data. `hash-table.yam
 `rekursi.yaml` (#20) **menyimpang lagi**, karena rekursi bukan struktur data — sama
 seperti Big-O, dan dicatat di ADR-0025. `sorting.yaml` (#21) **menyimpang lagi pula**,
 karena sorting bukan struktur data — sama seperti Big-O dan Rekursi, dan dicatat di
-ADR-0026.
+ADR-0026. `binary-search.yaml` (#22) **menyimpang lagi pula**, karena binary search
+adalah algoritma pencarian, bukan struktur data — sama seperti Big-O, Rekursi, dan
+Sorting, dan dicatat di ADR-0027. Soal Kodenya menulis pencarian biner **dua kali**
+(iteratif dan rekursif), sehingga perbedaan **ruang** `O(1)` dan `O(log n)` terasa
+sebagai angka — pelajaran yang belum dimiliki Topik mana pun sebelumnya.
 
-**Lima Topik lain belum punya berkas.** Materi dan Soal untuk kelima Topik itu
+**Empat Topik lain belum punya berkas.** Materi dan Soal untuk keempat Topik itu
 belum ditulis; `content/jalur.yaml` sudah mendeklarasikannya lebih dulu, sehingga
 Topik yang belum punya berkas tampil redup dan berlabel "segera" di sidebar.
 
