@@ -34,6 +34,12 @@ Hasil sesi grilling. Setiap keputusan di bawah sudah dipilih sadar, bukan diasum
 > menjadi **menulis dua algoritma pengurutan dari nol dan mengembalikan jumlah
 > perbandingannya**, sehingga perbedaan O(n²) dan O(n log n) terasa sebagai angka.
 > Lihat [ADR-0026](adr/0026-bentuk-soal-kode-sorting.md).
+> **Diperluas ticket #22 (2026-10-07).** Untuk Topik **Binary Search** — yang juga bukan
+> struktur data, melainkan algoritma pencarian — bentuk ini kembali tidak bisa dipakai
+> apa adanya. Soal Kodenya menjadi **menulis pencarian biner dua kali dari nol (iteratif
+> dan rekursif) dan mengembalikan jumlah langkah serta kedalaman rekursinya**, sehingga
+> perbedaan ruang O(1) dan O(log n) terasa sebagai angka. Lihat
+> [ADR-0027](adr/0027-bentuk-soal-kode-binary-search.md).
 **Batas keras**: tidak ada soal bergaya LeetCode. Semua Soal dan Pembahasan ditulis original. Soal LeetCode boleh ditautkan, tidak boleh disalin.
 **Pembahasan**: penuh, tersembunyi, terbuka setelah jawaban benar. Berisi pendekatan, kompleksitas, kode referensi, jebakan umum.
 **Kotak Penjelasan**: ada. Kamu menulis alasan dengan kata sendiri, tidak dinilai otomatis, lalu membandingkan dengan penjelasan referensi.
@@ -315,6 +321,32 @@ Soal Kode-nya sengaja memakai **gelembung polos** (tanpa henti-awal), supaya jum
 perbandingannya selalu `n × (n - 1) / 2` dan tidak bergantung pada isi data — kalau
 memakai henti-awal, gelembung justru lebih hemat daripada gabung pada data terurut,
 dan Soal itu akan mengajarkan hal yang berlawanan dengan Materinya.
+
+**Topik Binary Search (#22) selesai — Topik kedelapan yang punya berkas.** Materi dua
+bahasa, 5 Kuis skenario, 1 Soal Kode, dan 5 Pembahasan, semuanya tulisan asli. Topik ini
+**menyimpang lagi** dari bentuk Soal Kode yang ditetapkan dokumen ini — **bukan**
+implementasi struktur data dari nol — karena binary search adalah algoritma pencarian,
+sama seperti Big-O (#16), Rekursi (#20), dan Sorting (#21), dan berbeda dari Array &
+String (#17), Linked List (#18), dan Hash Table (#19) yang memang struktur data.
+Soalnya menjadi **menulis pencarian biner dua kali dari nol — sekali dengan perulangan,
+sekali dengan rekursi — dan mengembalikan indeks, jumlah langkah, serta kedalaman
+rekursinya**; field `kompleksitas` juga diisi algoritma yang dianalisis. Keduanya dicatat
+di [ADR-0027](adr/0027-bentuk-soal-kode-binary-search.md).
+**Tidak ada baris kode aplikasi yang berubah**: Topik ini masuk sebagai berkas
+`content/binary-search.yaml`. **Tiga cacat** ditemukan dengan **menjalankan dan meninjau
+ulang**, bukan membaca — sama seperti #16 sampai #21: (a) tiga kartu Anki mengajarkan
+istilah yang tidak pernah diperkenalkan Materi ("Pembagian dua", "Ruang tambahan", dan
+pasangan English-nya) — Materi sekarang memperkenalkan ketiganya; (b) dua blok kode
+Python Materi adalah potongan ilustratif yang tidak bisa dijalankan sendiri,
+padahal konvensi Topik sebelumnya setiap blok bisa dijalankan — keduanya digabung menjadi
+satu program lengkap; (c) klaim "kedalaman sama dengan langkah" hanya berlaku untuk
+nilai yang ada, sehingga Soal Kode mendapat kasus keempat yang mencari nilai **tidak**
+ada. Rinciannya di [ADR-0027](adr/0027-bentuk-soal-kode-binary-search.md).
+**Nama kartu Anki-nya sengaja dibedakan dari Topik 1**: "Pencarian biner" sudah dipakai
+Big-O (#16) sebagai `istilah` **dan** sebagai nama `kompleksitas`, dan semua Topik masuk
+satu dek — jadi Topik ini mendaftarkan "Pencarian biner iteratif" dan "Pencarian biner
+rekursif" sebagai gantinya. Alasan yang sama membuat Sorting (#21) melewatkan "Pencarian
+biner" dan "Bagi dan taklukkan".
 
 **Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
 → pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini

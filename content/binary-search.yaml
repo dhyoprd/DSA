@@ -1,0 +1,1324 @@
+# Topik 8 — Binary Search.
+#
+# Topik kedelapan di Jalur, `prasyarat: [2, 7]` (Array & String, Sorting). Materi di
+# sini memakai dua hal dari Topik sebelumnya: gagasan "mengambil satu elemen lewat
+# nomornya dalam O(1)" dari Array & String (#17), dan syarat "data harus terurut"
+# yang justru dibahas Sorting (#21) — pencarian biner hanya masuk akal di atas data
+# yang sudah urut.
+#
+# **ADA penyimpangan yang dicatat.** `docs/design-tree.md` menetapkan Soal Kode
+# berbentuk "implementasi struktur data dari nol". Binary Search **bukan** struktur
+# data, jadi bentuk itu tidak bisa dipakai apa adanya di sini — persis situasi Big-O
+# (#16, ADR-0023), Rekursi (#20, ADR-0025), dan Sorting (#21, ADR-0026). Soal Kode
+# Topik ini menjadi **menulis pencarian biner dua kali dari nol — sekali dengan
+# perulangan, sekali dengan rekursi — lalu mengembalikan indeks, jumlah langkah, dan
+# kedalaman rekursinya**. Yang dibandingkan bukan waktunya (keduanya O(log n)),
+# melainkan **ruangnya**: perulangan memakai O(1) ruang tambahan, sedangkan rekursi
+# menumpuk pemanggilan sedalam O(log n). Field `kompleksitas` juga diisi **algoritma
+# yang dianalisis**, bukan struktur data — sama seperti #16, #20, dan #21. Kedua
+# penyimpangan itu diputuskan pemilik dan dicatat di
+# `docs/adr/0027-bentuk-soal-kode-binary-search.md`.
+#
+# **Pembahasan hanya untuk kelima Kuis.** Soal Kode di sini tidak punya Pembahasan,
+# karena skema di issue #1 — dan `frontend/src/lib/konten/tipe.ts` — tidak punya field
+# `penjelasan` pada `SoalKode`. Pemilik sudah memutuskan (2026-10-06) bahwa cukup 5
+# Pembahasan per Topik, sama seperti #10, #16, #17, #18, #19, #20, dan #21.
+#
+# **Kartu Anki sengaja dibedakan dari Topik 1.** "Pencarian biner" sudah terdaftar
+# sebagai `istilah` **dan** sebagai nama `kompleksitas` di `content/big-o.yaml` (#16),
+# dan semua Topik masuk satu dek. Front kartu definisi berbentuk "Definisi — <istilah>",
+# jadi mendaftarkan "Pencarian biner" lagi akan menghasilkan front yang sama dan Anki
+# menolaknya. Karena itu Topik ini **tidak** mendaftarkan "Pencarian biner"; yang
+# didaftarkan adalah hal-hal yang khas Topik ini: pencarian biner **iteratif** dan
+# **rekursif**, rentang pencarian, titik tengah, titik sisip, dan seterusnya. Alasan
+# yang sama membuat Sorting (#21) melewatkan "Bagi dan taklukkan" dan "Pencarian biner".
+#
+# Semua Soal dan Pembahasan di sini ditulis original, sesuai ADR-0005. Tidak ada teks
+# LeetCode yang disalin maupun diterjemahkan.
+#
+# **Setiap angka di berkas ini sudah dijalankan, bukan dibaca.** Yang diperiksa dengan
+# menjalankan Python 3.14: kelima test case Soal Kode; jejak langkah pencarian biner
+# pada beberapa larik (mis. cari 13 di [1,3,5,7,9,11,13,15] = 3 langkah, indeks 6);
+# jumlah langkah terburuk untuk n = 16, 1000, dan 1.000.000 (5, 10, dan 20 langkah);
+# bahwa jumlah langkah versi iteratif **sama persis** dengan versi rekursif (diperiksa
+# untuk seluruh n <= 40 dan semua target); dan bahwa kedalaman rekursi sama dengan
+# jumlah langkah. Pada data yang **tidak** terurut, pencarian biner melaporkan nilai
+# yang sebenarnya ADA sebagai "tidak ditemukan" — tanpa error apa pun (diperiksa pada
+# [8,3,5,1,9,2,7,4]: nilai 3, 4, 5, 8, dan 9 dilaporkan -1 padahal ada).
+#
+# `nomor`, `slug`, `judul`, dan `prasyarat` harus sama dengan content/jalur.yaml —
+# validator menolak build kalau berbeda.
+
+nomor: 8
+slug: binary-search
+judul:
+  id: Binary Search
+  en: Binary Search
+prasyarat: [2, 7]
+
+# Sumber terstruktur untuk ekspor CSV/Anki (ticket #14). Karena binary search bukan
+# struktur data, isinya **algoritma yang dianalisis** — sama seperti Big-O (#16),
+# Rekursi (#20), dan Sorting (#21), sesuai ADR-0023/0025/0026. Nama field tetap
+# `struktur`; yang berbeda isinya. Mengganti nama field itu akan menyentuh `tipe.ts`,
+# validator, penyusun kartu, dan uji-ujinya demi satu Topik — dan aturan repo ini
+# adalah abstraksi diubah saat ada kebutuhan kedua yang nyata.
+#
+# `waktu` dan `ruang` memakai notasi O(...) apa adanya — notasi itu sama di kedua
+# bahasa, jadi menerjemahkannya hanya menghasilkan dua salinan yang bisa menyimpang.
+#
+# **Nilai yang memuat koma WAJIB dikutip.** Dalam pemetaan alir YAML (`{ ... }`), koma
+# memisahkan entri — jadi `{ id: A, B, en: ... }` menghasilkan `id: "A"` plus kunci
+# liar `B: null`, dan kata itu hilang dari kartu tanpa error apa pun. Gerbang konten
+# tidak menangkapnya (jebakan 80). Kutipan di bawah bukan hiasan.
+#
+# **Nama struktur di sini sengaja TIDAK "Pencarian biner" polos**, karena nama itu
+# sudah dipakai Topik 1 dan kartu ruang/waktunya akan berdepan sama. Lihat catatan di
+# kepala berkas.
+#
+# **Nilai di sini wajib sama dengan tabel di bagian "Tabel kompleksitas" di Materi.**
+# ADR-0019 mencatat bahwa keduanya memang bisa menyimpang dan tidak ada gerbang yang
+# membandingkannya — yang menjaganya adalah disiplin saat menyunting, dan skrip
+# pemeriksa mandiri Topik ini.
+kompleksitas:
+  - struktur:
+      id: Pencarian biner iteratif
+      en: Iterative binary search
+    ruang: O(1)
+    operasi:
+      - nama: { id: Bandingkan satu elemen tengah, en: Compare one middle element }
+        waktu: O(1)
+      - nama: { id: Cari satu nilai pada n elemen, en: Find one value among n elements }
+        waktu: O(log n)
+
+  - struktur:
+      id: Pencarian biner rekursif
+      en: Recursive binary search
+    ruang: O(log n)
+    operasi:
+      - nama: { id: Panggil ulang untuk separuh rentang, en: Recurse into half the range }
+        waktu: O(1)
+      - nama: { id: Cari satu nilai pada n elemen, en: Find one value among n elements }
+        waktu: O(log n)
+
+  - struktur:
+      id: Titik sisip
+      en: Insertion point
+    ruang: O(1)
+    operasi:
+      - nama: { id: Bandingkan satu elemen tengah, en: Compare one middle element }
+        waktu: O(1)
+      - nama: { id: Temukan posisi sisip, en: Find the insertion position }
+        waktu: O(log n)
+
+# Istilah yang layak dihafal. `istilah` adalah pasangan Indonesia–English; `definisi`
+# menjelaskannya di kedua bahasa. Setiap pasangan di bawah ini berbeda antara kedua
+# bahasa, jadi setiap istilah menghasilkan dua kartu: definisinya, dan pasangannya.
+#
+# **Setiap kartu di sini mengajarkan sesuatu yang memang ada di Materi.** Itu kelas
+# cacat yang ditemukan di #17, #18, dan #21 (kartu yang mengajarkan hal yang nol kali
+# disebut di Materi). Kesembilan istilah di bawah muncul di Materi, bukan hanya di sini.
+#
+# **Tidak ada istilah yang sudah dipakai Topik lain.** Anki menolak catatan dengan
+# front yang sama, dan semua Topik masuk satu dek. "Pencarian biner" sengaja **tidak**
+# didaftarkan lagi di sini karena sudah dipakai Big-O (#16) — yang didaftarkan adalah
+# "Pencarian biner iteratif" dan "Pencarian biner rekursif", yang belum dipakai.
+istilah:
+  - istilah: { id: Data terurut, en: Sorted data }
+    definisi:
+      id: Data yang susunannya sudah mengikuti aturan tertentu — biasanya dari kecil ke besar. Pencarian biner hanya sah dipakai pada data seperti ini; kalau datanya belum terurut, jawabannya bisa salah tanpa memunculkan error.
+      en: Data whose arrangement already follows a certain rule — usually from smallest to largest. Binary search is only valid on data like this; if the data is not sorted, the answer can be wrong without raising any error.
+  - istilah: { id: Rentang pencarian, en: Search range }
+    definisi:
+      id: Bagian data yang masih mungkin berisi nilai yang dicari. Setiap langkah pencarian biner memotong rentang ini menjadi separuh, sampai tinggal satu elemen atau kosong.
+      en: The part of the data that could still contain the value being searched for. Every step of binary search cuts this range in half, until only one element remains or it becomes empty.
+  - istilah: { id: Titik tengah, en: Middle point }
+    definisi:
+      id: Elemen yang diperiksa pada setiap langkah pencarian biner. Ia diambil dari posisi tengah rentang pencarian, lalu dibandingkan dengan nilai yang dicari untuk menentukan separuh mana yang dibuang.
+      en: The element checked at every step of binary search. It is taken from the middle position of the search range, then compared with the target to decide which half to discard.
+  - istilah: { id: Batas pencarian, en: Search bounds }
+    definisi:
+      id: Sepasang nomor — batas kiri dan batas kanan — yang menandai ujung-ujung rentang pencarian. Pencarian berhenti begitu batas kiri melewati batas kanan, yang berarti rentangnya sudah kosong.
+      en: A pair of indices — a left bound and a right bound — marking the ends of the search range. The search stops as soon as the left bound passes the right bound, which means the range is empty.
+  - istilah: { id: Pencarian biner iteratif, en: Iterative binary search }
+    definisi:
+      id: Pencarian biner yang ditulis dengan perulangan. Ia memakai ruang tambahan tetap O(1), karena hanya menyimpan batas kiri dan batas kanan di variabel biasa, bukan menumpuk pemanggilan.
+      en: Binary search written with a loop. It uses a fixed O(1) of extra space, because it only keeps the left and right bounds in ordinary variables instead of stacking up calls.
+  - istilah: { id: Pencarian biner rekursif, en: Recursive binary search }
+    definisi:
+      id: Pencarian biner yang ditulis dengan fungsi yang memanggil dirinya sendiri untuk separuh rentang yang tersisa. Ia memakai ruang tambahan O(log n), karena setiap pemanggilan menunggu di tumpukan sampai pemanggilan di bawahnya selesai.
+      en: Binary search written as a function that calls itself for the remaining half of the range. It uses O(log n) of extra space, because every call waits on the stack until the call beneath it finishes.
+  - istilah: { id: Titik sisip, en: Insertion point }
+    definisi:
+      id: Posisi tempat sebuah nilai baru sebaiknya disisipkan supaya datanya tetap terurut. Nilainya sama dengan banyaknya elemen yang lebih kecil daripada nilai itu, dan pencarian biner bisa menemukannya dalam O(log n).
+      en: The position where a new value should be inserted so the data stays sorted. It equals the number of elements smaller than that value, and binary search can find it in O(log n).
+  - istilah: { id: Pembagian dua, en: Halving }
+    definisi:
+      id: Tindakan memotong rentang pencarian menjadi separuh setiap langkah. Karena data yang tersisa selalu dibagi dua, banyaknya langkah tumbuh mengikuti logaritma dari ukuran data, bukan mengikuti ukurannya.
+      en: The act of cutting the search range in half every step. Because the remaining data is always divided by two, the number of steps grows with the logarithm of the data size, not with the size itself.
+  - istilah: { id: Ruang tambahan, en: Auxiliary space }
+    definisi:
+      id: Memori di luar data masukannya sendiri yang dipakai sebuah algoritma untuk bekerja. Pencarian biner iteratif hanya butuh sedikit ruang tambahan, sedangkan versi rekursifnya butuh ruang tambahan sebanyak kedalaman pemanggilannya.
+      en: The memory beyond the input data itself that an algorithm uses to work. Iterative binary search needs only a little auxiliary space, while the recursive version needs as much as the depth of its calls.
+
+materi:
+  id: |
+    ## Kenapa pencarian biner penting
+
+    **Pencarian biner** (*binary search*) adalah cara menemukan satu nilai di dalam data
+    yang **sudah terurut** dengan membuang separuh sisanya di setiap langkah. Ia bukan
+    struktur data — ia sebuah **algoritma pencarian**, sama seperti pencarian linear yang
+    kamu lihat di Topik 1. Bedanya jauh sekali.
+
+    Bayangkan kamus tebal berisi sejuta kata. Kalau kamu mencari satu kata dengan
+    memeriksa halaman satu per satu dari awal, kamu bisa memeriksa ratusan ribu halaman
+    sebelum menemukannya. Cara pencarian biner jauh lebih pintar: buka kamus di tengah,
+    lihat kata di halaman itu, lalu putuskan — kata yang kamu cari ada di paruh depan
+    atau paruh belakang? Buang paruh yang pasti tidak berisi, lalu ulangi pada paruh
+    yang tersisa.
+
+    Setiap langkah membuang separuh. Itulah seluruh idenya.
+
+    ## Syaratnya: data harus terurut
+
+    Pencarian biner **hanya bekerja pada data yang sudah terurut**. Ini bukan saran,
+    melainkan syarat mutlak. Alasannya: seluruh cara kerjanya bergantung pada satu
+    kenyataan — kalau elemen tengah lebih kecil daripada nilai yang dicari, maka
+    **semua** elemen di sebelah kirinya juga lebih kecil, jadi paruh kiri itu pasti
+    tidak berisi. Kalau datanya belum terurut, kenyataan itu tidak berlaku, dan
+    keputusan "buang separuh ini" menjadi keputusan yang salah.
+
+    Yang berbahaya: melanggar syarat ini **tidak memunculkan error apa pun**. Programnya
+    berjalan mulus, lalu mengembalikan "tidak ditemukan" untuk nilai yang sebenarnya
+    ada. Itu sebabnya **Sorting (#21)** menjadi prasyarat Topik ini: sering kali langkah
+    pertama memakai pencarian biner adalah mengurutkan datanya lebih dulu.
+
+    ## Cara kerja: membuang separuh
+
+    Pencarian biner menyimpan **rentang pencarian** (*search range*) — bagian data yang
+    masih mungkin berisi nilai yang dicari. Pada awalnya, rentang itu adalah seluruh
+    data.
+
+    Setiap langkah melakukan tiga hal:
+
+    1. Ambil **titik tengah** (*middle point*) rentang, lalu bandingkan dengan nilai
+       yang dicari.
+    2. Kalau sama — ketemu, selesai.
+    3. Kalau nilai tengah lebih kecil, buang paruh kiri; kalau lebih besar, buang paruh
+       kanan. Ulangi pada paruh yang tersisa.
+
+    Perhatikan bagaimana **batas pencarian** (*search bounds*) bergerak. Rentangnya
+    diwakili dua nomor: batas kiri dan batas kanan. Saat membuang paruh kiri, batas kiri
+    naik; saat membuang paruh kanan, batas kanan turun. Pencarian berhenti begitu batas
+    kiri **melewati** batas kanan — artinya rentangnya sudah kosong, dan nilainya memang
+    tidak ada.
+
+    ## Menghitung langkahnya
+
+    Berapa langkah yang dibutuhkan? Setiap langkah membuang separuh — itulah
+    **pembagian dua** (*halving*) yang terjadi berulang kali. Pertanyaannya jadi sama
+    dengan: berapa kali sebuah angka bisa dibagi dua sampai habis? Jawabannya tumbuh
+    mengikuti **logaritma**, dan itulah asal `O(log n)`.
+
+    Angka sesungguhnya, dihitung dengan menjalankan, bukan dibayangkan:
+
+    | Banyaknya data | Langkah terburuk pencarian biner | Langkah terburuk pencarian linear |
+    |---|---|---|
+    | 16 | 5 | 16 |
+    | 1.000 | 10 | 1.000 |
+    | 1.000.000 | 20 | 1.000.000 |
+
+    Lihat baris terakhir: untuk sejuta data, pencarian biner butuh paling banyak **20
+    langkah**, sedangkan pencarian linear bisa sampai **sejuta langkah**. Inilah sebabnya
+    `O(log n)` disebut tumbuh sangat lambat — melipatgandakan jumlah data hanya menambah
+    satu atau dua langkah.
+
+    ## Batas kiri dan kanan
+
+    Seluruh pencarian biner berdiri di atas satu aturan perulangan:
+
+    ```python
+    def cari_biner(daftar, target):
+        kiri, kanan = 0, len(daftar) - 1
+        while kiri <= kanan:              # aturan perulangannya
+            tengah = (kiri + kanan) // 2
+            if daftar[tengah] == target:
+                return tengah
+            if daftar[tengah] < target:
+                kiri = tengah + 1         # bukan tengah
+            else:
+                kanan = tengah - 1        # bukan tengah
+        return -1
+
+    print(cari_biner([1, 3, 5, 7, 9], 7))   # 3
+    ```
+
+    Tanda `<=` di situ bukan hiasan. Selama `kiri` belum melewati `kanan`, masih ada
+    setidaknya satu elemen yang belum diperiksa — jadi pencarian harus lanjut. Begitu
+    `kiri` menjadi lebih besar daripada `kanan`, rentangnya kosong dan pencarian berhenti.
+
+    Yang sama pentingnya adalah cara batasnya bergerak. Setelah memeriksa elemen tengah
+    dan tahu bahwa nilainya bukan yang dicari, batas baru harus **melewati** tengah itu —
+    itulah `kiri = tengah + 1` dan `kanan = tengah - 1` di dalam kode di atas.
+
+    Kalau `+ 1` dan `- 1` itu terlupa, tengah yang sama akan diperiksa berulang-ulang dan
+    perulangannya tidak pernah selesai. Ini jebakan yang paling sering terjadi.
+
+    ## Dua cara menulisnya: iteratif dan rekursif
+
+    Pencarian biner bisa ditulis dengan **perulangan** atau dengan **rekursi**. Keduanya
+    memeriksa elemen yang persis sama dan memakai jumlah langkah yang persis sama —
+    waktunya sama-sama `O(log n)`. Yang berbeda adalah **ruang tambahannya** (*auxiliary
+    space*): memori di luar data masukannya sendiri yang dipakai algoritmanya untuk
+    bekerja.
+
+    - **Pencarian biner iteratif** memakai perulangan `while`. Ia hanya menyimpan batas
+      kiri dan batas kanan di variabel biasa, jadi ruang tambahannya tetap `O(1)` — tidak
+      tumbuh seberapa pun besarnya data.
+    - **Pencarian biner rekursif** memanggil dirinya sendiri untuk separuh rentang yang
+      tersisa. Setiap pemanggilan harus menunggu di tumpukan sampai pemanggilan di
+      bawahnya selesai, sehingga kedalamannya sama dengan banyaknya langkah. Ruang
+      tambahannya `O(log n)` — lebih besar daripada versi perulangan, meski waktunya
+      sama.
+
+    Ini pelajaran yang halus: **dua algoritma bisa sama cepatnya tetapi tidak sama
+    hemat memorinya.** Iteratif memakai perulangan sebagai ganti tumpukan pemanggilan,
+    dan itu sebabnya ia lebih hemat ruang. Versi rekursif tetap diajarkan karena ia
+    memperlihatkan bentuk persoalannya dengan lebih jelas — dan karena banyak algoritma
+    lain (bagi-dan-taklukkan) memang berbentuk begitu.
+
+    ## Titik sisip
+
+    Pencarian biner tidak hanya dipakai untuk menjawab "ada atau tidak". Ia juga bisa
+    menjawab pertanyaan lain yang mirip: **"kalau nilai ini dimasukkan, di posisi mana
+    ia harus diletakkan supaya datanya tetap terurut?"** Posisi itu disebut **titik
+    sisip** (*insertion point*).
+
+    Cara kerjanya hampir sama, hanya beda pertanyaan di akhir. Alih-alih berhenti saat
+    menemukan nilai yang sama, pencarian terus berjalan sampai rentangnya kosong, lalu
+    mengembalikan posisi batas kiri — di situlah nilai baru seharusnya diletakkan. Kalau
+    nilainya lebih besar daripada semua yang ada, titik sisipnya adalah panjang datanya.
+
+    ## Tabel kompleksitas
+
+    | Operasi | Waktu | Kenapa |
+    |---|---|---|
+    | Bandingkan satu elemen tengah (iteratif) | O(1) | Membandingkan dua nilai adalah pekerjaan tetap, tidak peduli datanya sebesar apa |
+    | Cari satu nilai pada n elemen (iteratif) | O(log n) | Setiap langkah membuang separuh rentang, jadi langkahnya tumbuh mengikuti logaritma |
+    | Panggil ulang untuk separuh rentang (rekursif) | O(1) | Satu pemanggilan rekursif adalah pekerjaan tetap untuk menyiapkan langkah berikutnya |
+    | Cari satu nilai pada n elemen (rekursif) | O(log n) | Kedalamannya sama dengan banyaknya langkah, karena rentangnya juga dibagi dua setiap kali |
+    | Bandingkan satu elemen tengah (titik sisip) | O(1) | Sama seperti pencarian biasa, satu perbandingan per langkah |
+    | Temukan posisi sisip | O(log n) | Mencari batas di data terurut dengan membuang separuh, sama seperti pencarian biasa |
+
+    Untuk ruangnya: pencarian biner **iteratif** `O(1)` karena hanya menyimpan dua batas
+    di variabel biasa, sedangkan pencarian biner **rekursif** `O(log n)` karena setiap
+    pemanggilan menumpuk di tumpukan sampai selesai. Titik sisip `O(1)` karena ia
+    ditulis dengan perulangan.
+
+    ## Jebakan yang sering terjadi
+
+    **Lupa bahwa data harus terurut.** Ini jebakan paling berbahaya karena tidak
+    memunculkan error. Dijalankan pada `[8, 3, 5, 1, 9, 2, 7, 4]` yang belum terurut,
+    pencarian biner melaporkan nilai **3, 4, 5, 8, dan 9** sebagai "tidak ditemukan"
+    — padahal kelimanya ada di larik itu. Programnya benar-benar berjalan tanpa keluhan.
+    Selalu pastikan datanya terurut lebih dulu.
+
+    **Lupa menggeser batas dengan `+ 1` dan `- 1`.** Menulis `kiri = tengah` alih-alih
+    `kiri = tengah + 1` membuat perulangan tidak pernah selesai, karena elemen tengah
+    yang sama terus diperiksa. Dijalankan, bentuk yang salah ini benar-benar berputar
+    tanpa henti.
+
+    **Memakai `<` alih-alih `<=` di syarat perulangan.** Menulis `while kiri < kanan`
+    membuat pencarian biner gagal pada data berisi **satu** elemen: perulangannya tidak
+    pernah dijalankan sama sekali, sehingga nilainya selalu dilaporkan tidak ditemukan.
+    Dijalankan, `cari_biner([7], 7)` dengan bentuk itu mengembalikan -1.
+
+    **Menghitung `(kiri + kanan) // 2` sebagai sumber error.** Di sebagian bahasa,
+    menjumlahkan dua nomor besar bisa melewati batas dan menghasilkan nomor negatif.
+    Di Python hal itu **tidak terjadi** — nomornya bertambah besar sesuka hati tanpa
+    meluap. Jadi di Python bentuk `(kiri + kanan) // 2` aman. Bentuk `kiri + (kanan - kiri) // 2`
+    memberi hasil yang sama dan tetap berguna kalau kamu menulis di bahasa lain.
+
+    **Mengira versi rekursif lebih cepat.** Keduanya sama cepatnya — sama-sama
+    `O(log n)`, dan dijalankan, jumlah langkahnya persis sama untuk setiap nilai yang
+    dicari. Yang berbeda hanya ruangnya: versi rekursif memakai `O(log n)` ruang
+    tambahan untuk tumpukan pemanggilan, versi iteratif cukup `O(1)`.
+
+    **Mengira pencarian biner selalu butuh tepat `log n` langkah.** `log n` adalah
+    gambaran pertumbuhannya, bukan angka hasil hitung. Untuk 16 elemen, pencarian bisa
+    selesai dalam 1 sampai 5 langkah, tergantung di mana nilainya berada. Yang pasti
+    adalah langkahnya tidak pernah melebihi batas itu.
+
+  en: |
+    ## Why binary search matters
+
+    **Binary search** is a way to find a single value inside **sorted** data by
+    discarding half of what remains at every step. It is not a data structure — it is a
+    **search algorithm**, much like the linear search you saw in Topic 1. The difference
+    is enormous.
+
+    Picture a thick dictionary with a million words. If you look for one word by checking
+    pages one by one from the start, you might check hundreds of thousands of pages before
+    you find it. Binary search is far cleverer: open the dictionary in the middle, look at
+    the word on that page, then decide — is the word you want in the front half or the
+    back half? Discard the half that certainly cannot hold it, then repeat on what is
+    left.
+
+    Every step throws away half. That is the whole idea.
+
+    ## The requirement: the data must be sorted
+
+    Binary search **only works on sorted data**. This is not advice, it is a hard
+    requirement. The reason: its entire mechanism depends on one fact — if the middle
+    element is smaller than the target, then **every** element to its left is also
+    smaller, so the left half certainly cannot contain it. If the data is not sorted,
+    that fact does not hold, and the decision "discard this half" becomes a wrong one.
+
+    The dangerous part: breaking this requirement **raises no error at all**. The program
+    runs smoothly, then reports "not found" for a value that is actually there. That is
+    why **Sorting (#21)** is a prerequisite for this topic: often the first step in using
+    binary search is to sort the data first.
+
+    ## How it works: discarding half
+
+    Binary search keeps a **search range** — the part of the data that could still hold
+    the target. At the start, that range is the whole data set.
+
+    Every step does three things:
+
+    1. Take the **middle point** of the range, and compare it with the target.
+    2. If they are equal — found, done.
+    3. If the middle value is smaller, discard the left half; if larger, discard the
+       right half. Repeat on what remains.
+
+    Notice how the **search bounds** move. The range is represented by two indices: a
+    left bound and a right bound. When discarding the left half, the left bound rises;
+    when discarding the right half, the right bound falls. The search stops as soon as
+    the left bound **passes** the right bound — meaning the range is empty, and the value
+    truly is not there.
+
+    ## Counting the steps
+
+    How many steps does it take? Every step discards half — that is **halving** happening
+    again and again. So the question is the same as: how many times can a number be
+    divided by two before it runs out? The answer grows with the **logarithm**, and that
+    is where `O(log n)` comes from.
+
+    The actual numbers, computed by running rather than imagining:
+
+    | Amount of data | Worst-case binary search steps | Worst-case linear search steps |
+    |---|---|---|
+    | 16 | 5 | 16 |
+    | 1,000 | 10 | 1,000 |
+    | 1,000,000 | 20 | 1,000,000 |
+
+    Look at the last row: for a million items, binary search needs at most **20 steps**,
+    while linear search can take up to **a million steps**. This is why `O(log n)` is
+    called very slow-growing — multiplying the amount of data adds only one or two steps.
+
+    ## Left and right bounds
+
+    The whole of binary search stands on a single loop condition:
+
+    ```python
+    def cari_biner(daftar, target):
+        kiri, kanan = 0, len(daftar) - 1
+        while kiri <= kanan:              # the loop condition
+            tengah = (kiri + kanan) // 2
+            if daftar[tengah] == target:
+                return tengah
+            if daftar[tengah] < target:
+                kiri = tengah + 1         # not tengah
+            else:
+                kanan = tengah - 1        # not tengah
+        return -1
+
+    print(cari_biner([1, 3, 5, 7, 9], 7))   # 3
+    ```
+
+    The `<=` there is not decoration. As long as `kiri` has not passed `kanan`, there is
+    still at least one element left to check — so the search must go on. Once `kiri`
+    becomes larger than `kanan`, the range is empty and the search stops.
+
+    Just as important is how the bounds move. After checking the middle element and
+    learning it is not the target, the new bound must **step past** that middle — those
+    are the `kiri = tengah + 1` and `kanan = tengah - 1` inside the code above.
+
+    If those `+ 1` and `- 1` are forgotten, the same middle element is checked over and
+    over and the loop never ends. This is the most common trap.
+
+    ## Two ways to write it: iterative and recursive
+
+    Binary search can be written with a **loop** or with **recursion**. Both check exactly
+    the same elements and use exactly the same number of steps — both are `O(log n)` in
+    time. What differs is the **auxiliary space**: the memory beyond the input data itself
+    that the algorithm uses to work.
+
+    - **Iterative binary search** uses a `while` loop. It keeps only the left and right
+      bounds in ordinary variables, so its extra space is a fixed `O(1)` — it does not
+      grow no matter how large the data is.
+    - **Recursive binary search** calls itself for the remaining half of the range. Every
+      call must wait on the stack until the call beneath it finishes, so its depth equals
+      the number of steps. Its extra space is `O(log n)` — larger than the loop version,
+      even though the time is the same.
+
+    This is a subtle lesson: **two algorithms can be equally fast yet not equally frugal
+    with memory.** The iterative one uses a loop in place of the call stack, and that is
+    why it saves space. The recursive version is still taught because it shows the shape
+    of the problem more clearly — and because many other algorithms (divide and conquer)
+    really are shaped that way.
+
+    ## Insertion point
+
+    Binary search is not only used to answer "present or not". It can also answer a
+    similar question: **"if this value were inserted, at which position should it go so
+    the data stays sorted?"** That position is called the **insertion point**.
+
+    The mechanism is almost the same, with only the final question differing. Instead of
+    stopping when it finds an equal value, the search keeps going until the range is
+    empty, then returns the left bound — that is where the new value belongs. If the value
+    is larger than everything present, the insertion point is the length of the data.
+
+    ## Complexity table
+
+    | Operation | Time | Why |
+    |---|---|---|
+    | Compare one middle element (iterative) | O(1) | Comparing two values is fixed work, no matter how large the data is |
+    | Find one value among n elements (iterative) | O(log n) | Every step discards half the range, so the steps grow with the logarithm |
+    | Recurse into half the range (recursive) | O(1) | One recursive call is fixed work to set up the next step |
+    | Find one value among n elements (recursive) | O(log n) | Its depth equals the number of steps, because the range is also halved each time |
+    | Compare one middle element (insertion point) | O(1) | Same as an ordinary search, one comparison per step |
+    | Find the insertion position | O(log n) | Searching for a boundary in sorted data by discarding half, just like an ordinary search |
+
+    For space: **iterative** binary search is `O(1)` because it keeps only two bounds in
+    ordinary variables, while **recursive** binary search is `O(log n)` because every call
+    stacks up until it finishes. The insertion point is `O(1)` because it is written with a
+    loop.
+
+    ## Common traps
+
+    **Forgetting that the data must be sorted.** This is the most dangerous trap because it
+    raises no error. Run on the unsorted `[8, 3, 5, 1, 9, 2, 7, 4]`, binary search reports
+    the values **3, 4, 5, 8, and 9** as "not found" — even though all five are in that
+    array. The program runs without a single complaint. Always make sure the data is
+    sorted first.
+
+    **Forgetting to move the bounds with `+ 1` and `- 1`.** Writing `kiri = tengah` instead
+    of `kiri = tengah + 1` makes the loop never finish, because the same middle element is
+    checked again and again. Run, the wrong form truly spins forever.
+
+    **Using `<` instead of `<=` in the loop condition.** Writing `while kiri < kanan` makes
+    binary search fail on data holding a **single** element: the loop never runs at all, so
+    the value is always reported as not found. Run, `cari_biner([7], 7)` with that form
+    returns -1.
+
+    **Treating `(kiri + kanan) // 2` as a source of error.** In some languages, adding two
+    large indices can overflow and produce a negative number. In Python that **does not
+    happen** — its numbers grow as large as they like without overflowing. So in Python the
+    form `(kiri + kanan) // 2` is safe. The form `kiri + (kanan - kiri) // 2` gives the same
+    result and is still worth knowing if you write in another language.
+
+    **Thinking the recursive version is faster.** Both are equally fast — both `O(log n)`,
+    and run, the number of steps is exactly the same for every target. Only the space
+    differs: the recursive version uses `O(log n)` of extra space for the call stack, the
+    iterative one needs only `O(1)`.
+
+    **Thinking binary search always takes exactly `log n` steps.** `log n` describes how it
+    grows, not a computed result. For 16 elements, a search can finish in 1 to 5 steps,
+    depending on where the value sits. What is certain is that the steps never exceed that
+    bound.
+
+soal:
+  # --- Kuis 1: melacak langkah pencarian biner -----------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi berikut mencari satu nilai di dalam larik yang **sudah terurut** dengan
+        pencarian biner, dan menghitung berapa langkah yang dipakai.
+
+        Untuk larik `[1, 3, 5, 7, 9, 11, 13, 15]` dan nilai yang dicari `13`, berapa
+        langkah yang dipakai, dan di indeks berapa nilainya ditemukan?
+      en: |
+        The function below finds a value inside an array that is **already sorted** using
+        binary search, and counts how many steps it uses.
+
+        For the array `[1, 3, 5, 7, 9, 11, 13, 15]` and the target `13`, how many steps
+        does it use, and at which index is the value found?
+    kode: |
+      def cari_biner(daftar, target):
+          kiri, kanan = 0, len(daftar) - 1
+          langkah = 0
+          while kiri <= kanan:
+              tengah = (kiri + kanan) // 2
+              langkah += 1
+              if daftar[tengah] == target:
+                  return [tengah, langkah]
+              if daftar[tengah] < target:
+                  kiri = tengah + 1
+              else:
+                  kanan = tengah - 1
+          return [-1, langkah]
+    opsi:
+      - teks:
+          id: 3 langkah, ditemukan di indeks 6
+          en: 3 steps, found at index 6
+        benar: true
+      - teks:
+          id: 3 langkah, ditemukan di indeks 13
+          en: 3 steps, found at index 13
+        benar: false
+      - teks:
+          id: 4 langkah, ditemukan di indeks 6
+          en: 4 steps, found at index 6
+        benar: false
+      - teks:
+          id: 8 langkah, ditemukan di indeks 6
+          en: 8 steps, found at index 6
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Rentangnya mula-mula seluruh larik: `kiri = 0`, `kanan = 7`.
+        Setiap langkah mengambil titik tengah, membandingkannya, lalu membuang separuh
+        yang tidak mungkin berisi `13`.
+
+        Lacak setiap langkahnya:
+
+        - Langkah 1: `tengah = (0 + 7) // 2 = 3`, nilainya `7`. `7 < 13`, jadi buang
+          paruh kiri; `kiri = 4`.
+        - Langkah 2: `tengah = (4 + 7) // 2 = 5`, nilainya `11`. `11 < 13`, jadi
+          `kiri = 6`.
+        - Langkah 3: `tengah = (6 + 7) // 2 = 6`, nilainya `13`. Sama — ketemu di indeks
+          **6**, setelah **3 langkah**.
+
+        **Kompleksitas.** Setiap langkah membuang separuh rentang, jadi langkahnya
+        tumbuh `O(log n)`. Untuk 8 elemen, itu berarti paling banyak 4 langkah. Ruang
+        tambahannya `O(1)` — hanya dua variabel batas dan satu pencacah.
+
+        **Kode referensi.**
+
+        ```python
+        def cari_biner(daftar, target):
+            kiri, kanan = 0, len(daftar) - 1
+            langkah = 0
+            while kiri <= kanan:
+                tengah = (kiri + kanan) // 2
+                langkah += 1
+                if daftar[tengah] == target:
+                    return [tengah, langkah]
+                if daftar[tengah] < target:
+                    kiri = tengah + 1
+                else:
+                    kanan = tengah - 1
+            return [-1, langkah]
+
+        print(cari_biner([1, 3, 5, 7, 9, 11, 13, 15], 13))   # [6, 3]
+        ```
+
+        **Jebakan umum.** Jawaban **indeks 13** mengira fungsi mengembalikan **nilainya**,
+        padahal yang dikembalikan adalah **posisinya** — `13` ada di indeks `6`. Jawaban
+        **4 langkah** mengira setiap pencarian selalu memakai langkah paling banyak;
+        padahal `13` kebetulan berada tepat di tengah pada langkah terakhir, dan
+        pencarian berhenti begitu ketemu. Jawaban **8 langkah** mengira pencarian biner
+        memeriksa setiap elemen seperti pencarian linear — justru sebaliknya, ia membuang
+        separuh setiap langkah.
+      en: |
+        **Approach.** The range starts as the whole array: `kiri = 0`, `kanan = 7`. Every
+        step takes the middle point, compares it, then discards the half that cannot
+        contain `13`.
+
+        Trace each step:
+
+        - Step 1: `tengah = (0 + 7) // 2 = 3`, value `7`. `7 < 13`, so discard the left
+          half; `kiri = 4`.
+        - Step 2: `tengah = (4 + 7) // 2 = 5`, value `11`. `11 < 13`, so `kiri = 6`.
+        - Step 3: `tengah = (6 + 7) // 2 = 6`, value `13`. Equal — found at index **6**,
+          after **3 steps**.
+
+        **Complexity.** Every step discards half the range, so the steps grow `O(log n)`.
+        For 8 elements, that means at most 4 steps. The extra space is `O(1)` — just two
+        bound variables and one counter.
+
+        **Reference code.**
+
+        ```python
+        def cari_biner(daftar, target):
+            kiri, kanan = 0, len(daftar) - 1
+            langkah = 0
+            while kiri <= kanan:
+                tengah = (kiri + kanan) // 2
+                langkah += 1
+                if daftar[tengah] == target:
+                    return [tengah, langkah]
+                if daftar[tengah] < target:
+                    kiri = tengah + 1
+                else:
+                    kanan = tengah - 1
+            return [-1, langkah]
+
+        print(cari_biner([1, 3, 5, 7, 9, 11, 13, 15], 13))   # [6, 3]
+        ```
+
+        **Common trap.** The answer **index 13** assumes the function returns the
+        **value**, but it returns the **position** — `13` sits at index `6`. The answer
+        **4 steps** assumes every search uses the maximum number of steps; but `13`
+        happens to land exactly in the middle on the last step, and the search stops the
+        moment it finds it. The answer **8 steps** assumes binary search checks every
+        element like a linear search — quite the opposite, it discards half at every step.
+
+  # --- Kuis 2: `while kiri < kanan` gagal pada satu elemen ------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Seorang pemelajar menulis pencarian biner, tetapi menuliskan syarat
+        perulangannya sebagai `while kiri < kanan` — memakai `<`, bukan `<=`.
+
+        Untuk larik yang hanya berisi **satu** elemen, `[7]`, dan nilai yang dicari
+        `7`, apa yang dikembalikan fungsi itu, dan mengapa?
+      en: |
+        A learner writes binary search, but writes the loop condition as
+        `while kiri < kanan` — using `<`, not `<=`.
+
+        For an array holding **a single** element, `[7]`, and the target `7`, what does
+        that function return, and why?
+    kode: |
+      def cari_biner(daftar, target):
+          kiri, kanan = 0, len(daftar) - 1
+          while kiri < kanan:
+              tengah = (kiri + kanan) // 2
+              if daftar[tengah] == target:
+                  return tengah
+              if daftar[tengah] < target:
+                  kiri = tengah + 1
+              else:
+                  kanan = tengah - 1
+          return -1
+    opsi:
+      - teks:
+          id: Mengembalikan -1, karena perulangannya tidak pernah dijalankan sama sekali
+          en: It returns -1, because the loop never runs at all
+        benar: true
+      - teks:
+          id: Mengembalikan 0, karena elemen pertama selalu diperiksa lebih dulu
+          en: It returns 0, because the first element is always checked first
+        benar: false
+      - teks:
+          id: Mengembalikan 7, karena nilai yang dicari sama dengan isi lariknya
+          en: It returns 7, because the target equals the array's contents
+        benar: false
+      - teks:
+          id: Perulangannya tidak pernah berhenti
+          en: The loop never terminates
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Untuk `[7]`, `kiri = 0` dan `kanan = 0`. Syarat perulangannya
+        `kiri < kanan` menjadi `0 < 0`, yang bernilai **salah**. Jadi perulangannya
+        tidak pernah dijalankan sama sekali, dan fungsinya langsung melompat ke
+        `return -1`.
+
+        Akibatnya fungsi itu melaporkan **setiap** pencarian pada larik satu elemen
+        sebagai tidak ditemukan — bahkan ketika nilainya jelas ada. Dijalankan,
+        `cari_biner([7], 7)` mengembalikan `-1`.
+
+        **Kompleksitas.** Karena perulangannya tidak berjalan, fungsinya selesai dalam
+        `O(1)` — tetapi jawabannya salah, dan itulah masalahnya. Kompleksitas yang cepat
+        tidak ada gunanya kalau hasilnya keliru.
+
+        **Kode referensi.**
+
+        ```python
+        def cari_biner_benar(daftar, target):
+            kiri, kanan = 0, len(daftar) - 1
+            while kiri <= kanan:            # <= bukan <
+                tengah = (kiri + kanan) // 2
+                if daftar[tengah] == target:
+                    return tengah
+                if daftar[tengah] < target:
+                    kiri = tengah + 1
+                else:
+                    kanan = tengah - 1
+            return -1
+
+        print(cari_biner_benar([7], 7))   # 0
+        ```
+
+        **Jebakan umum.** Jawaban **"mengembalikan 0"** dan **"mengembalikan 7"** sama
+        saja berasumsi perulangannya berjalan minimal sekali — padahal `0 < 0` salah,
+        jadi badan perulangannya tidak pernah disentuh. Jawaban **"perulangannya tidak
+        pernah berhenti"** mencampuradukkan dua jebakan berbeda: perulangan tak berujung
+        datang dari lupa menggeser batas dengan `+ 1`/`- 1`, bukan dari memakai `<`.
+      en: |
+        **Approach.** For `[7]`, `kiri = 0` and `kanan = 0`. The loop condition
+        `kiri < kanan` becomes `0 < 0`, which is **false**. So the loop never runs at all,
+        and the function jumps straight to `return -1`.
+
+        The result is that the function reports **every** search on a one-element array as
+        not found — even when the value is plainly there. Run, `cari_biner([7], 7)` returns
+        `-1`.
+
+        **Complexity.** Because the loop never runs, the function finishes in `O(1)` — but
+        the answer is wrong, and that is the problem. A fast complexity is worthless when
+        the result is incorrect.
+
+        **Reference code.**
+
+        ```python
+        def cari_biner_benar(daftar, target):
+            kiri, kanan = 0, len(daftar) - 1
+            while kiri <= kanan:            # <= not <
+                tengah = (kiri + kanan) // 2
+                if daftar[tengah] == target:
+                    return tengah
+                if daftar[tengah] < target:
+                    kiri = tengah + 1
+                else:
+                    kanan = tengah - 1
+            return -1
+
+        print(cari_biner_benar([7], 7))   # 0
+        ```
+
+        **Common trap.** The answers **"returns 0"** and **"returns 7"** both assume the
+        loop runs at least once — but `0 < 0` is false, so the loop body is never touched.
+        The answer **"the loop never terminates"** mixes up two different traps: an
+        endless loop comes from forgetting to move the bounds with `+ 1`/`- 1`, not from
+        using `<`.
+
+  # --- Kuis 3: lupa menggeser batas → perulangan tak berujung ---------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Fungsi berikut hampir benar, tetapi saat membuang paruh kiri ia menulis
+        `kiri = tengah` — tanpa `+ 1`. Saat mencari nilai yang **tidak ada** di dalam
+        larik, apa yang terjadi?
+      en: |
+        The function below is almost right, but when discarding the left half it writes
+        `kiri = tengah` — without `+ 1`. When searching for a value that is **not** in the
+        array, what happens?
+    kode: |
+      def cari_biner(daftar, target):
+          kiri, kanan = 0, len(daftar) - 1
+          while kiri <= kanan:
+              tengah = (kiri + kanan) // 2
+              if daftar[tengah] == target:
+                  return tengah
+              if daftar[tengah] < target:
+                  kiri = tengah          # seharusnya tengah + 1
+              else:
+                  kanan = tengah - 1
+          return -1
+    opsi:
+      - teks:
+          id: Perulangannya tidak pernah berhenti, karena elemen tengah yang sama diperiksa berulang-ulang
+          en: The loop never terminates, because the same middle element is checked over and over
+        benar: true
+      - teks:
+          id: Fungsi mengembalikan -1 seperti biasa
+          en: The function returns -1 as usual
+        benar: false
+      - teks:
+          id: Fungsi mengembalikan indeks yang salah, tetapi tetap berhenti
+          en: The function returns a wrong index, but still stops
+        benar: false
+      - teks:
+          id: Fungsi melempar error karena indeksnya keluar batas
+          en: The function throws an error because the index goes out of range
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Bayangkan mencari `6` di `[1, 2, 3, 4, 5]`. Langkah pertama,
+        `tengah = 2`, nilainya `3`. Karena `3 < 6`, fungsinya menyetel `kiri = tengah = 2`
+        — bukan `3`. Rentangnya **tidak menyusut** di sisi kiri: `kiri` tetap `2`.
+
+        Langkah berikutnya menghitung `tengah = (2 + 4) // 2 = 3`, nilainya `4`. Karena
+        `4 < 6`, `kiri = 3`. Langkah berikutnya `tengah = (3 + 4) // 2 = 3` lagi, nilainya
+        `4` lagi, dan `kiri = 3` lagi. Rentangnya berhenti menyusut, dan perulangannya
+        berputar tanpa henti. Dijalankan, bentuk yang salah ini benar-benar tidak berhenti.
+
+        **Kompleksitas.** Perulangan yang tidak berhenti tidak punya kompleksitas yang
+        berarti — ia tidak pernah selesai. Inilah sebabnya `+ 1` dan `- 1` wajib: keduanya
+        yang menjamin rentangnya **selalu menyusut**, sehingga pencarian pasti berakhir
+        setelah paling banyak `O(log n)` langkah.
+
+        **Kode referensi.**
+
+        ```python
+        def cari_biner(daftar, target):
+            kiri, kanan = 0, len(daftar) - 1
+            while kiri <= kanan:
+                tengah = (kiri + kanan) // 2
+                if daftar[tengah] == target:
+                    return tengah
+                if daftar[tengah] < target:
+                    kiri = tengah + 1
+                else:
+                    kanan = tengah - 1
+            return -1
+
+        print(cari_biner([1, 2, 3, 4, 5], 6))   # -1, dan selesai dengan cepat
+        ```
+
+        **Jebakan umum.** Jawaban **"mengembalikan -1 seperti biasa"** mengira
+        perulangannya tetap berakhir, padahal rentangnya bisa berhenti menyusut dan
+        `kiri` tidak pernah melewati `kanan`. Jawaban **"melempar error"** mengira Python
+        akan mengeluh — justru tidak: `tengah` selalu di dalam batas larik, jadi tidak ada
+        error yang muncul; programnya hanya berputar diam-diam.
+      en: |
+        **Approach.** Imagine searching for `6` in `[1, 2, 3, 4, 5]`. On the first step,
+        `tengah = 2`, value `3`. Because `3 < 6`, the function sets `kiri = tengah = 2` —
+        not `3`. The range does **not** shrink on the left: `kiri` stays `2`.
+
+        The next step computes `tengah = (2 + 4) // 2 = 3`, value `4`. Because `4 < 6`,
+        `kiri = 3`. The step after that computes `tengah = (3 + 4) // 2 = 3` again, value
+        `4` again, and `kiri = 3` again. The range stops shrinking, and the loop spins
+        forever. Run, this wrong form truly never stops.
+
+        **Complexity.** A loop that never terminates has no meaningful complexity — it
+        never finishes. This is why the `+ 1` and `- 1` are required: they are what
+        guarantees the range **always shrinks**, so the search is certain to end after at
+        most `O(log n)` steps.
+
+        **Reference code.**
+
+        ```python
+        def cari_biner(daftar, target):
+            kiri, kanan = 0, len(daftar) - 1
+            while kiri <= kanan:
+                tengah = (kiri + kanan) // 2
+                if daftar[tengah] == target:
+                    return tengah
+                if daftar[tengah] < target:
+                    kiri = tengah + 1
+                else:
+                    kanan = tengah - 1
+            return -1
+
+        print(cari_biner([1, 2, 3, 4, 5], 6))   # -1, and finishes quickly
+        ```
+
+        **Common trap.** The answer **"returns -1 as usual"** assumes the loop still ends,
+        but the range can stop shrinking and `kiri` never passes `kanan`. The answer
+        **"throws an error"** assumes Python will complain — it will not: `tengah` is
+        always within the array bounds, so no error appears; the program simply spins in
+        silence.
+
+  # --- Kuis 4: pencarian biner pada data yang BELUM terurut -----------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Seseorang menjalankan pencarian biner pada larik berikut, yang **belum terurut**:
+
+        `[8, 3, 5, 1, 9, 2, 7, 4]`
+
+        Larik itu sebenarnya berisi semua angka dari 1 sampai 9 kecuali 6. Apa yang
+        terjadi ketika mencari angka `5`?
+      en: |
+        Someone runs binary search on the following array, which is **not sorted**:
+
+        `[8, 3, 5, 1, 9, 2, 7, 4]`
+
+        That array actually holds every number from 1 to 9 except 6. What happens when
+        searching for `5`?
+    kode: |
+      def cari_biner(daftar, target):
+          kiri, kanan = 0, len(daftar) - 1
+          while kiri <= kanan:
+              tengah = (kiri + kanan) // 2
+              if daftar[tengah] == target:
+                  return tengah
+              if daftar[tengah] < target:
+                  kiri = tengah + 1
+              else:
+                  kanan = tengah - 1
+          return -1
+    opsi:
+      - teks:
+          id: Fungsi mengembalikan -1, seolah-olah 5 tidak ada — padahal 5 ada di larik itu
+          en: The function returns -1, as if 5 were absent — even though 5 is in the array
+        benar: true
+      - teks:
+          id: Fungsi mengembalikan indeks 2, karena 5 berada di posisi itu
+          en: The function returns index 2, because 5 sits at that position
+        benar: false
+      - teks:
+          id: Fungsi melempar error karena datanya tidak terurut
+          en: The function throws an error because the data is not sorted
+        benar: false
+      - teks:
+          id: Fungsi tetap menemukan 5, hanya saja lebih lambat
+          en: The function still finds 5, just more slowly
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Pencarian biner mengandalkan satu kenyataan: kalau elemen tengah
+        lebih kecil daripada nilai yang dicari, maka seluruh paruh kiri juga lebih kecil.
+        Pada data yang belum terurut, kenyataan itu **tidak berlaku**, sehingga keputusan
+        membuang separuh menjadi salah.
+
+        Lacak pencarian `5` di `[8, 3, 5, 1, 9, 2, 7, 4]`:
+
+        - Langkah 1: `tengah = 3`, nilainya `1`. `1 < 5`, jadi buang paruh kiri dan
+          setel `kiri = 4`. Padahal `5` ada di indeks `2` — sudah terbuang.
+        - Langkah 2: `tengah = 5`, nilainya `2`. `2 < 5`, jadi `kiri = 6`.
+        - Langkah 3: `tengah = 6`, nilainya `7`. `7 > 5`, jadi `kanan = 5`. Sekarang
+          `kiri = 6` sudah melewati `kanan = 5`, dan perulangannya berhenti.
+
+        Fungsinya mengembalikan `-1`. Dijalankan, pola yang sama membuat **3, 4, 5, 8,
+        dan 9** semuanya dilaporkan tidak ditemukan, padahal kelimanya ada di larik itu.
+
+        **Kompleksitas.** Fungsinya tetap berjalan `O(log n)` — cepat, tetapi **salah**.
+        Inilah bahayanya: melanggar syarat "data harus terurut" tidak memperlambat
+        apa pun dan tidak memunculkan error. Ia hanya membuat jawabannya keliru.
+
+        **Kode referensi.**
+
+        ```python
+        def cari_biner(daftar, target):
+            kiri, kanan = 0, len(daftar) - 1
+            while kiri <= kanan:
+                tengah = (kiri + kanan) // 2
+                if daftar[tengah] == target:
+                    return tengah
+                if daftar[tengah] < target:
+                    kiri = tengah + 1
+                else:
+                    kanan = tengah - 1
+            return -1
+
+        data = [8, 3, 5, 1, 9, 2, 7, 4]
+        print(cari_biner(sorted(data), 5))   # 2 — setelah data diurutkan lebih dulu
+        print(cari_biner(data, 5))           # -1 — hasil salah tanpa error
+        ```
+
+        **Jebakan umum.** Jawaban **"mengembalikan indeks 2"** berasumsi pencarian biner
+        memeriksa seluruh larik; ia tidak — ia melompat-lompat, dan lompatannya
+        bergantung pada data yang terurut. Jawaban **"melempar error"** berasumsi Python
+        tahu datanya tidak terurut — justru tidak: Python tidak memeriksanya sama sekali,
+        dan itulah yang membuat jebakan ini berbahaya. Jawaban **"tetap menemukan, hanya
+        lebih lambat"** salah pada dua hal: hasilnya tidak selalu ketemu, dan waktu
+        kerjanya tidak melambat.
+      en: |
+        **Approach.** Binary search relies on one fact: if the middle element is smaller
+        than the target, then the whole left half is also smaller. On unsorted data, that
+        fact **does not hold**, so the decision to discard a half becomes a wrong one.
+
+        Trace the search for `5` in `[8, 3, 5, 1, 9, 2, 7, 4]`:
+
+        - Step 1: `tengah = 3`, value `1`. `1 < 5`, so discard the left half and set
+          `kiri = 4`. But `5` sits at index `2` — already discarded.
+        - Step 2: `tengah = 5`, value `2`. `2 < 5`, so `kiri = 6`.
+        - Step 3: `tengah = 6`, value `7`. `7 > 5`, so `kanan = 5`. Now `kiri = 6` has
+          passed `kanan = 5`, and the loop stops.
+
+        The function returns `-1`. Run, the same pattern makes **3, 4, 5, 8, and 9** all
+        reported as not found, even though all five are in that array.
+
+        **Complexity.** The function still runs `O(log n)` — fast, but **wrong**. That is
+        the danger: breaking the "data must be sorted" requirement does not slow anything
+        down and raises no error. It only makes the answer incorrect.
+
+        **Reference code.**
+
+        ```python
+        def cari_biner(daftar, target):
+            kiri, kanan = 0, len(daftar) - 1
+            while kiri <= kanan:
+                tengah = (kiri + kanan) // 2
+                if daftar[tengah] == target:
+                    return tengah
+                if daftar[tengah] < target:
+                    kiri = tengah + 1
+                else:
+                    kanan = tengah - 1
+            return -1
+
+        data = [8, 3, 5, 1, 9, 2, 7, 4]
+        print(cari_biner(sorted(data), 5))   # 2 — after sorting the data first
+        print(cari_biner(data, 5))           # -1 — wrong result, no error
+        ```
+
+        **Common trap.** The answer **"returns index 2"** assumes binary search checks the
+        whole array; it does not — it jumps around, and its jumps depend on the data being
+        sorted. The answer **"throws an error"** assumes Python knows the data is
+        unsorted — it does not: Python never checks, and that is what makes this trap
+        dangerous. The answer **"still finds it, just more slowly"** is wrong on two
+        counts: the result is not always found, and the running time does not slow down.
+
+  # --- Kuis 5: ruang pada versi iteratif lawan rekursif ---------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Dua versi pencarian biner mencari nilai yang sama pada data yang sama, dan
+        keduanya memakai jumlah **langkah** yang persis sama. Satu versi memakai
+        perulangan `while`, satu lagi memanggil dirinya sendiri.
+
+        Versi mana yang memakai **ruang tambahan** lebih banyak, dan mengapa?
+      en: |
+        Two versions of binary search find the same value in the same data, and both use
+        exactly the same number of **steps**. One version uses a `while` loop, the other
+        calls itself.
+
+        Which version uses more **auxiliary space**, and why?
+    opsi:
+      - teks:
+          id: Versi rekursif, karena setiap pemanggilan menunggu di tumpukan sampai pemanggilan di bawahnya selesai
+          en: The recursive version, because every call waits on the stack until the call beneath it finishes
+        benar: true
+      - teks:
+          id: Versi iteratif, karena perulangannya menyimpan lebih banyak variabel
+          en: The iterative version, because the loop stores more variables
+        benar: false
+      - teks:
+          id: Keduanya sama, karena keduanya memakai jumlah langkah yang sama
+          en: Both are the same, because both use the same number of steps
+        benar: false
+      - teks:
+          id: Versi rekursif, karena ia memeriksa lebih banyak elemen
+          en: The recursive version, because it checks more elements
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Kedua versi memeriksa elemen yang persis sama, jadi keduanya
+        memakai jumlah langkah yang sama — waktunya sama-sama `O(log n)`. Yang berbeda
+        adalah cara keduanya menyimpan pekerjaan yang belum selesai.
+
+        Versi **iteratif** hanya menyimpan batas kiri dan batas kanan di dua variabel
+        biasa. Ketika batasnya diperbarui, nilai lamanya dibuang. Ruang tambahannya tetap
+        `O(1)` — tidak tumbuh seberapa pun besarnya data.
+
+        Versi **rekursif** tidak bisa membuang pemanggilan lama. Setiap pemanggilan harus
+        menunggu di **tumpukan pemanggilan** (*call stack*) sampai pemanggilan di bawahnya
+        selesai. Karena setiap langkah membagi dua rentang, kedalamannya sama dengan
+        banyaknya langkah — dan itulah `O(log n)` ruang tambahan.
+
+        **Kompleksitas.** Waktunya sama: `O(log n)` untuk keduanya. Ruangnya berbeda:
+        iteratif `O(1)`, rekursif `O(log n)`. Diperiksa dengan menjalankan, jumlah langkah
+        versi iteratif **sama persis** dengan versi rekursif untuk setiap nilai yang
+        dicari, dan kedalaman rekursinya sama dengan jumlah langkahnya.
+
+        **Kode referensi.**
+
+        ```python
+        def iteratif(daftar, target):
+            kiri, kanan = 0, len(daftar) - 1
+            while kiri <= kanan:
+                tengah = (kiri + kanan) // 2
+                if daftar[tengah] == target:
+                    return tengah
+                if daftar[tengah] < target:
+                    kiri = tengah + 1
+                else:
+                    kanan = tengah - 1
+            return -1
+
+        def rekursif(daftar, target, kiri, kanan):
+            if kiri > kanan:
+                return -1
+            tengah = (kiri + kanan) // 2
+            if daftar[tengah] == target:
+                return tengah
+            if daftar[tengah] < target:
+                return rekursif(daftar, target, tengah + 1, kanan)
+            return rekursif(daftar, target, kiri, tengah - 1)
+
+        data = list(range(1, 1000001))
+        print(iteratif(data, 999999))                          # 999998
+        print(rekursif(data, 999999, 0, len(data) - 1))        # 999998
+        ```
+
+        **Jebakan umum.** Jawaban **"keduanya sama"** menyamakan **waktu** dengan
+        **ruang** — dua hal yang diukur terpisah, dan justru inilah pelajaran Kuis ini.
+        Jawaban **"versi iteratif lebih banyak"** terbalik: perulangan hanya menimpa dua
+        variabel, sedangkan rekursi menumpuk satu kerangka pemanggilan per langkah.
+        Jawaban **"rekursif memeriksa lebih banyak elemen"** salah karena keduanya
+        memeriksa elemen yang persis sama; yang bertambah pada versi rekursif bukan
+        elemen yang diperiksa, melainkan pemanggilan yang menunggu di tumpukan.
+      en: |
+        **Approach.** Both versions check exactly the same elements, so both use the same
+        number of steps — both are `O(log n)` in time. What differs is how each one stores
+        unfinished work.
+
+        The **iterative** version keeps only the left and right bounds in two ordinary
+        variables. When a bound is updated, its old value is discarded. Its extra space is
+        a fixed `O(1)` — it does not grow no matter how large the data is.
+
+        The **recursive** version cannot discard old calls. Every call must wait on the
+        **call stack** until the call beneath it finishes. Because every step halves the
+        range, its depth equals the number of steps — and that is `O(log n)` of extra
+        space.
+
+        **Complexity.** The time is the same: `O(log n)` for both. The space differs:
+        iterative `O(1)`, recursive `O(log n)`. Checked by running, the iterative version's
+        step count is **exactly** the same as the recursive version's for every target, and
+        the recursion depth equals the number of steps.
+
+        **Reference code.**
+
+        ```python
+        def iteratif(daftar, target):
+            kiri, kanan = 0, len(daftar) - 1
+            while kiri <= kanan:
+                tengah = (kiri + kanan) // 2
+                if daftar[tengah] == target:
+                    return tengah
+                if daftar[tengah] < target:
+                    kiri = tengah + 1
+                else:
+                    kanan = tengah - 1
+            return -1
+
+        def rekursif(daftar, target, kiri, kanan):
+            if kiri > kanan:
+                return -1
+            tengah = (kiri + kanan) // 2
+            if daftar[tengah] == target:
+                return tengah
+            if daftar[tengah] < target:
+                return rekursif(daftar, target, tengah + 1, kanan)
+            return rekursif(daftar, target, kiri, tengah - 1)
+
+        data = list(range(1, 1000001))
+        print(iteratif(data, 999999))                          # 999998
+        print(rekursif(data, 999999, 0, len(data) - 1))        # 999998
+        ```
+
+        **Common trap.** The answer **"both are the same"** conflates **time** with
+        **space** — two things measured separately, and that is precisely this quiz's
+        lesson. The answer **"the iterative version uses more"** is backwards: a loop only
+        overwrites two variables, while recursion stacks one call frame per step. The
+        answer **"the recursive version checks more elements"** is wrong because both check
+        exactly the same elements; what grows in the recursive version is not the elements
+        checked but the calls waiting on the stack.
+
+  # --- Soal Kode: pencarian biner iteratif lawan rekursif -------------------------
+  #
+  # Bentuk Soal Kode ini **menyimpang** dari design-tree (yang menetapkan "implementasi
+  # struktur data dari nol") karena binary search bukan struktur data — sama seperti #16,
+  # #20, dan #21. Yang dipilih: menulis pencarian biner **dua kali** dari nol, lalu
+  # mengembalikan indeks, jumlah langkah, dan kedalaman rekursinya. Yang dibandingkan
+  # bukan waktunya (keduanya O(log n)) melainkan ruangnya. Keputusan pemilik, dicatat di
+  # ADR-0027.
+  #
+  # Angka-angka test case di bawah dihitung dengan menjalankan, bukan dibaca. Perhatikan
+  # kasus 4: nilai yang tidak ada membuat versi rekursif memakai satu pemanggilan
+  # tambahan untuk menemukan rentang yang kosong, sehingga kedalamannya 4 sedangkan
+  # langkahnya 3. Perbedaan itu disengaja — ia menguji pemahaman yang sesungguhnya,
+  # bukan hafalan.
+  - tipe: soal-kode
+    skenario:
+      id: |
+        Tulis dari nol **dua versi pencarian biner**, lalu bandingkan keduanya.
+
+        **Versi pertama — `cari_biner_iteratif(daftar, target)`.** Pencarian biner
+        dengan perulangan `while`. Ia mengembalikan **pasangan** `[indeks, jumlah_langkah]`:
+        posisi nilai yang dicari, dan berapa langkah yang dipakai. Kalau nilainya tidak
+        ada, indeksnya `-1`. Hitung satu langkah setiap kali kamu memeriksa satu elemen
+        tengah.
+
+        **Versi kedua — `cari_biner_rekursif(daftar, target, kiri, kanan, kedalaman=1)`.**
+        Pencarian biner yang sama, tetapi memanggil dirinya sendiri. Ia mengembalikan
+        **tiga nilai** `[indeks, jumlah_langkah, kedalaman]`. `kedalaman` adalah berapa
+        banyak pemanggilan bersarang pada jalur itu, dengan pemanggilan paling luar
+        dihitung 1 — jadi setiap kali kamu memanggil diri sendiri, kirim `kedalaman + 1`.
+
+        **Fungsi `proses(daftar, target)`** memanggil keduanya dan mengembalikan satu
+        daftar berisi lima nilai:
+
+        `[indeks_iteratif, langkah_iteratif, indeks_rekursif, langkah_rekursif, kedalaman_rekursif]`
+
+        Jangan memakai `bisect`, operator `in`, maupun `list.index()` — tulis kedua
+        pencariannya sendiri. Data yang diberikan **selalu sudah terurut**.
+
+        Perhatikan bahwa **jumlah langkah kedua versi selalu sama** — yang berbeda hanya
+        kedalaman rekursinya. Itulah pelajarannya: dua algoritma bisa sama cepatnya
+        tetapi tidak sama hemat memorinya.
+      en: |
+        Write from scratch **two versions of binary search**, then compare them.
+
+        **First version — `cari_biner_iteratif(daftar, target)`.** Binary search with a
+        `while` loop. It returns a **pair** `[index, step_count]`: the position of the
+        target, and how many steps it used. If the value is absent, the index is `-1`.
+        Count one step every time you check one middle element.
+
+        **Second version — `cari_biner_rekursif(daftar, target, kiri, kanan, kedalaman=1)`.**
+        The same binary search, but calling itself. It returns **three values**
+        `[index, step_count, depth]`. `depth` is how many nested calls sit on that path,
+        with the outermost call counted as 1 — so every time you call yourself, pass
+        `kedalaman + 1`.
+
+        **The `proses(daftar, target)` function** calls both and returns a single list of
+        five values:
+
+        `[iterative_index, iterative_steps, recursive_index, recursive_steps, recursive_depth]`
+
+        Do not use `bisect`, the `in` operator, or `list.index()` — write both searches
+        yourself. The data given is **always already sorted**.
+
+        Notice that **both versions always use the same number of steps** — only the
+        recursion depth differs. That is the lesson: two algorithms can be equally fast
+        yet not equally frugal with memory.
+    fungsi: proses
+    test_case:
+      # Kasus 1 — nilai di tengah. Satu langkah: langsung ketemu di indeks 2. Kedua
+      # versi sama langkahnya, dan kedalamannya 1.
+      - argumen:
+          - [1, 2, 3, 4, 5]
+          - 3
+        diharapkan: [2, 1, 2, 1, 1]
+      # Kasus 2 — nilai di paling kiri. Dua langkah untuk kedua versi: periksa tengah
+      # (3), lalu kiri (1). Ketemu di indeks 0.
+      - argumen:
+          - [1, 2, 3, 4, 5]
+          - 1
+        diharapkan: [0, 2, 0, 2, 2]
+      # Kasus 3 — nilai di paling kanan. Tiga langkah: 3, 4, lalu 5. Indeks 4.
+      - argumen:
+          - [1, 2, 3, 4, 5]
+          - 5
+        diharapkan: [4, 3, 4, 3, 3]
+      # Kasus 4 — nilai TIDAK ada. Kedua versi memakai 3 langkah dan mengembalikan -1,
+      # tetapi versi rekursif memakai SATU pemanggilan tambahan untuk menemukan rentang
+      # yang kosong, jadi kedalamannya 4 sedangkan langkahnya 3.
+      - argumen:
+          - [1, 2, 3, 4, 5]
+          - 6
+        diharapkan: [-1, 3, -1, 3, 4]
+      # Kasus 5 — enam belas elemen, mencari yang terakhir. Lima langkah untuk kedua
+      # versi: 8, 12, 14, 15, 16. Indeks 15. Inilah yang memperlihatkan langkahnya
+      # tumbuh mengikuti log n, bukan mengikuti n.
+      - argumen:
+          - [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+          - 16
+        diharapkan: [15, 5, 15, 5, 5]
+    solusi_referensi: |
+      def cari_biner_iteratif(daftar, target):
+          kiri, kanan = 0, len(daftar) - 1
+          langkah = 0
+          while kiri <= kanan:
+              tengah = (kiri + kanan) // 2
+              langkah += 1
+              if daftar[tengah] == target:
+                  return [tengah, langkah]
+              if daftar[tengah] < target:
+                  kiri = tengah + 1
+              else:
+                  kanan = tengah - 1
+          return [-1, langkah]
+
+      def cari_biner_rekursif(daftar, target, kiri, kanan, kedalaman=1):
+          if kiri > kanan:
+              return [-1, 0, kedalaman]
+          tengah = (kiri + kanan) // 2
+          if daftar[tengah] == target:
+              return [tengah, 1, kedalaman]
+          if daftar[tengah] < target:
+              hasil = cari_biner_rekursif(daftar, target, tengah + 1, kanan, kedalaman + 1)
+          else:
+              hasil = cari_biner_rekursif(daftar, target, kiri, tengah - 1, kedalaman + 1)
+          return [hasil[0], hasil[1] + 1, hasil[2]]
+
+      def proses(daftar, target):
+          indeks_iteratif, langkah_iteratif = cari_biner_iteratif(daftar, target)
+          indeks_rekursif, langkah_rekursif, kedalaman = cari_biner_rekursif(
+              daftar, target, 0, len(daftar) - 1
+          )
+          return [indeks_iteratif, langkah_iteratif, indeks_rekursif, langkah_rekursif, kedalaman]
