@@ -142,6 +142,33 @@
      tombol biasa, karena aksennya sendiri yang berbalik. Tanpa token ini, teks putih
      di atas aksen gelap akan kehilangan kontras. */
   --color-accent-fg: light-dark(#ffffff, #0a0a0a);
+
+  /*
+   * Warna blok kode.
+   *
+   * Blok kode butuh beberapa warna untuk berguna — satu warna polos membuat kode
+   * sulit dipindai. Tetapi `docs/design-tree.md` menetapkan merah sebagai
+   * **satu-satunya** warna aksen. Penyelesaiannya: seluruh palet kode diambil dari
+   * keluarga **merah–oranye–cokelat**, tidak ada biru/hijau/ungu seperti tema editor
+   * biasa. Penyimpangan ini dicatat di `docs/adr/0029`.
+   *
+   * **Nilainya diukur, bukan dipilih dengan mata.** Tiap warna lulus kontras WCAG AA
+   * (≥ 4,5:1) terhadap latar blok kode di temanya masing-masing, DAN jarak
+   * perseptual antar warna (CIE76 di ruang Lab) minimal 31,9 — di atas tema GitHub
+   * light (28,4) yang jadi acuan. Diukur dengan skrip di luar repo; angka mentahnya
+   * ada di ADR-0029.
+   *
+   * Angka-angka ini **harus diukur ulang** kalau diubah. Dua warna berbeda hue tapi
+   * sama terang punya rasio kontras 1,0 — jadi "sudah beda warna" tidak bisa dinilai
+   * dengan rasio kontras. Itu kesalahan yang sempat kubuat saat menyusun palet ini.
+   */
+  --kode-bg: light-dark(#f1f1f1, #181818);
+  --kode-fg: light-dark(#111111, #f5f5f5);
+  --kode-kunci: light-dark(#ca1616, #ec5151);
+  --kode-angka: light-dark(#a54d12, #ec9e51);
+  --kode-fungsi: light-dark(#6f5b20, #df9090);
+  --kode-teks: light-dark(#6f2020, #e8dab0);
+  --kode-komentar: light-dark(#6b6b73, #9a9aa3);
 }
 
 /*
@@ -323,6 +350,45 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-muted);
+}
+
+/*
+ * Blok kode yang sudah disorot (`sorot-kode.ts`).
+ *
+ * Shiki menuliskan `<pre class="shiki" style="background-color:...;color:...">` dan
+ * membungkus tiap baris dengan `<span class="line">`. Warnanya sendiri datang dari
+ * `var(--kode-*)` yang dipasang modul penyorot, jadi tidak ada warna literal di sini.
+ *
+ * Aturan ini **menyatukan** gaya blok tersorot dengan blok biasa di atas — latar,
+ * tepi, dan padding yang sama — supaya blok yang gagal disorot (memakai fallback)
+ * tidak terlihat berbeda dari yang berhasil. Tanpa penyatuan ini, satu Topik bisa
+ * memuat dua gaya blok kode yang berbeda.
+ */
+.materi :where(pre.shiki) {
+  background: var(--kode-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-block: var(--space-5);
+  overflow-x: auto;
+  /* Baris kode tidak boleh membungkus: indentasi Python adalah sintaks. */
+  white-space: pre;
+}
+
+.materi :where(pre.shiki code) {
+  background: none;
+  padding: 0;
+  font-size: 0.875em;
+}
+
+/*
+ * Jarak antar baris kode.
+ *
+ * `display: block` membuat tiap baris mulai di baris baru tanpa perlu `<br>`, dan
+ * tanpa itu indentasi baris kedua akan ikut terlihat sebagai teks.
+ */
+.materi :where(pre.shiki .line) {
+  display: block;
 }
 
 /* Tabel dibungkus agar bisa digulir mendatar di layar sempit. */

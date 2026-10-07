@@ -70,8 +70,13 @@ export interface OpsiSiap {
 /** Satu Kuis yang sudah siap dirender: teks sudah jadi ReactNode. */
 export interface KuisSiap {
   skenario: ReactNode;
-  /** Potongan kode mentah untuk ditebak outputnya, atau `undefined`. */
-  kode?: string;
+  /**
+   * Blok kode untuk ditebak outputnya, atau `undefined`.
+   *
+   * Sudah berupa ReactNode — disorot di server oleh `daftar-kuis.tsx` — supaya
+   * penyorot beserta grammar-nya tidak ikut masuk bundel peramban.
+   */
+  kode?: ReactNode;
   opsi: OpsiSiap[];
   penjelasan: ReactNode;
 }
@@ -247,16 +252,13 @@ export function Kuis({ kuis, indeksSoal, nomor, total, slugTopik, kamus }: Props
       {/*
         Potongan kode, hanya pada Kuis yang punya (user story 17). Dibungkus `.materi`
         supaya gaya blok kode yang sudah ada di `globals.css` berlaku — tidak ada blok
-        kode kedua yang perlu dirawat terpisah. `data-bahasa` memunculkan label
-        "PYTHON" di sudut blok, lewat aturan yang sama dengan Materi.
+        kode kedua yang perlu dirawat terpisah.
+
+        **Sudah disorot di server.** `kuis.kode` datang sebagai ReactNode jadi dari
+        `daftar-kuis.tsx`, bukan teks. Penyorotnya tidak boleh diimpor di berkas ini:
+        ini komponen klien, dan grammar penyorot akan ikut ke bundel peramban.
       */}
-      {kuis.kode !== undefined && (
-        <div className="materi mt-4 text-sm">
-          <pre>
-            <code data-bahasa="python">{kuis.kode}</code>
-          </pre>
-        </div>
-      )}
+      {kuis.kode !== undefined && <div className="materi mt-4 text-sm">{kuis.kode}</div>}
 
       <ul className="mt-5 flex list-none flex-col gap-2">
         {urutan.map((indeksAsli) => {
