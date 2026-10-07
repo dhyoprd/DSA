@@ -1,5 +1,8 @@
+import type { ReactNode } from "react";
+
 import type { Bahasa } from "@/lib/bahasa/bahasa.ts";
 import type { Kamus } from "@/lib/bahasa/kamus.ts";
+import { sorotKode } from "@/lib/konten/sorot-kode.ts";
 import type { Kuis as BentukKuis, Topik } from "@/lib/konten/tipe.ts";
 import { TeksKaya } from "@/lib/konten/teks-kaya.tsx";
 
@@ -48,11 +51,49 @@ function kuisDenganPosisi(topik: Topik): { kuis: BentukKuis; indeksSoal: number 
     .map((item) => ({ kuis: item.soal, indeksSoal: item.indeksSoal }));
 }
 
+/**
+ * Blok kode satu Kuis, sudah disorot kalau bisa.
+ *
+ * **Disorot di sini (server), bukan di `kuis.tsx` (klien).** Alasannya sama dengan
+ * alasan Markdown dirender di sini: penyorot beserta grammar-nya adalah paket besar,
+ * dan mengimpornya di komponen klien akan memasukkannya ke bundel peramban hanya untuk
+ * mewarnai potongan kode pendek. Dirender di server, hasilnya menyeberang sebagai
+ * ReactNode — pola yang sudah dipakai untuk skenario dan opsi.
+ *
+ * **Fallback.** Kalau penyorotan tidak tersedia, blok dirender polos seperti
+ * sebelumnya. Kode yang tidak terbaca jauh lebih buruk daripada kode tanpa warna.
+ */
+function blokKode(kode: string): ReactNode {
+  const tersorot = sorotKode(kode);
+  if (tersorot === null) {
+    return (
+      <pre>
+        <code data-bahasa="python">{kode}</code>
+      </pre>
+    );
+  }
+  return (
+    <pre className="shiki">
+      <code data-bahasa="python">
+        {tersorot.baris.map((baris, i) => (
+          <span className="line" key={i}>
+            {baris.map((potongan, j) => (
+              <span key={j} style={potongan.warna === undefined ? undefined : { color: potongan.warna }}>
+                {potongan.teks}
+              </span>
+            ))}
+          </span>
+        ))}
+      </code>
+    </pre>
+  );
+}
+
 /** Ubah satu Kuis dari bentuk YAML menjadi bentuk siap render, dalam satu bahasa. */
 function siapkanKuis(kuis: BentukKuis, bahasa: Bahasa): KuisSiap {
   return {
     skenario: <TeksKaya markdown={kuis.skenario[bahasa]} />,
-    kode: kuis.kode,
+    kode: kuis.kode === undefined ? undefined : blokKode(kuis.kode),
     opsi: kuis.opsi.map((opsi) => ({
       teks: <TeksKaya markdown={opsi.teks[bahasa]} />,
       benar: opsi.benar,

@@ -15,6 +15,42 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { barisSimpul } from "./baris.ts";
+import { sorotKode } from "./sorot-kode.ts";
+
+/**
+ * Ambil teks mentah dari isi sebuah blok kode.
+ *
+ * react-markdown menyerahkan `children` sebagai elemen React, bukan teks. Bentuknya
+ * `<code>{teks}</code>`, dan teksnya bisa terpecah menjadi beberapa simpul kalau
+ * memuat penanda. Karena itu seluruh isinya dikumpulkan rekursif, bukan dibaca
+ * sebagai satu string.
+ *
+ * `null` berarti bentuknya tidak seperti yang diharapkan — pemanggil memakai fallback
+ * daripada menebak.
+ */
+function teksDariAnak(anak: unknown): string | null {
+  if (typeof anak === "string") return anak;
+  if (typeof anak === "number") return String(anak);
+  if (Array.isArray(anak)) {
+    const bagian = anak.map(teksDariAnak);
+    if (bagian.some((b) => b === null)) return null;
+    return bagian.join("");
+  }
+  if (anak !== null && typeof anak === "object" && "props" in anak) {
+    const props = (anak as { props?: { children?: unknown } }).props;
+    return teksDariAnak(props?.children);
+  }
+  return null;
+}
+
+/** Nama bahasa dari `className` sebuah blok kode, mis. `language-python` -> `python`. */
+function bahasaDariAnak(anak: unknown): string | undefined {
+  if (anak !== null && typeof anak === "object" && "props" in anak) {
+    const props = (anak as { props?: { className?: string } }).props;
+    return /language-(\w+)/.exec(props?.className ?? "")?.[1];
+  }
+  return undefined;
+}
 
 interface Props {
   /** Isi Markdown, salah satu bahasa. */
@@ -86,6 +122,51 @@ export function MateriMarkdown({ markdown, idJudul }: Props) {
               <code className={className} data-bahasa={cocok?.[1]} {...sisa}>
                 {children}
               </code>
+            );
+          },
+          /**
+           * Blok kode disorot kalau bisa, dan ditampilkan apa adanya kalau tidak.
+           *
+           * **Kenapa `pre`, bukan `code`.** Yang perlu diganti adalah seluruh blok:
+           * penyorotan menghasilkan baris-baris, dan baris itu perlu elemen sendiri
+           * supaya tiap baris mulai di baris baru tanpa `<br>`. Menggantinya di
+           * `code` akan menyisakan `<pre>` pembungkus yang tidak tahu soal baris.
+           *
+           * **Tidak ada HTML mentah di sini.** `sorotKode()` mengembalikan data
+           * (baris dan potongan), bukan string HTML, dan komponen ini merendernya
+           * sebagai JSX. Jadi tidak ada `dangerouslySetInnerHTML` di seluruh jalur
+           * ini — markupnya terlihat di sini, bukan tersembunyi di dalam string.
+           *
+           * **Fallback wajib.** Kalau penyorotan tidak tersedia (`null`), blok
+           * dirender seperti sebelumnya — teks polos dengan label bahasa. Kode yang
+           * tidak terbaca jauh lebih buruk daripada kode tanpa warna, jadi kegagalan
+           * penyorot tidak boleh membuat kode hilang.
+           */
+          pre(props) {
+            const { children, node, ...sisa } = props;
+            void node;
+            const bahasa = bahasaDariAnak(children);
+            const teks = teksDariAnak(children);
+            const tersorot = teks === null ? null : sorotKode(teks, bahasa ?? "python");
+
+            if (tersorot === null) {
+              return <pre {...sisa}>{children}</pre>;
+            }
+
+            return (
+              <pre {...sisa} className="shiki">
+                <code data-bahasa={bahasa ?? "python"}>
+                  {tersorot.baris.map((baris, i) => (
+                    <span className="line" key={i}>
+                      {baris.map((potongan, j) => (
+                        <span key={j} style={potongan.warna === undefined ? undefined : { color: potongan.warna }}>
+                          {potongan.teks}
+                        </span>
+                      ))}
+                    </span>
+                  ))}
+                </code>
+              </pre>
             );
           },
           // Tabel (dipakai untuk notasi kompleksitas) dibungkus wadah yang bisa
