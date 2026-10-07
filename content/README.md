@@ -102,7 +102,7 @@ ia bekerja pada nilai JavaScript biasa, jadi bisa diuji tanpa membuat berkas con
 
 ## Isi saat ini
 
-Delapan Topik sudah punya berkas, semuanya tulisan sungguhan:
+Sembilan Topik sudah punya berkas, semuanya tulisan sungguhan:
 
 | Berkas | Isi | Ticket |
 |---|---|---|
@@ -114,6 +114,7 @@ Delapan Topik sudah punya berkas, semuanya tulisan sungguhan:
 | `rekursi.yaml` | Materi, 5 Kuis, 1 Soal Kode | #20 |
 | `sorting.yaml` | Materi, 5 Kuis, 1 Soal Kode | #21 |
 | `binary-search.yaml` | Materi, 5 Kuis, 1 Soal Kode | #22 |
+| `tree-bst.yaml` | Materi, 5 Kuis, 1 Soal Kode | #23 |
 
 `stack.yaml` ditulis lebih dulu sebagai pembuktian teknis: #4 menulis Materinya, #6
 menambahkan komponen serta logika penilaian Kuis-nya, dan **#10 mengganti draf Soal
@@ -132,15 +133,21 @@ adalah algoritma pencarian, bukan struktur data — sama seperti Big-O, Rekursi,
 Sorting, dan dicatat di ADR-0027. Soal Kodenya menulis pencarian biner **dua kali**
 (iteratif dan rekursif), sehingga perbedaan **ruang** `O(1)` dan `O(log n)` terasa
 sebagai angka — pelajaran yang belum dimiliki Topik mana pun sebelumnya.
+`tree-bst.yaml` (#23) **kembali memenuhi bentuk itu apa adanya**, karena tree dan BST
+memang struktur data — sama seperti Array & String, Linked List, dan Hash Table, dan
+berbeda dari empat Topik yang menyimpang. Ia **tidak menuntut ADR baru**. Yang khas
+dari Topik ini: field `kompleksitas`-nya berisi **dua** bentuk pohon yang sama
+operasinya tetapi berbeda biayanya — seimbang `O(log n)` lawan miring `O(n)` —
+sehingga pelajaran "bentuk pohon menentukan biaya" ikut terhafal, bukan hanya terbaca.
 
-**Empat Topik lain belum punya berkas.** Materi dan Soal untuk keempat Topik itu
+**Tiga Topik lain belum punya berkas.** Materi dan Soal untuk ketiga Topik itu
 belum ditulis; `content/jalur.yaml` sudah mendeklarasikannya lebih dulu, sehingga
 Topik yang belum punya berkas tampil redup dan berlabel "segera" di sidebar.
 
 **Soal Kode tidak punya Pembahasan.** Skema di issue #1 tidak memberi field `penjelasan`
 pada `SoalKode`, jadi tiap Topik berisi **5 Pembahasan** (satu per Kuis), bukan 6 seperti
 tertulis di beberapa ticket. Itu keputusan pemilik (2026-10-06), dan berlaku untuk
-ketujuh berkas di atas.
+kedelapan berkas di atas.
 
 Catatan yang ditulis dari situs **tidak** disimpan di sini. Catatan dan Progres
 hidup di database backend, sesuai ADR-0003.

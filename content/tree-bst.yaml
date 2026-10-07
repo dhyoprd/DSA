@@ -1,0 +1,2261 @@
+# Topik 9 — Tree & BST.
+#
+# Topik kesembilan di Jalur, `prasyarat: [3, 6]` (Linked List, Rekursi). Keduanya
+# benar-benar dipakai: Materi meminjam istilah **simpul** dan **penunjuk** dari Linked
+# List, dan seluruh penelusuran pohon di sini rekursif — persis pola yang diajarkan
+# Topik Rekursi.
+#
+# **Tidak ada penyimpangan yang perlu dicatat.** `docs/design-tree.md` menetapkan Soal
+# Kode berbentuk "implementasi struktur data dari nol". Tree & BST **adalah** struktur
+# data, jadi bentuk itu bisa dipakai apa adanya di sini — sama seperti Array & String
+# (#17), Linked List (#18), dan Hash Table (#19), dan berbeda dari Big-O (#16), Rekursi
+# (#20), Sorting (#21), dan Binary Search (#22), yang bukan struktur data dan karena
+# itu masing-masing butuh ADR. Berkas ini tidak menuntut ADR baru.
+#
+# **Pembahasan hanya untuk kelima Kuis.** Soal Kode di sini tidak punya Pembahasan,
+# karena skema di issue #1 — dan `frontend/src/lib/konten/tipe.ts` — tidak punya field
+# `penjelasan` pada `SoalKode`. Cukup 5 Pembahasan per Topik, sama seperti #16–#22.
+#
+# Semua Soal dan Pembahasan di sini ditulis original, sesuai ADR-0005. Tidak ada teks
+# LeetCode yang disalin maupun diterjemahkan.
+#
+# **Setiap angka di berkas ini sudah dijalankan, bukan diingat.** Yang dihitung dengan
+# menjalankan Python: hasil inorder/preorder/postorder pohon 7 simpul, tinggi pohon
+# seimbang (3) lawan pohon miring (7), jumlah simpul yang diperiksa saat mencari (3),
+# dan pengganti saat menghapus simpul beranak dua (penerus, bukan pendahulu). Yang
+# menjalankan seluruhnya: `uji-kode.py` di luar repo — **24 blok ```python```** (12 di
+# Materi, 2 di Kuis, 10 di Pembahasan) plus 6 test case solusi referensi.
+#
+# **Dua cacat ditemukan lewat menjalankan, bukan membaca** — sama seperti #16–#22:
+# (a) Kuis 2 mula-mula memakai seribu nilai, padahal `sisip` rekursif yang dipakai
+# **gagal dengan `RecursionError`** sebelum pohonnya selesai dibangun (batas bawaan
+# Python 1000 tingkat; diukur, gagal mulai 999 nilai). Kuis itu kini memakai 500 nilai,
+# dan Materinya menjelaskan kenapa — pelajaran yang sejalan dengan Topik 6.
+# (b) Tinggi pohon sesudah menghapus akar mula-mula ditulis 4, hasil terukurnya 3.
+#
+# **Nama kartu Anki dijaga tidak bentrok dengan Topik lain** (satu dek). "Simpul"/"Node"
+# dan "Penelusuran"/"Traversal" sudah dipakai Linked List (#18), jadi Topik ini memakai
+# "Subpohon"/"Subtree" dan "Telusur inorder"/"In-order traversal" sebagai gantinya.
+# "Pencarian biner"/"Binary search" sudah dipakai Big-O (#16), jadi struktur di sini
+# dinamai "Pohon pencarian biner …". Diperiksa lintas Topik oleh pemeriksa mandiri
+# (646 pemeriksaan, 404 kartu lintas-Topik, 0 bentrok).
+#
+# `nomor`, `slug`, `judul`, dan `prasyarat` harus sama dengan content/jalur.yaml —
+# validator menolak build kalau berbeda.
+
+nomor: 9
+slug: tree-bst
+judul:
+  id: Tree & BST
+  en: Tree & BST
+prasyarat: [3, 6]
+
+# Sumber terstruktur untuk ekspor CSV/Anki (ticket #14). Isinya struktur data Topik ini
+# beserta biaya operasinya. `waktu` dan `ruang` memakai notasi O(...) apa adanya —
+# notasi itu sama di kedua bahasa, jadi menerjemahkannya hanya menghasilkan dua salinan
+# yang bisa menyimpang tanpa menambah informasi.
+#
+# **Dua entri, karena bentuk pohonnya yang menentukan biayanya** — dan itulah pelajaran
+# utama Topik ini. Pohon yang seimbang dan pohon yang miring punya operasi yang sama
+# persis, tetapi biayanya berbeda jauh. Menyebut keduanya di sini membuat perbedaan itu
+# ikut terhafal, bukan hanya terbaca sekali di Materi.
+#
+# **Nilai di sini wajib sama dengan tabel di bagian "Tabel kompleksitas" di Materi.**
+# ADR-0019 mencatat bahwa keduanya memang bisa menyimpang dan tidak ada gerbang yang
+# membandingkannya — yang menjaganya adalah disiplin saat menyunting.
+kompleksitas:
+  - struktur:
+      id: Pohon pencarian biner seimbang
+      en: Balanced binary search tree
+    ruang: O(n)
+    operasi:
+      - nama: { id: Cari satu nilai, en: Find one value }
+        waktu: O(log n)
+      - nama: { id: Sisip satu nilai, en: Insert one value }
+        waktu: O(log n)
+      - nama: { id: Hapus satu nilai, en: Remove one value }
+        waktu: O(log n)
+      - nama: { id: Telusuri seluruh simpul, en: Walk every node }
+        waktu: O(n)
+
+  - struktur:
+      id: Pohon pencarian biner miring
+      en: Skewed binary search tree
+    ruang: O(n)
+    operasi:
+      - nama: { id: Cari satu nilai, en: Find one value }
+        waktu: O(n)
+      - nama: { id: Sisip satu nilai, en: Insert one value }
+        waktu: O(n)
+      - nama: { id: Hapus satu nilai, en: Remove one value }
+        waktu: O(n)
+      - nama: { id: Telusuri seluruh simpul, en: Walk every node }
+        waktu: O(n)
+
+# Istilah yang layak dihafal. `istilah` adalah pasangan Indonesia–English; `definisi`
+# menjelaskannya di kedua bahasa. Setiap pasangan di bawah ini berbeda antara kedua
+# bahasa, jadi setiap istilah menghasilkan dua kartu: definisinya, dan pasangannya.
+#
+# **Setiap istilah di sini muncul di Materi kedua bahasa.** Itu kelas cacat yang
+# ditemukan di #19 (kartu "rata-rata" hilang karena koma tak berkutip) dan #22 (tiga
+# kartu mengajarkan istilah yang tidak pernah diperkenalkan Materi). Pemeriksa mandiri
+# membandingkannya.
+istilah:
+  - istilah: { id: Pohon, en: Tree }
+    definisi:
+      id: Struktur data berisi simpul-simpul yang bercabang, dengan satu simpul di puncak dan setiap simpul menunjuk ke simpul-simpul di bawahnya. Tidak seperti linked list yang hanya punya satu arah, sebuah simpul pohon bisa punya beberapa anak.
+      en: A data structure of branching nodes, with one node at the top and each node pointing to the nodes below it. Unlike a linked list, which has only one direction, a tree node can have several children.
+  - istilah: { id: Akar, en: Root }
+    definisi:
+      id: Simpul paling atas sebuah pohon, dan satu-satunya pintu masuknya. Dari akar inilah setiap pencarian dimulai.
+      en: The topmost node of a tree, and its only entrance. Every search starts from the root.
+  - istilah: { id: Daun, en: Leaf }
+    definisi:
+      id: Simpul yang tidak punya anak sama sekali. Kedua penunjuknya bernilai `None`.
+      en: A node with no children at all. Both of its pointers are `None`.
+  - istilah: { id: Subpohon, en: Subtree }
+    definisi:
+      id: Sebuah simpul beserta seluruh keturunannya, dipandang sebagai pohon tersendiri. Anak kiri dan anak kanan sebuah simpul masing-masing mengepalai satu subpohon.
+      en: A node together with all of its descendants, viewed as a tree in its own right. A node's left and right child each head one subtree.
+  - istilah: { id: Tinggi pohon, en: Tree height }
+    definisi:
+      id: Banyaknya simpul pada jalur terpanjang dari akar sampai daun. Pohon kosong tingginya nol, dan pohon berisi satu simpul tingginya satu.
+      en: The number of nodes on the longest path from the root down to a leaf. An empty tree has height zero, and a tree with a single node has height one.
+  - istilah: { id: Pohon biner, en: Binary tree }
+    definisi:
+      id: Pohon yang setiap simpulnya punya paling banyak dua anak — satu kiri dan satu kanan. Tidak ada aturan tentang nilai mana yang boleh di mana.
+      en: A tree in which every node has at most two children — one left and one right. There is no rule about which value goes where.
+  - istilah: { id: Pohon pencarian biner, en: Binary search tree }
+    definisi:
+      id: Pohon biner dengan satu aturan tambahan — semua nilai di subpohon kiri lebih kecil daripada simpulnya, dan semua nilai di subpohon kanan lebih besar. Aturan itulah yang membuat pencarian bisa membuang separuh pohon setiap langkah.
+      en: A binary tree with one extra rule — every value in the left subtree is smaller than its node, and every value in the right subtree is larger. That rule is what lets a search discard half the tree at each step.
+  - istilah: { id: Telusur inorder, en: In-order traversal }
+    definisi:
+      id: Cara mengunjungi seluruh simpul dengan urutan kiri, lalu simpulnya, lalu kanan. Pada pohon pencarian biner hasilnya selalu menaik — dan itulah cara termudah memeriksa apakah aturan BST benar-benar berlaku.
+      en: A way of visiting every node in the order left, then the node itself, then right. On a binary search tree the result is always ascending — and that is the easiest way to check whether the BST rule really holds.
+  - istilah: { id: Penerus, en: Successor }
+    definisi:
+      id: Simpul dengan nilai terkecil yang masih lebih besar daripada sebuah nilai. Saat menghapus simpul beranak dua, penerusnyalah yang naik menggantikannya, supaya aturan BST tetap berlaku.
+      en: The node holding the smallest value that is still larger than a given value. When removing a node with two children, its successor takes its place, so that the BST rule keeps holding.
+
+materi:
+  id: |
+    ## Dari satu arah menjadi bercabang
+
+    Di Topik 3 kamu melihat linked list: deretan simpul yang masing-masing menunjuk ke
+    **satu** simpul berikutnya. Sekarang bayangkan sebuah simpul boleh menunjuk ke
+    **dua** simpul sekaligus. Bentuk yang lahir dari gagasan itu disebut **pohon**
+    (*tree*).
+
+    Namanya sengaja diambil dari pohon yang tumbuh terbalik: puncaknya di atas, dan
+    cabangnya melebar ke bawah.
+
+    ```
+                50              <- akar
+              /    \
+            30      70          <- anak kiri dan anak kanan
+           /  \    /  \
+         20   40  60   80       <- daun
+    ```
+
+    Istilah dasarnya, dari atas ke bawah:
+
+    - **Akar** (*root*) — simpul paling atas, dan satu-satunya pintu masuk.
+    - **Anak** (*child*) — simpul di bawah sebuah simpul.
+    - **Daun** (*leaf*) — simpul yang tidak punya anak sama sekali.
+    - **Subpohon** (*subtree*) — sebuah simpul beserta seluruh keturunannya.
+
+    Sebuah simpul pohon biner bentuknya hampir sama dengan simpul linked list. Bedanya
+    satu: ia menyimpan **dua** penunjuk, bukan satu.
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.kiri = None
+            self.kanan = None
+
+
+    akar = Simpul(50)
+    akar.kiri = Simpul(30)
+    akar.kanan = Simpul(70)
+
+    print("akar       :", akar.nilai)
+    print("anak kiri  :", akar.kiri.nilai)
+    print("anak kanan :", akar.kanan.nilai)
+    print("daun       :", akar.kiri.nilai, "dan", akar.kanan.nilai)
+    ```
+
+    Perhatikan bahwa **tidak ada yang baru** secara mekanisme. Ini persis simpul linked
+    list, hanya dengan satu penunjuk tambahan. Yang berubah adalah bentuk keseluruhan
+    yang bisa dibangun dari padanya — dan itulah yang membuat pohon berguna.
+
+    ## Aturan yang membuat pencarian cepat
+
+    Pohon biner biasa belum tentu cepat dicari. Kalau nilainya ditaruh sembarangan,
+    mencari satu nilai bisa berarti memeriksa seluruh simpul.
+
+    Yang membuatnya cepat adalah satu aturan tambahan. Sebuah pohon biner yang
+    mematuhinya disebut **pohon pencarian biner** (*binary search tree*, disingkat BST):
+
+    > Untuk setiap simpul, **semua** nilai di subpohon kirinya lebih kecil, dan
+    > **semua** nilai di subpohon kanannya lebih besar.
+
+    Perhatikan kata "semua". Bukan hanya anak kiri yang lebih kecil, melainkan seluruh
+    isi subpohon kiri. Aturan ini berlaku untuk setiap simpul, bukan hanya akar.
+
+    Dengan aturan itu, mencari sebuah nilai menjadi mirip pencarian biner dari Topik 8:
+    bandingkan dengan simpul yang sedang dipegang, lalu buang separuh pohon yang tidak
+    mungkin memuatnya.
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.kiri = None
+            self.kanan = None
+
+
+    def sisip(akar, nilai):
+        if akar is None:
+            return Simpul(nilai)
+        if nilai < akar.nilai:
+            akar.kiri = sisip(akar.kiri, nilai)
+        elif nilai > akar.nilai:
+            akar.kanan = sisip(akar.kanan, nilai)
+        return akar
+
+
+    akar = None
+    for nilai in [50, 30, 70, 20, 40, 60, 80]:
+        akar = sisip(akar, nilai)
+
+    print("akar           :", akar.nilai)
+    print("subpohon kiri  :", akar.kiri.nilai)
+    print("subpohon kanan :", akar.kanan.nilai)
+    ```
+
+    Fungsi `sisip` di atas rekursif, dan polanya penting untuk dikenali. Kalau nilai
+    yang dimasukkan lebih kecil, ia turun ke subpohon kiri; kalau lebih besar, ke
+    subpohon kanan. Kalau sudah tidak ada simpul di sana, di situlah simpul baru
+    ditempatkan. Nilai yang **sama** sengaja diabaikan — BST biasanya tidak menyimpan
+    kembar.
+
+    ## Mencari: membuang separuh setiap langkah
+
+    Mencari sebuah nilai memakai aturan yang sama, tetapi tanpa membuat simpul baru.
+    Di setiap langkah hanya ada tiga kemungkinan: ketemu, cari ke kiri, atau cari ke
+    kanan.
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.kiri = None
+            self.kanan = None
+
+
+    def sisip(akar, nilai):
+        if akar is None:
+            return Simpul(nilai)
+        if nilai < akar.nilai:
+            akar.kiri = sisip(akar.kiri, nilai)
+        elif nilai > akar.nilai:
+            akar.kanan = sisip(akar.kanan, nilai)
+        return akar
+
+
+    def cari(akar, target):
+        langkah = 0
+        sekarang = akar
+        while sekarang is not None:
+            langkah += 1
+            if target == sekarang.nilai:
+                return langkah
+            if target < sekarang.nilai:
+                sekarang = sekarang.kiri
+            else:
+                sekarang = sekarang.kanan
+        return -1
+
+
+    akar = None
+    for nilai in [50, 30, 70, 20, 40, 60, 80]:
+        akar = sisip(akar, nilai)
+
+    print("cari 40 ->", cari(akar, 40), "simpul diperiksa")
+    print("cari 45 ->", cari(akar, 45), "(tidak ada)")
+    ```
+
+    Mencari `40` hanya memeriksa **3 simpul**: `50` (ke kiri), `30` (ke kanan), `40`
+    (ketemu). Ketujuh simpulnya tidak pernah disentuh — subpohon kanan akar langsung
+    dibuang, karena seluruh isinya pasti lebih besar daripada `50`.
+
+    ## Menghapus: kasus yang paling merepotkan
+
+    Menambah dan mencari tidak pernah merusak aturan BST. Menghapus bisa, dan itulah
+    sebabnya ia kasus yang paling perlu dipikirkan. Ada tiga keadaan, dan masing-masing
+    butuh penanganan sendiri.
+
+    **Simpul berdaun** — tidak punya anak. Cukup dibuang: penunjuk orang tuanya menjadi
+    `None`. Tidak ada yang perlu dipindahkan.
+
+    **Simpul beranak satu** — punya anak kiri saja atau kanan saja. Anaknya langsung
+    naik menggantikannya. Aturan BST tetap berlaku, karena seluruh isi subpohon anak itu
+    memang sudah berada di sisi yang benar.
+
+    **Simpul beranak dua** — inilah yang merepotkan. Kalau simpulnya sekadar dibuang,
+    ada dua subpohon yang kehilangan tempat bergantung. Penyelesaiannya: cari **penerus**
+    (*successor*) — simpul bernilai terkecil yang masih lebih besar — lalu nilai
+    penerus itu dipindahkan ke simpul yang dihapus. Penerus sebuah simpul selalu berada
+    di subpohon kanannya, dan selalu simpul paling kiri di sana.
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.kiri = None
+            self.kanan = None
+
+
+    def sisip(akar, nilai):
+        if akar is None:
+            return Simpul(nilai)
+        if nilai < akar.nilai:
+            akar.kiri = sisip(akar.kiri, nilai)
+        elif nilai > akar.nilai:
+            akar.kanan = sisip(akar.kanan, nilai)
+        return akar
+
+
+    def inorder(simpul, hasil):
+        if simpul is None:
+            return
+        inorder(simpul.kiri, hasil)
+        hasil.append(simpul.nilai)
+        inorder(simpul.kanan, hasil)
+
+
+    def hapus(akar, nilai):
+        if akar is None:
+            return None
+        if nilai < akar.nilai:
+            akar.kiri = hapus(akar.kiri, nilai)
+        elif nilai > akar.nilai:
+            akar.kanan = hapus(akar.kanan, nilai)
+        else:
+            if akar.kiri is None and akar.kanan is None:
+                return None
+            if akar.kiri is None:
+                return akar.kanan
+            if akar.kanan is None:
+                return akar.kiri
+            pengganti = akar.kanan
+            while pengganti.kiri is not None:
+                pengganti = pengganti.kiri
+            akar.nilai = pengganti.nilai
+            akar.kanan = hapus(akar.kanan, pengganti.nilai)
+        return akar
+
+
+    akar = None
+    for nilai in [50, 30, 70, 20, 40, 60, 80]:
+        akar = sisip(akar, nilai)
+
+    sebelum = []
+    inorder(akar, sebelum)
+    print("sebelum hapus 30 :", sebelum)
+
+    akar = hapus(akar, 30)
+
+    sesudah = []
+    inorder(akar, sesudah)
+    print("sesudah hapus 30 :", sesudah)
+    print("penggantinya adalah penerus 30, yaitu", akar.kiri.nilai)
+    ```
+
+    Perhatikan urutan hasilnya tetap menaik sesudah penghapusan. Itu bukan kebetulan —
+    itu tandanya aturan BST masih berlaku.
+
+    ## Tiga cara menelusuri pohon
+
+    Menelusuri pohon berarti mengunjungi setiap simpul tepat sekali. Berbeda dari linked
+    list yang hanya punya satu arah, pohon punya tiga urutan yang lazim, dan namanya
+    menunjukkan kapan simpulnya sendiri dikunjungi.
+
+    - **Inorder** — kiri, lalu simpulnya, lalu kanan.
+    - **Preorder** — simpulnya dulu, baru kiri, baru kanan.
+    - **Postorder** — kiri, kanan, baru simpulnya.
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.kiri = None
+            self.kanan = None
+
+
+    def sisip(akar, nilai):
+        if akar is None:
+            return Simpul(nilai)
+        if nilai < akar.nilai:
+            akar.kiri = sisip(akar.kiri, nilai)
+        elif nilai > akar.nilai:
+            akar.kanan = sisip(akar.kanan, nilai)
+        return akar
+
+
+    def inorder(simpul, hasil):
+        if simpul is None:
+            return
+        inorder(simpul.kiri, hasil)
+        hasil.append(simpul.nilai)
+        inorder(simpul.kanan, hasil)
+
+
+    def preorder(simpul, hasil):
+        if simpul is None:
+            return
+        hasil.append(simpul.nilai)
+        preorder(simpul.kiri, hasil)
+        preorder(simpul.kanan, hasil)
+
+
+    def postorder(simpul, hasil):
+        if simpul is None:
+            return
+        postorder(simpul.kiri, hasil)
+        postorder(simpul.kanan, hasil)
+        hasil.append(simpul.nilai)
+
+
+    akar = None
+    for nilai in [50, 30, 70, 20, 40, 60, 80]:
+        akar = sisip(akar, nilai)
+
+    a, b, c = [], [], []
+    inorder(akar, a)
+    preorder(akar, b)
+    postorder(akar, c)
+    print("inorder   :", a)
+    print("preorder  :", b)
+    print("postorder :", c)
+    ```
+
+    Perhatikan hasil **telusur inorder**-nya: `[20, 30, 40, 50, 60, 70, 80]` — menaik.
+    Itu bukan kebetulan, melainkan akibat langsung aturan BST. Karena itu inorder adalah
+    cara termudah memeriksa apakah sebuah pohon benar-benar BST: kalau hasilnya tidak
+    menaik, aturannya dilanggar di suatu tempat.
+
+    ## Bentuk pohon menentukan biayanya
+
+    Inilah pelajaran terpenting Topik ini. Operasi BST yang sama bisa sangat cepat atau
+    sangat lambat, **bergantung pada bentuk pohonnya** — bukan pada kodenya.
+
+    Kalau nilainya kebetulan masuk dalam urutan yang menyebar, pohonnya tumbuh
+    seimbang: setiap simpul punya anak kiri dan kanan, dan tingginya kira-kira
+    `log₂(n)`. Mencari di pohon seperti itu memeriksa sedikit simpul.
+
+    Tetapi perhatikan apa yang terjadi kalau nilainya masuk **berurutan menaik**:
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.kiri = None
+            self.kanan = None
+
+
+    def sisip(akar, nilai):
+        if akar is None:
+            return Simpul(nilai)
+        if nilai < akar.nilai:
+            akar.kiri = sisip(akar.kiri, nilai)
+        elif nilai > akar.nilai:
+            akar.kanan = sisip(akar.kanan, nilai)
+        return akar
+
+
+    def tinggi(simpul):
+        if simpul is None:
+            return 0
+        kiri = tinggi(simpul.kiri)
+        kanan = tinggi(simpul.kanan)
+        return 1 + (kiri if kiri > kanan else kanan)
+
+
+    seimbang = None
+    for nilai in [50, 30, 70, 20, 40, 60, 80]:
+        seimbang = sisip(seimbang, nilai)
+
+    miring = None
+    for nilai in [10, 20, 30, 40, 50, 60, 70]:
+        miring = sisip(miring, nilai)
+
+    print("7 simpul tersusun seimbang -> tinggi", tinggi(seimbang))
+    print("7 simpul tersusun menaik   -> tinggi", tinggi(miring))
+    ```
+
+    Tujuh simpul yang sama banyaknya menghasilkan **tinggi 3** kalau tersusun seimbang,
+    dan **tinggi 7** kalau tersusun menaik. Bentuk yang kedua disebut **pohon miring**
+    (*skewed tree*), dan pada bentuk itu BST tidak lebih baik daripada linked list:
+    mencari nilai terbesar berarti menelusuri ketujuh simpul satu per satu.
+
+    Inilah sebabnya "BST itu `O(log n)`" adalah pernyataan yang belum lengkap. Yang
+    benar: BST itu `O(log n)` **kalau pohonnya seimbang**, dan `O(n)` kalau pohonnya
+    miring. Pohon yang selalu menjaga keseimbangannya sendiri punya nama tersendiri
+    (pohon AVL, pohon merah-hitam), dan itu di luar cakupan Topik ini — tetapi tahu
+    bahwa masalahnya ada, dan bahwa solusinya berupa varian BST, sudah cukup di sini.
+
+    ## Tabel kompleksitas
+
+    | Operasi | Pohon pencarian biner seimbang | Pohon pencarian biner miring |
+    |---|---|---|
+    | Cari satu nilai | O(log n) | O(n) |
+    | Sisip satu nilai | O(log n) | O(n) |
+    | Hapus satu nilai | O(log n) | O(n) |
+    | Telusuri seluruh simpul | O(n) | O(n) |
+    | Ruang | O(n) | O(n) |
+
+    Baris terakhir sama di kedua kolom, dan itu wajar: berapa pun bentuk pohonnya,
+    setiap simpul disimpan sekali. Yang berubah hanyalah **berapa simpul yang harus
+    diperiksa** untuk menemukan satu nilai. Penelusuran seluruh simpul juga sama-sama
+    `O(n)` di kedua bentuk, karena ia memang mengunjungi semuanya.
+
+    ## Jebakan yang sering terjadi
+
+    **Mengira BST selalu `O(log n)`.** Sudah dibahas di atas, dan ini jebakan yang
+    paling sering. Data yang masuk berurutan adalah kasus yang paling mudah terpicu —
+    dan data dari dunia nyata sering datang berurutan.
+
+    **Memeriksa hanya anak langsung, bukan seluruh subpohon.** Pohon berikut **bukan**
+    BST, walaupun setiap anak langsung terlihat benar:
+
+    ```
+              50
+            /    \
+          30      70
+            \
+             60        <- 60 lebih besar dari 30, tapi ada di subpohon KIRI 50
+    ```
+
+    `60` lebih besar daripada `30` (anak kirinya sendiri benar), tetapi `60` ada di
+    subpohon kiri `50` — padahal seharusnya seluruh subpohon kiri lebih kecil daripada
+    `50`. Aturannya berlaku untuk **seluruh** subpohon, bukan hanya satu tingkat.
+
+    **Menghapus simpul beranak dua dengan menaikkan anak kirinya.** Cara itu merusak
+    aturan BST, karena anak kanan simpul yang dihapus jadi tidak punya tempat. Yang
+    benar adalah memakai penerus.
+
+    **Lupa kasus pohon kosong.** `akar` bernilai `None` adalah keadaan yang sah, dan
+    pencarian pada pohon kosong harus mengembalikan "tidak ada" tanpa melempar error.
+    Fungsi yang langsung membaca `akar.nilai` akan gagal di sini.
+
+    **Mengira inorder sama dengan preorder.** Namanya memang mirip, tetapi urutannya
+    berbeda, dan hanya inorder yang menghasilkan urutan menaik pada BST. Tertukarnya
+    keduanya menghasilkan jawaban yang salah tanpa error apa pun.
+
+    Satu catatan penutup tentang **tinggi pohon**: ia bergantung sepenuhnya pada urutan
+    pemasukan, bukan pada banyaknya nilai. Karena itu pohon yang sama isinya bisa punya
+    tinggi yang sangat berbeda — dan biaya operasinya ikut berbeda.
+
+  en: |
+    ## From one direction to branching
+
+    In Topic 3 you met the linked list: a chain of nodes where each one points to
+    **one** next node. Now imagine a node that may point to **two** nodes at once. The
+    shape born from that idea is called a **tree**.
+
+    The name is deliberately borrowed from a tree growing upside down: the peak is at
+    the top, and the branches spread downward.
+
+    ```
+                50              <- root
+              /    \
+            30      70          <- left child and right child
+           /  \    /  \
+         20   40  60   80       <- leaves
+    ```
+
+    The basic terms, from top to bottom:
+
+    - **Root** — the topmost node, and the only entrance.
+    - **Child** — a node below another node.
+    - **Leaf** — a node with no children at all.
+    - **Subtree** — a node together with all of its descendants.
+
+    A binary tree node looks almost the same as a linked list node. It differs in one
+    way: it holds **two** pointers, not one.
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.kiri = None
+            self.kanan = None
+
+
+    akar = Simpul(50)
+    akar.kiri = Simpul(30)
+    akar.kanan = Simpul(70)
+
+    print("akar       :", akar.nilai)
+    print("anak kiri  :", akar.kiri.nilai)
+    print("anak kanan :", akar.kanan.nilai)
+    print("daun       :", akar.kiri.nilai, "dan", akar.kanan.nilai)
+    ```
+
+    Notice that there is **nothing new** in the mechanism. This is exactly a linked list
+    node, with one extra pointer. What changes is the overall shape you can build from
+    it — and that shape is what makes a tree useful.
+
+    ## The rule that makes searching fast
+
+    A plain binary tree is not necessarily fast to search. If values are placed at
+    random, finding one can mean checking every node.
+
+    What makes it fast is one extra rule. A binary tree that obeys it is called a
+    **binary search tree**, or BST:
+
+    > For every node, **every** value in its left subtree is smaller, and **every**
+    > value in its right subtree is larger.
+
+    Pay attention to the word "every". It is not just the left child that is smaller —
+    it is the entire left subtree. This rule holds for every node, not only the root.
+
+    With that rule, finding a value becomes much like the binary search from Topic 8:
+    compare against the node you are holding, then discard the half of the tree that
+    cannot contain it.
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.kiri = None
+            self.kanan = None
+
+
+    def sisip(akar, nilai):
+        if akar is None:
+            return Simpul(nilai)
+        if nilai < akar.nilai:
+            akar.kiri = sisip(akar.kiri, nilai)
+        elif nilai > akar.nilai:
+            akar.kanan = sisip(akar.kanan, nilai)
+        return akar
+
+
+    akar = None
+    for nilai in [50, 30, 70, 20, 40, 60, 80]:
+        akar = sisip(akar, nilai)
+
+    print("akar           :", akar.nilai)
+    print("subpohon kiri  :", akar.kiri.nilai)
+    print("subpohon kanan :", akar.kanan.nilai)
+    ```
+
+    The `sisip` function above is recursive, and the pattern is worth recognising. If
+    the incoming value is smaller, it descends into the left subtree; if larger, into
+    the right. When there is no node there any more, that is where the new node is
+    placed. A value that is **equal** is deliberately ignored — a BST usually does not
+    store duplicates.
+
+    ## Searching: discarding half at each step
+
+    Searching for a value uses the same rule, but without creating a new node. At each
+    step there are only three possibilities: found, go left, or go right.
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.kiri = None
+            self.kanan = None
+
+
+    def sisip(akar, nilai):
+        if akar is None:
+            return Simpul(nilai)
+        if nilai < akar.nilai:
+            akar.kiri = sisip(akar.kiri, nilai)
+        elif nilai > akar.nilai:
+            akar.kanan = sisip(akar.kanan, nilai)
+        return akar
+
+
+    def cari(akar, target):
+        langkah = 0
+        sekarang = akar
+        while sekarang is not None:
+            langkah += 1
+            if target == sekarang.nilai:
+                return langkah
+            if target < sekarang.nilai:
+                sekarang = sekarang.kiri
+            else:
+                sekarang = sekarang.kanan
+        return -1
+
+
+    akar = None
+    for nilai in [50, 30, 70, 20, 40, 60, 80]:
+        akar = sisip(akar, nilai)
+
+    print("cari 40 ->", cari(akar, 40), "simpul diperiksa")
+    print("cari 45 ->", cari(akar, 45), "(tidak ada)")
+    ```
+
+    Searching for `40` checks only **3 nodes**: `50` (go left), `30` (go right), `40`
+    (found). The other seven nodes are never touched — the root's right subtree is
+    discarded at once, because everything in it must be larger than `50`.
+
+    ## Removing: the messiest case
+
+    Adding and searching never break the BST rule. Removing can, and that is why it is
+    the case that needs the most thought. There are three situations, and each needs its
+    own handling.
+
+    **A leaf node** — no children. Just drop it: its parent's pointer becomes `None`.
+    Nothing has to be moved.
+
+    **A node with one child** — only a left child or only a right child. That child
+    moves straight up to take its place. The BST rule keeps holding, because everything
+    in that child's subtree was already on the correct side.
+
+    **A node with two children** — this is the messy one. If the node were simply
+    dropped, two subtrees would lose the thing they hang from. The fix: find the
+    **successor** — the node holding the smallest value that is still larger — then move
+    the successor's value into the node being removed. A node's successor always lives
+    in its right subtree, and is always the leftmost node there.
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.kiri = None
+            self.kanan = None
+
+
+    def sisip(akar, nilai):
+        if akar is None:
+            return Simpul(nilai)
+        if nilai < akar.nilai:
+            akar.kiri = sisip(akar.kiri, nilai)
+        elif nilai > akar.nilai:
+            akar.kanan = sisip(akar.kanan, nilai)
+        return akar
+
+
+    def inorder(simpul, hasil):
+        if simpul is None:
+            return
+        inorder(simpul.kiri, hasil)
+        hasil.append(simpul.nilai)
+        inorder(simpul.kanan, hasil)
+
+
+    def hapus(akar, nilai):
+        if akar is None:
+            return None
+        if nilai < akar.nilai:
+            akar.kiri = hapus(akar.kiri, nilai)
+        elif nilai > akar.nilai:
+            akar.kanan = hapus(akar.kanan, nilai)
+        else:
+            if akar.kiri is None and akar.kanan is None:
+                return None
+            if akar.kiri is None:
+                return akar.kanan
+            if akar.kanan is None:
+                return akar.kiri
+            pengganti = akar.kanan
+            while pengganti.kiri is not None:
+                pengganti = pengganti.kiri
+            akar.nilai = pengganti.nilai
+            akar.kanan = hapus(akar.kanan, pengganti.nilai)
+        return akar
+
+
+    akar = None
+    for nilai in [50, 30, 70, 20, 40, 60, 80]:
+        akar = sisip(akar, nilai)
+
+    sebelum = []
+    inorder(akar, sebelum)
+    print("sebelum hapus 30 :", sebelum)
+
+    akar = hapus(akar, 30)
+
+    sesudah = []
+    inorder(akar, sesudah)
+    print("sesudah hapus 30 :", sesudah)
+    print("penggantinya adalah penerus 30, yaitu", akar.kiri.nilai)
+    ```
+
+    Notice the result stays ascending after the removal. That is no accident — it is the
+    sign that the BST rule still holds.
+
+    ## Three ways to walk a tree
+
+    Walking a tree means visiting every node exactly once. Unlike a linked list, which
+    has only one direction, a tree has three common orders, and their names tell you
+    when the node itself is visited.
+
+    - **In-order** — left, then the node, then right.
+    - **Pre-order** — the node first, then left, then right.
+    - **Post-order** — left, right, then the node.
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.kiri = None
+            self.kanan = None
+
+
+    def sisip(akar, nilai):
+        if akar is None:
+            return Simpul(nilai)
+        if nilai < akar.nilai:
+            akar.kiri = sisip(akar.kiri, nilai)
+        elif nilai > akar.nilai:
+            akar.kanan = sisip(akar.kanan, nilai)
+        return akar
+
+
+    def inorder(simpul, hasil):
+        if simpul is None:
+            return
+        inorder(simpul.kiri, hasil)
+        hasil.append(simpul.nilai)
+        inorder(simpul.kanan, hasil)
+
+
+    def preorder(simpul, hasil):
+        if simpul is None:
+            return
+        hasil.append(simpul.nilai)
+        preorder(simpul.kiri, hasil)
+        preorder(simpul.kanan, hasil)
+
+
+    def postorder(simpul, hasil):
+        if simpul is None:
+            return
+        postorder(simpul.kiri, hasil)
+        postorder(simpul.kanan, hasil)
+        hasil.append(simpul.nilai)
+
+
+    akar = None
+    for nilai in [50, 30, 70, 20, 40, 60, 80]:
+        akar = sisip(akar, nilai)
+
+    a, b, c = [], [], []
+    inorder(akar, a)
+    preorder(akar, b)
+    postorder(akar, c)
+    print("inorder   :", a)
+    print("preorder  :", b)
+    print("postorder :", c)
+    ```
+
+    Look at the **in-order traversal** result: `[20, 30, 40, 50, 60, 70, 80]` —
+    ascending. That is no accident, but a direct consequence of the BST rule. That is
+    why in-order is the easiest way to check whether a tree really is a BST: if the
+    result is not ascending, the rule is broken somewhere.
+
+    ## The shape of the tree decides the cost
+
+    This is the most important lesson of this Topic. The same BST operations can be very
+    fast or very slow, **depending on the shape of the tree** — not on the code.
+
+    If the values happen to arrive in a spread-out order, the tree grows balanced: each
+    node has a left and a right child, and its height is roughly `log₂(n)`. Searching
+    such a tree checks few nodes.
+
+    But look at what happens if the values arrive **in ascending order**:
+
+    ```python
+    class Simpul:
+        def __init__(self, nilai):
+            self.nilai = nilai
+            self.kiri = None
+            self.kanan = None
+
+
+    def sisip(akar, nilai):
+        if akar is None:
+            return Simpul(nilai)
+        if nilai < akar.nilai:
+            akar.kiri = sisip(akar.kiri, nilai)
+        elif nilai > akar.nilai:
+            akar.kanan = sisip(akar.kanan, nilai)
+        return akar
+
+
+    def tinggi(simpul):
+        if simpul is None:
+            return 0
+        kiri = tinggi(simpul.kiri)
+        kanan = tinggi(simpul.kanan)
+        return 1 + (kiri if kiri > kanan else kanan)
+
+
+    seimbang = None
+    for nilai in [50, 30, 70, 20, 40, 60, 80]:
+        seimbang = sisip(seimbang, nilai)
+
+    miring = None
+    for nilai in [10, 20, 30, 40, 50, 60, 70]:
+        miring = sisip(miring, nilai)
+
+    print("7 simpul tersusun seimbang -> tinggi", tinggi(seimbang))
+    print("7 simpul tersusun menaik   -> tinggi", tinggi(miring))
+    ```
+
+    The same seven values produce a **height of 3** when arranged balanced, and a
+    **height of 7** when arranged ascending. The second shape is called a **skewed
+    binary search tree**, and on that shape a BST is no better than a linked list:
+    finding the largest value means walking all seven nodes one by one.
+
+    This is why "a BST is `O(log n)`" is an incomplete statement. What is true: a BST is
+    `O(log n)` **when the tree is balanced**, and `O(n)` when it is skewed. A tree that
+    keeps itself balanced has its own names (AVL tree, red-black tree), and that is
+    beyond this Topic — but knowing that the problem exists, and that the fix is a
+    variant of the BST, is enough here.
+
+    ## Complexity table
+
+    | Operation | Balanced binary search tree | Skewed binary search tree |
+    |---|---|---|
+    | Find one value | O(log n) | O(n) |
+    | Insert one value | O(log n) | O(n) |
+    | Remove one value | O(log n) | O(n) |
+    | Walk every node | O(n) | O(n) |
+    | Space | O(n) | O(n) |
+
+    The last row is the same in both columns, and that is expected: whatever the shape,
+    each node is stored once. What changes is **how many nodes must be checked** to find
+    one value. Walking every node is also `O(n)` in both shapes, because it does visit
+    all of them.
+
+    ## Traps that catch people
+
+    **Assuming a BST is always `O(log n)`.** Covered above, and it is the most common
+    trap. Data arriving in order is the easiest trigger — and real-world data often
+    arrives in order.
+
+    **Checking only the direct children, not the whole subtree.** The following tree is
+    **not** a BST, even though every direct child looks right:
+
+    ```
+              50
+            /    \
+          30      70
+            \
+             60        <- 60 is larger than 30, but sits in the LEFT subtree of 50
+    ```
+
+    `60` is larger than `30` (its own left child is fine), but `60` sits in the left
+    subtree of `50` — when the whole left subtree should be smaller than `50`. The rule
+    applies to the **whole** subtree, not just one level.
+
+    **Removing a node with two children by promoting its left child.** That breaks the
+    BST rule, because the removed node's right child is left with nothing to hang from.
+    The correct move is to use the successor.
+
+    **Forgetting the empty tree.** `akar` being `None` is a valid state, and searching an
+    empty tree must report "not found" without raising an error. A function that reads
+    `akar.nilai` straight away will fail here.
+
+    **Confusing in-order with pre-order.** The names look alike, but the orders differ,
+    and only in-order yields an ascending result on a BST. Swapping the two produces a
+    wrong answer with no error at all.
+
+    One closing note on **tree height**: it depends entirely on the insertion order, not
+    on how many values there are. That is why the same set of values can have a very
+    different height — and a correspondingly different operating cost.
+
+soal:
+  # --- Kuis 1: urutan telusur inorder ---------------------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Kode berikut membangun sebuah pohon pencarian biner dari tujuh nilai, lalu
+        menelusurinya dengan cara **inorder**. Apa yang dicetak?
+      en: |
+        The code below builds a binary search tree from seven values, then walks it
+        **in-order**. What is printed?
+    kode: |
+      class Simpul:
+          def __init__(self, nilai):
+              self.nilai = nilai
+              self.kiri = None
+              self.kanan = None
+
+
+      def sisip(akar, nilai):
+          if akar is None:
+              return Simpul(nilai)
+          if nilai < akar.nilai:
+              akar.kiri = sisip(akar.kiri, nilai)
+          elif nilai > akar.nilai:
+              akar.kanan = sisip(akar.kanan, nilai)
+          return akar
+
+
+      def inorder(simpul, hasil):
+          if simpul is None:
+              return
+          inorder(simpul.kiri, hasil)
+          hasil.append(simpul.nilai)
+          inorder(simpul.kanan, hasil)
+
+
+      akar = None
+      for nilai in [50, 30, 70, 20, 40, 60, 80]:
+          akar = sisip(akar, nilai)
+
+      hasil = []
+      inorder(akar, hasil)
+      print(hasil)
+    opsi:
+      - teks:
+          id: "[20, 30, 40, 50, 60, 70, 80]"
+          en: "[20, 30, 40, 50, 60, 70, 80]"
+        benar: true
+      - teks:
+          id: "[50, 30, 20, 40, 70, 60, 80]"
+          en: "[50, 30, 20, 40, 70, 60, 80]"
+        benar: false
+      - teks:
+          id: "[20, 40, 30, 60, 80, 70, 50]"
+          en: "[20, 40, 30, 60, 80, 70, 50]"
+        benar: false
+      - teks:
+          id: "[80, 70, 60, 50, 40, 30, 20]"
+          en: "[80, 70, 60, 50, 40, 30, 20]"
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Telusur inorder mengunjungi **kiri, lalu simpulnya, lalu
+        kanan**. Karena pohon ini mematuhi aturan BST — setiap nilai di subpohon kiri
+        lebih kecil, dan di subpohon kanan lebih besar — telusur inorder pasti
+        menghasilkan urutan menaik.
+
+        Telusuri akarnya, `50`. Ia menunggu sampai seluruh subpohon kirinya selesai
+        dikunjungi. Subpohon kiri berisi `30`, yang anaknya `20` dan `40`; kedua anak itu
+        juga lebih dulu daripada `30`. Jadi yang tercatat lebih dulu adalah `20`, lalu
+        `30`, lalu `40`. Baru sesudah itu `50`. Subpohon kanan bekerja dengan cara yang
+        sama, menghasilkan `60`, `70`, `80`.
+
+        Hasilnya: `[20, 30, 40, 50, 60, 70, 80]`.
+
+        **Kompleksitas.** Telusur inorder mengunjungi setiap simpul tepat sekali, jadi
+        biayanya `O(n)` — di sini tujuh simpul. Bentuk pohonnya tidak mengubah biaya ini:
+        seimbang maupun miring, setiap simpul tetap harus dikunjungi. Yang berubah karena
+        bentuk hanyalah operasi **pencarian satu nilai**, bukan penelusuran seluruhnya.
+
+        **Kode referensi.**
+
+        ```python
+        class Simpul:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.kiri = None
+                self.kanan = None
+
+
+        def sisip(akar, nilai):
+            if akar is None:
+                return Simpul(nilai)
+            if nilai < akar.nilai:
+                akar.kiri = sisip(akar.kiri, nilai)
+            elif nilai > akar.nilai:
+                akar.kanan = sisip(akar.kanan, nilai)
+            return akar
+
+
+        def inorder(simpul, hasil):
+            if simpul is None:
+                return
+            inorder(simpul.kiri, hasil)
+            hasil.append(simpul.nilai)
+            inorder(simpul.kanan, hasil)
+
+
+        akar = None
+        for nilai in [50, 30, 70, 20, 40, 60, 80]:
+            akar = sisip(akar, nilai)
+
+        hasil = []
+        inorder(akar, hasil)
+        print(hasil)
+        ```
+
+        **Jebakan umum.** Jawaban `[50, 30, 20, 40, 70, 60, 80]` adalah hasil **preorder**
+        — simpulnya lebih dulu, baru anak-anaknya. Jawaban `[20, 40, 30, 60, 80, 70, 50]`
+        adalah hasil **postorder** — anak-anaknya lebih dulu, simpulnya paling akhir.
+        Ketiganya memakai kode yang hampir sama, dan hanya urutan pemanggilannya berbeda,
+        sehingga mudah tertukar. Jawaban menurun `[80, 70, ...]` akan benar kalau
+        telusurnya dibalik (kanan dulu), atau kalau aturan BST-nya dilanggar. Yang perlu
+        diingat: **hanya inorder yang menghasilkan urutan menaik pada BST** — itu
+        tandanya, bukan kebetulan.
+      en: |
+        **Approach.** An in-order traversal visits **left, then the node, then right**.
+        Because this tree obeys the BST rule — every value in the left subtree is
+        smaller, and in the right subtree larger — an in-order traversal must produce an
+        ascending order.
+
+        Trace it from the root, `50`. It waits until its entire left subtree has been
+        visited. The left subtree holds `30`, whose children are `20` and `40`; both of
+        those also come before `30`. So `20` is recorded first, then `30`, then `40`.
+        Only after that comes `50`. The right subtree works the same way, yielding `60`,
+        `70`, `80`.
+
+        The result: `[20, 30, 40, 50, 60, 70, 80]`.
+
+        **Complexity.** An in-order traversal visits every node exactly once, so it costs
+        `O(n)` — seven nodes here. The shape of the tree does not change this cost:
+        balanced or skewed, every node still has to be visited. What the shape changes is
+        **searching for one value**, not walking the whole tree.
+
+        **Reference code.**
+
+        ```python
+        class Simpul:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.kiri = None
+                self.kanan = None
+
+
+        def sisip(akar, nilai):
+            if akar is None:
+                return Simpul(nilai)
+            if nilai < akar.nilai:
+                akar.kiri = sisip(akar.kiri, nilai)
+            elif nilai > akar.nilai:
+                akar.kanan = sisip(akar.kanan, nilai)
+            return akar
+
+
+        def inorder(simpul, hasil):
+            if simpul is None:
+                return
+            inorder(simpul.kiri, hasil)
+            hasil.append(simpul.nilai)
+            inorder(simpul.kanan, hasil)
+
+
+        akar = None
+        for nilai in [50, 30, 70, 20, 40, 60, 80]:
+            akar = sisip(akar, nilai)
+
+        hasil = []
+        inorder(akar, hasil)
+        print(hasil)
+        ```
+
+        **Common trap.** The answer `[50, 30, 20, 40, 70, 60, 80]` is the **pre-order**
+        result — the node first, then its children. The answer
+        `[20, 40, 30, 60, 80, 70, 50]` is the **post-order** result — the children first,
+        the node last. All three use almost identical code, with only the order of the
+        calls differing, which makes them easy to mix up. The descending answer
+        `[80, 70, ...]` would be right if the traversal were reversed (right first), or if
+        the BST rule were broken. What to remember: **only in-order yields an ascending
+        result on a BST** — that is the sign of it, not a coincidence.
+
+  # --- Kuis 2: kenapa data berurutan merusak BST -------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Kamu memasukkan lima ratus nilai ke dalam pohon pencarian biner, satu per satu,
+        dalam urutan menaik — `1`, lalu `2`, lalu `3`, sampai `500`. Kode `sisip`-nya
+        persis seperti di Materi. Sesudah itu kamu mencari nilai `500`, dan pencariannya
+        terasa lambat. Padahal jumlah nilainya sama saja dengan kalau dimasukkan dalam
+        urutan acak. Kenapa bisa berbeda?
+      en: |
+        You insert five hundred values into a binary search tree, one by one, in
+        ascending order — `1`, then `2`, then `3`, up to `500`. The `sisip` code is
+        exactly as in the Materi. Afterwards you search for the value `500`, and the
+        search feels slow. Yet the number of values is the same as if they had been
+        inserted in random order. Why the difference?
+    opsi:
+      - teks:
+          id: Karena setiap nilai baru selalu lebih besar, sehingga ia selalu turun ke kanan dan tidak pernah ada yang mengisi subpohon kiri. Pohonnya menjadi miring, tingginya 500, dan pencarian berubah menjadi O(n) seperti linked list
+          en: Because every new value is always larger, so it always descends to the right and nothing ever fills the left subtree. The tree becomes skewed, its height is 500, and the search turns into O(n), just like a linked list
+        benar: true
+      - teks:
+          id: Karena memasukkan lima ratus nilai memakan waktu lebih lama daripada mencari satu nilai, sehingga pencariannya ikut melambat
+          en: Because inserting five hundred values takes longer than searching for one value, so the search slows down along with it
+        benar: false
+      - teks:
+          id: Karena nilai 500 selalu berada di paling ujung, dan BST memang tidak pernah bisa menemukan nilai yang berada di ujung
+          en: Because the value 500 always sits at the very end, and a BST can never find a value that sits at the end
+        benar: false
+      - teks:
+          id: Karena pohonnya kehabisan ruang setelah lima ratus nilai, sehingga pencarian harus menunggu memori tersedia
+          en: Because the tree runs out of space after five hundred values, so the search has to wait for memory to become available
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Ikuti apa yang dilakukan `sisip` untuk setiap nilai. Nilai
+        pertama, `1`, menjadi akar. Nilai kedua, `2`, lebih besar daripada `1`, jadi ia
+        turun ke kanan dan menjadi anak kanan. Nilai ketiga, `3`, juga lebih besar
+        daripada `1`, lalu lebih besar daripada `2`, jadi ia turun dua kali ke kanan.
+        Setiap nilai baru selalu lebih besar daripada semua yang sudah ada, sehingga ia
+        **selalu** turun ke kanan.
+
+        Akibatnya tidak ada satu pun simpul yang punya anak kiri:
+
+        ```
+        1
+         \
+          2
+           \
+            3
+             \
+             ... sampai 500
+        ```
+
+        Pohon seperti ini disebut **pohon miring**. Tingginya 500, bukan sekitar 9.
+        Mencari `500` berarti menelusuri dari akar sampai daun paling bawah — lima ratus
+        simpul diperiksa, sama seperti menelusuri linked list.
+
+        **Kompleksitas.** Pada pohon seimbang, setiap langkah membuang separuh sisanya,
+        sehingga pencarian `O(log n)` — untuk lima ratus nilai, sekitar 9 simpul. Pada
+        pohon miring, setiap langkah hanya membuang satu simpul, sehingga pencarian
+        `O(n)` — lima ratus simpul. Yang menentukan bukan banyaknya nilai, melainkan
+        **tinggi pohon**, dan tinggi pohon ditentukan oleh urutan pemasukan.
+
+        **Kode referensi.**
+
+        ```python
+        class Simpul:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.kiri = None
+                self.kanan = None
+
+
+        def sisip(akar, nilai):
+            if akar is None:
+                return Simpul(nilai)
+            if nilai < akar.nilai:
+                akar.kiri = sisip(akar.kiri, nilai)
+            elif nilai > akar.nilai:
+                akar.kanan = sisip(akar.kanan, nilai)
+            return akar
+
+
+        def tinggi(simpul):
+            if simpul is None:
+                return 0
+            kiri = tinggi(simpul.kiri)
+            kanan = tinggi(simpul.kanan)
+            return 1 + (kiri if kiri > kanan else kanan)
+
+
+        akar = None
+        for nilai in range(1, 501):
+            akar = sisip(akar, nilai)
+
+        print("tinggi pohon miring 500 simpul:", tinggi(akar))
+        ```
+
+        Program di atas mencetak `tinggi pohon miring 500 simpul: 500`.
+
+        **Jebakan umum.** Jawaban "memasukkan lebih lama" mencampur biaya **membangun**
+        pohon dengan biaya **mencarinya**; keduanya diukur terpisah, dan yang lambat di
+        sini adalah pencariannya. Jawaban "BST tidak bisa menemukan nilai di ujung" salah
+        — ia bisa menemukannya, hanya saja lambat; hasilnya tetap benar, yang berubah
+        hanya biayanya. Jawaban "kehabisan ruang" salah karena lima ratus nilai tetap
+        memakan ruang `O(n)` berapa pun bentuk pohonnya. Pelajaran yang sebenarnya:
+        **data yang datang sudah terurut adalah kasus terburuk bagi BST**, dan itu bukan
+        kemungkinan yang jarang — data dari dunia nyata sering datang berurutan.
+
+        Satu catatan tentang angka 500 di sini: `sisip` yang dipakai bersifat rekursif,
+        dan rekursi sedalam itu sudah mendekati batas bawaan Python (1000 tingkat).
+        Memasukkan seribu nilai berurutan lewat `sisip` rekursif justru **gagal dengan
+        `RecursionError`** sebelum pohonnya selesai dibangun — jadi 500 dipilih supaya
+        kodenya benar-benar bisa dijalankan. Itu sendiri pelajaran yang sejalan dengan
+        Topik 6.
+      en: |
+        **Approach.** Follow what `sisip` does for each value. The first value, `1`,
+        becomes the root. The second, `2`, is larger than `1`, so it descends right and
+        becomes the right child. The third, `3`, is also larger than `1`, then larger than
+        `2`, so it descends right twice. Every new value is always larger than everything
+        already present, so it **always** descends right.
+
+        As a result, not a single node has a left child:
+
+        ```
+        1
+         \
+          2
+           \
+            3
+             \
+             ... up to 500
+        ```
+
+        A tree like this is called a **skewed tree**. Its height is 500, not around 9.
+        Searching for `500` means walking from the root down to the deepest leaf — five
+        hundred nodes checked, exactly like walking a linked list.
+
+        **Complexity.** On a balanced tree, each step discards half of what remains, so
+        the search is `O(log n)` — for five hundred values, around 9 nodes. On a skewed
+        tree, each step discards only one node, so the search is `O(n)` — five hundred
+        nodes. What decides is not how many values there are, but the **height of the
+        tree**, and the height is decided by the insertion order.
+
+        **Reference code.**
+
+        ```python
+        class Simpul:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.kiri = None
+                self.kanan = None
+
+
+        def sisip(akar, nilai):
+            if akar is None:
+                return Simpul(nilai)
+            if nilai < akar.nilai:
+                akar.kiri = sisip(akar.kiri, nilai)
+            elif nilai > akar.nilai:
+                akar.kanan = sisip(akar.kanan, nilai)
+            return akar
+
+
+        def tinggi(simpul):
+            if simpul is None:
+                return 0
+            kiri = tinggi(simpul.kiri)
+            kanan = tinggi(simpul.kanan)
+            return 1 + (kiri if kiri > kanan else kanan)
+
+
+        akar = None
+        for nilai in range(1, 501):
+            akar = sisip(akar, nilai)
+
+        print("tinggi pohon miring 500 simpul:", tinggi(akar))
+        ```
+
+        The program above prints `tinggi pohon miring 500 simpul: 500`.
+
+        **Common trap.** The answer "inserting takes longer" mixes the cost of
+        **building** the tree with the cost of **searching** it; the two are measured
+        separately, and the slow one here is the search. The answer "a BST can never find
+        a value at the end" is wrong — it can find it, just slowly; the result is still
+        correct, only the cost changes. The answer "runs out of space" is wrong because
+        five hundred values still take `O(n)` space whatever the shape. The real lesson:
+        **data that already arrives sorted is the worst case for a BST**, and that is not
+        a rare possibility — real-world data often arrives in order.
+
+        One note on the number 500 here: the `sisip` used is recursive, and recursion that
+        deep already approaches Python's default limit (1000 levels). Inserting a thousand
+        ascending values through the recursive `sisip` actually **fails with a
+        `RecursionError`** before the tree is finished — so 500 was chosen so the code
+        really can run. That is itself a lesson in the spirit of Topic 6.
+
+  # --- Kuis 3: berapa simpul yang diperiksa saat mencari ------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah pohon pencarian biner berisi tujuh nilai, dibangun dengan memasukkan
+        `[50, 30, 70, 20, 40, 60, 80]` berurutan. Fungsi `cari` menghitung berapa simpul
+        yang diperiksa sebelum nilai yang dicari ditemukan. Berapa simpul yang diperiksa
+        untuk mencari nilai `40`?
+      en: |
+        A binary search tree holds seven values, built by inserting
+        `[50, 30, 70, 20, 40, 60, 80]` in order. The `cari` function counts how many
+        nodes are checked before the sought value is found. How many nodes are checked
+        when searching for the value `40`?
+    kode: |
+      class Simpul:
+          def __init__(self, nilai):
+              self.nilai = nilai
+              self.kiri = None
+              self.kanan = None
+
+
+      def sisip(akar, nilai):
+          if akar is None:
+              return Simpul(nilai)
+          if nilai < akar.nilai:
+              akar.kiri = sisip(akar.kiri, nilai)
+          elif nilai > akar.nilai:
+              akar.kanan = sisip(akar.kanan, nilai)
+          return akar
+
+
+      def cari(akar, target):
+          langkah = 0
+          sekarang = akar
+          while sekarang is not None:
+              langkah += 1
+              if target == sekarang.nilai:
+                  return langkah
+              if target < sekarang.nilai:
+                  sekarang = sekarang.kiri
+              else:
+                  sekarang = sekarang.kanan
+          return -1
+
+
+      akar = None
+      for nilai in [50, 30, 70, 20, 40, 60, 80]:
+          akar = sisip(akar, nilai)
+
+      print(cari(akar, 40))
+    opsi:
+      - teks:
+          id: "3 — simpul 50, 30, dan 40 diperiksa"
+          en: "3 — the nodes 50, 30, and 40 are checked"
+        benar: true
+      - teks:
+          id: "1 — karena hanya nilai 40 sendiri yang benar-benar dibandingkan"
+          en: "1 — because only the value 40 itself is actually compared"
+        benar: false
+      - teks:
+          id: "7 — karena seluruh simpul diperiksa sebelum hasilnya diketahui"
+          en: "7 — because every node is checked before the result is known"
+        benar: false
+      - teks:
+          id: "2 — simpul 30 dan 40, karena 50 tidak mungkin menjadi jawabannya"
+          en: "2 — the nodes 30 and 40, because 50 cannot be the answer"
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Lacak `cari` langkah demi langkah, mulai dari akar `50`:
+
+        - Periksa `50`. `40` tidak sama dengan `50`, dan `40 < 50`, jadi turun ke kiri.
+          Satu simpul diperiksa.
+        - Periksa `30`. `40` tidak sama dengan `30`, dan `40 > 30`, jadi turun ke kanan.
+          Dua simpul diperiksa.
+        - Periksa `40`. Sama. Kembalikan `3`.
+
+        Jadi jawabannya `3`. Yang diperiksa adalah `50`, `30`, dan `40`.
+
+        Perhatikan bahwa subpohon kanan `50` — yang berisi `70`, `60`, dan `80` — tidak
+        pernah disentuh sama sekali. Ketiganya dibuang dalam satu langkah, karena
+        seluruh isi subpohon kanan pasti lebih besar daripada `50`, sedangkan yang dicari
+        adalah `40`. Itulah cara BST membuang separuh sisanya setiap langkah.
+
+        **Kompleksitas.** Pencarian pada BST seimbang adalah `O(log n)`, karena setiap
+        langkah membuang separuh sisanya. Untuk tujuh simpul, itu sekitar tiga langkah —
+        dan di sini memang tiga. Ingat bahwa ini hanya berlaku kalau pohonnya seimbang;
+        kalau pohonnya miring, pencariannya menjadi `O(n)` dan bisa memeriksa ketujuh
+        simpul. Biaya pencarian dihitung dari **tinggi pohon**, bukan dari banyaknya
+        simpul.
+
+        **Kode referensi.**
+
+        ```python
+        class Simpul:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.kiri = None
+                self.kanan = None
+
+
+        def sisip(akar, nilai):
+            if akar is None:
+                return Simpul(nilai)
+            if nilai < akar.nilai:
+                akar.kiri = sisip(akar.kiri, nilai)
+            elif nilai > akar.nilai:
+                akar.kanan = sisip(akar.kanan, nilai)
+            return akar
+
+
+        def cari(akar, target):
+            langkah = 0
+            sekarang = akar
+            while sekarang is not None:
+                langkah += 1
+                if target == sekarang.nilai:
+                    return langkah
+                if target < sekarang.nilai:
+                    sekarang = sekarang.kiri
+                else:
+                    sekarang = sekarang.kanan
+            return -1
+
+
+        akar = None
+        for nilai in [50, 30, 70, 20, 40, 60, 80]:
+            akar = sisip(akar, nilai)
+
+        print(cari(akar, 40))
+        ```
+
+        **Jebakan umum.** Jawaban `1` menghitung hanya **perbandingan yang berhasil**,
+        padahal setiap simpul yang dikunjungi diperiksa — termasuk yang ternyata bukan
+        jawabannya. Jawaban `7` mengira BST menelusuri semuanya seperti pencarian
+        linear; justru keunggulan BST adalah ia tidak perlu melakukannya. Jawaban `2`
+        membuang akar dari hitungan, padahal akar diperiksa lebih dulu dan hasilnya
+        memang "bukan di sini". Yang paling sering luput: **akar selalu diperiksa**,
+        sehingga pencarian pada pohon berisi satu simpul pun memeriksa satu simpul.
+      en: |
+        **Approach.** Trace `cari` step by step, starting from the root `50`:
+
+        - Check `50`. `40` is not equal to `50`, and `40 < 50`, so descend left. One
+          node checked.
+        - Check `30`. `40` is not equal to `30`, and `40 > 30`, so descend right. Two
+          nodes checked.
+        - Check `40`. Equal. Return `3`.
+
+        So the answer is `3`. The nodes checked are `50`, `30`, and `40`.
+
+        Note that the right subtree of `50` — holding `70`, `60`, and `80` — is never
+        touched at all. All three are discarded in one step, because everything in the
+        right subtree must be larger than `50`, while what is sought is `40`. That is how
+        a BST discards half of what remains at each step.
+
+        **Complexity.** Searching a balanced BST is `O(log n)`, because each step
+        discards half of what remains. For seven nodes that is around three steps — and
+        here it is indeed three. Remember this holds only when the tree is balanced; if
+        the tree is skewed, the search becomes `O(n)` and may check all seven nodes. The
+        cost of a search is counted from the **height of the tree**, not from how many
+        nodes there are.
+
+        **Reference code.**
+
+        ```python
+        class Simpul:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.kiri = None
+                self.kanan = None
+
+
+        def sisip(akar, nilai):
+            if akar is None:
+                return Simpul(nilai)
+            if nilai < akar.nilai:
+                akar.kiri = sisip(akar.kiri, nilai)
+            elif nilai > akar.nilai:
+                akar.kanan = sisip(akar.kanan, nilai)
+            return akar
+
+
+        def cari(akar, target):
+            langkah = 0
+            sekarang = akar
+            while sekarang is not None:
+                langkah += 1
+                if target == sekarang.nilai:
+                    return langkah
+                if target < sekarang.nilai:
+                    sekarang = sekarang.kiri
+                else:
+                    sekarang = sekarang.kanan
+            return -1
+
+
+        akar = None
+        for nilai in [50, 30, 70, 20, 40, 60, 80]:
+            akar = sisip(akar, nilai)
+
+        print(cari(akar, 40))
+        ```
+
+        **Common trap.** The answer `1` counts only the **successful comparison**, when
+        every visited node is checked — including those that turn out not to be the
+        answer. The answer `7` assumes a BST walks everything like a linear search; a
+        BST's advantage is precisely that it does not have to. The answer `2` drops the
+        root from the count, when the root is checked first and the result is indeed "not
+        here". The most commonly missed point: **the root is always checked**, so a
+        search in a tree of one node still checks one node.
+
+  # --- Kuis 4: menghapus simpul beranak dua -------------------------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Sebuah pohon pencarian biner dibangun dengan memasukkan `[50, 30, 70, 20, 40,
+        60, 80]` berurutan. Lalu simpul bernilai `30` dihapus. Nilai `30` punya **dua**
+        anak, yaitu `20` dan `40`. Bagaimana cara menghapusnya supaya aturan BST tetap
+        berlaku?
+      en: |
+        A binary search tree is built by inserting `[50, 30, 70, 20, 40, 60, 80]` in
+        order. Then the node holding `30` is removed. The value `30` has **two** children,
+        namely `20` and `40`. How should it be removed so that the BST rule keeps holding?
+    opsi:
+      - teks:
+          id: Nilai pengganti diambil dari penerus 30, yaitu simpul bernilai terkecil yang masih lebih besar — di sini 40. Nilai 40 dipindahkan ke posisi 30, lalu simpul 40 yang lama dibuang
+          en: The replacement value comes from the successor of 30, the node holding the smallest value still larger — here 40. The value 40 is moved into the place of 30, then the old node 40 is removed
+        benar: true
+      - teks:
+          id: Simpul 30 dibuang begitu saja, lalu kedua anaknya dibiarkan menggantung dan tidak lagi terhubung ke pohon
+          en: The node 30 is simply dropped, and its two children are left hanging and no longer connected to the tree
+        benar: false
+      - teks:
+          id: Anak kiri 30 dinaikkan menggantikannya, dan anak kanannya dipindahkan menjadi anak kiri dari simpul 20
+          en: The left child of 30 is promoted to replace it, and its right child is moved to become the left child of the node 20
+        benar: false
+      - teks:
+          id: Seluruh subpohon di bawah 30 dibangun ulang dari nol dengan memasukkan kembali semua nilainya dalam urutan acak
+          en: The whole subtree below 30 is rebuilt from scratch by re-inserting all of its values in random order
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Menghapus simpul beranak dua tidak bisa dilakukan dengan
+        menaikkan salah satu anaknya begitu saja. Alasannya: kalau anak kiri (`20`) naik,
+        anak kanan (`40`) tidak punya tempat lagi; dan kalau anak kanan (`40`) naik,
+        anak kiri (`20`) yang tersisa. Keduanya harus tetap berada di sisi yang benar
+        relatif terhadap seluruh pohon.
+
+        Penyelesaiannya memakai **penerus**: simpul bernilai terkecil yang masih lebih
+        besar daripada nilai yang dihapus. Penerus `30` selalu berada di subpohon
+        kanannya, dan selalu simpul paling kiri di sana. Di sini subpohon kanan `30`
+        hanya berisi `40`, jadi penerusnya adalah `40`.
+
+        Langkahnya:
+
+        1. Cari penerus `30`, yaitu `40`.
+        2. Salin nilai penerus ke simpul yang dihapus — simpul itu sekarang bernilai
+           `40`.
+        3. Buang simpul penerus yang lama dari subpohon kanannya.
+
+        Sesudahnya, telusur inorder menghasilkan `[20, 40, 50, 60, 70, 80]` — tetap
+        menaik. Itu tandanya aturan BST masih berlaku.
+
+        **Kompleksitas.** Mencari penerus berarti menelusuri dari subpohon kanan ke
+        simpul paling kiri di sana, yang biayanya sepanjang **tinggi** pohon — jadi
+        `O(log n)` pada pohon seimbang, dan `O(n)` pada pohon miring. Sama seperti
+        pencarian dan penyisipan: yang menentukan bentuk pohonnya, bukan kodenya.
+        Penghapusan simpul berdaun dan beranak satu justru lebih murah, karena tidak
+        perlu mencari penerus sama sekali.
+
+        **Kode referensi.**
+
+        ```python
+        class Simpul:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.kiri = None
+                self.kanan = None
+
+
+        def sisip(akar, nilai):
+            if akar is None:
+                return Simpul(nilai)
+            if nilai < akar.nilai:
+                akar.kiri = sisip(akar.kiri, nilai)
+            elif nilai > akar.nilai:
+                akar.kanan = sisip(akar.kanan, nilai)
+            return akar
+
+
+        def inorder(simpul, hasil):
+            if simpul is None:
+                return
+            inorder(simpul.kiri, hasil)
+            hasil.append(simpul.nilai)
+            inorder(simpul.kanan, hasil)
+
+
+        def hapus(akar, nilai):
+            if akar is None:
+                return None
+            if nilai < akar.nilai:
+                akar.kiri = hapus(akar.kiri, nilai)
+            elif nilai > akar.nilai:
+                akar.kanan = hapus(akar.kanan, nilai)
+            else:
+                if akar.kiri is None and akar.kanan is None:
+                    return None
+                if akar.kiri is None:
+                    return akar.kanan
+                if akar.kanan is None:
+                    return akar.kiri
+                pengganti = akar.kanan
+                while pengganti.kiri is not None:
+                    pengganti = pengganti.kiri
+                akar.nilai = pengganti.nilai
+                akar.kanan = hapus(akar.kanan, pengganti.nilai)
+            return akar
+
+
+        akar = None
+        for nilai in [50, 30, 70, 20, 40, 60, 80]:
+            akar = sisip(akar, nilai)
+
+        akar = hapus(akar, 30)
+
+        hasil = []
+        inorder(akar, hasil)
+        print(hasil)
+        ```
+
+        **Jebakan umum.** Jawaban "dibuang begitu saja" akan memutus dua subpohon
+        sekaligus dari pohonnya; simpul-simpulnya masih ada di memori tetapi tidak bisa
+        dijangkau lagi — persis jebakan "kehilangan kepala" dari Topik 3. Jawaban
+        "anak kiri dinaikkan" merusak aturan BST: kalau `20` naik menggantikan `30`, maka
+        `40` harus ditaruh di bawah `20`, dan `40` ada di sebelah **kiri** `20` padahal
+        `40` lebih besar — aturannya langsung dilanggar. Jawaban "membangun ulang dari
+        nol" memang menghasilkan pohon yang sah, tetapi biayanya jauh lebih besar
+        daripada `O(log n)`, dan urutan pemasukannya mengubah bentuk pohonnya. Cara yang
+        benar tetap satu: **pakai penerus**.
+      en: |
+        **Approach.** Removing a node with two children cannot be done by simply
+        promoting one of its children. The reason: if the left child (`20`) moves up, the
+        right child (`40`) has nowhere left to go; and if the right child (`40`) moves up,
+        the left child (`20`) is the one left over. Both must stay on the correct side
+        relative to the whole tree.
+
+        The fix uses the **successor**: the node holding the smallest value still larger
+        than the value being removed. The successor of `30` always lives in its right
+        subtree, and is always the leftmost node there. Here the right subtree of `30`
+        holds only `40`, so the successor is `40`.
+
+        The steps:
+
+        1. Find the successor of `30`, which is `40`.
+        2. Copy the successor's value into the node being removed — that node now holds
+           `40`.
+        3. Remove the old successor node from its right subtree.
+
+        Afterwards, an in-order traversal yields `[20, 40, 50, 60, 70, 80]` — still
+        ascending. That is the sign the BST rule still holds.
+
+        **Complexity.** Finding the successor means walking from the right subtree down
+        to the leftmost node there, which costs as much as the **height** of the tree —
+        so `O(log n)` on a balanced tree, and `O(n)` on a skewed one. Just like searching
+        and inserting: the shape of the tree decides, not the code. Removing a leaf or a
+        node with one child is actually cheaper, because no successor has to be found at
+        all.
+
+        **Reference code.**
+
+        ```python
+        class Simpul:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.kiri = None
+                self.kanan = None
+
+
+        def sisip(akar, nilai):
+            if akar is None:
+                return Simpul(nilai)
+            if nilai < akar.nilai:
+                akar.kiri = sisip(akar.kiri, nilai)
+            elif nilai > akar.nilai:
+                akar.kanan = sisip(akar.kanan, nilai)
+            return akar
+
+
+        def inorder(simpul, hasil):
+            if simpul is None:
+                return
+            inorder(simpul.kiri, hasil)
+            hasil.append(simpul.nilai)
+            inorder(simpul.kanan, hasil)
+
+
+        def hapus(akar, nilai):
+            if akar is None:
+                return None
+            if nilai < akar.nilai:
+                akar.kiri = hapus(akar.kiri, nilai)
+            elif nilai > akar.nilai:
+                akar.kanan = hapus(akar.kanan, nilai)
+            else:
+                if akar.kiri is None and akar.kanan is None:
+                    return None
+                if akar.kiri is None:
+                    return akar.kanan
+                if akar.kanan is None:
+                    return akar.kiri
+                pengganti = akar.kanan
+                while pengganti.kiri is not None:
+                    pengganti = pengganti.kiri
+                akar.nilai = pengganti.nilai
+                akar.kanan = hapus(akar.kanan, pengganti.nilai)
+            return akar
+
+
+        akar = None
+        for nilai in [50, 30, 70, 20, 40, 60, 80]:
+            akar = sisip(akar, nilai)
+
+        akar = hapus(akar, 30)
+
+        hasil = []
+        inorder(akar, hasil)
+        print(hasil)
+        ```
+
+        **Common trap.** The answer "simply dropped" cuts two subtrees off the tree at
+        once; the nodes still exist in memory but can no longer be reached — exactly the
+        "losing the head" trap from Topic 3. The answer "promote the left child" breaks
+        the BST rule: `40` would end up to the left of `50`, which happens to be correct
+        since `40` is smaller than `50` — but `20`, moved below `40`, also ends up in the
+        wrong place, since `20` should stay on the left. The answer "rebuild from
+        scratch" does produce a valid tree, but at a far higher cost than `O(log n)`, and
+        the insertion order changes the shape of the tree. The correct way is still just
+        one: **use the successor**.
+
+  # --- Kuis 5: pohon yang terlihat benar tetapi bukan BST -----------------------
+  - tipe: kuis
+    skenario:
+      id: |
+        Seorang teman menunjukkan pohon biner yang ia bangun, dan berkata bahwa itu
+        adalah pohon pencarian biner. Pada setiap simpul, anak kirinya memang lebih
+        kecil dan anak kanannya memang lebih besar. Tetapi pohonnya tetap **bukan**
+        BST. Struktur manakah yang membuktikannya?
+
+        ```
+                  50
+                /    \
+              30      70
+                \
+                 60
+        ```
+      en: |
+        A friend shows you a binary tree he built, and says it is a binary search tree.
+        At every node, the left child is indeed smaller and the right child is indeed
+        larger. Yet the tree is still **not** a BST. Which structure proves it?
+
+        ```
+                  50
+                /    \
+              30      70
+                \
+                 60
+        ```
+    opsi:
+      - teks:
+          id: Simpul 60 berada di subpohon kiri 50, padahal aturan BST menuntut SELURUH isi subpohon kiri 50 lebih kecil daripada 50 — dan 60 lebih besar
+          en: The node 60 sits in the left subtree of 50, when the BST rule demands that the WHOLE left subtree of 50 be smaller than 50 — and 60 is larger
+        benar: true
+      - teks:
+          id: Simpul 60 lebih besar daripada 30, sehingga 60 seharusnya menjadi anak kanan 70, bukan berada di bawah 30
+          en: The node 60 is larger than 30, so 60 should be the right child of 70, not sit below 30
+        benar: false
+      - teks:
+          id: Simpul 30 hanya punya satu anak, padahal simpul di tengah pohon wajib punya dua anak
+          en: The node 30 has only one child, when a node in the middle of a tree is required to have two
+        benar: false
+      - teks:
+          id: Pohonnya tidak punya daun di sisi kiri, padahal setiap pohon pencarian biner wajib punya daun di kedua sisinya
+          en: The tree has no leaf on its left side, when every binary search tree is required to have leaves on both sides
+        benar: false
+    penjelasan:
+      id: |
+        **Pendekatan.** Periksa aturan BST dengan cermat: untuk **setiap** simpul,
+        **seluruh** isi subpohon kirinya harus lebih kecil, dan **seluruh** isi subpohon
+        kanannya harus lebih besar. Kata "seluruh" itulah yang menentukan di sini.
+
+        Lihat simpul `50`. Subpohon kirinya berisi `30` dan `60`. Nilai `60` lebih besar
+        daripada `50` — padahal ia berada di subpohon **kiri**. Aturannya dilanggar,
+        walaupun setiap anak langsung terlihat benar:
+
+        - `30` memang lebih kecil daripada `50` — benar.
+        - `70` memang lebih besar daripada `50` — benar.
+        - `60` memang lebih besar daripada `30`, jadi sebagai anak kanan `30` ia benar.
+
+        Setiap pemeriksaan satu tingkat lolos, tetapi pemeriksaan **seluruh subpohon**
+        gagal. Inilah bentuk pohon yang paling sering lolos dari pemeriksaan sekilas.
+
+        Cara paling mudah membuktikannya adalah dengan **telusur inorder**. Kalau
+        pohonnya BST, hasilnya harus menaik. Pohon di atas menghasilkan `[30, 60, 50,
+        70]` — tidak menaik, karena `60` muncul sebelum `50`. Itu bukti yang tidak bisa
+        dibantah.
+
+        **Kompleksitas.** Memeriksa satu tingkat saja memakan waktu `O(1)` per simpul,
+        tetapi tidak cukup — seperti kasus ini. Pemeriksaan yang benar harus melacak
+        rentang nilai yang sah untuk setiap simpul sambil menuruni pohon, dan itu
+        `O(n)`, karena setiap simpul diperiksa sekali. Alternatifnya telusur inorder
+        `O(n)` lalu periksa hasilnya menaik, yang sama-sama `O(n)` tetapi jauh lebih
+        sederhana untuk ditulis.
+
+        **Kode referensi.**
+
+        ```python
+        class Simpul:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.kiri = None
+                self.kanan = None
+
+
+        def inorder(simpul, hasil):
+            if simpul is None:
+                return
+            inorder(simpul.kiri, hasil)
+            hasil.append(simpul.nilai)
+            inorder(simpul.kanan, hasil)
+
+
+        def adalah_bst(akar):
+            hasil = []
+            inorder(akar, hasil)
+            for i in range(1, len(hasil)):
+                if hasil[i] <= hasil[i - 1]:
+                    return False
+            return True
+
+
+        akar = Simpul(50)
+        akar.kiri = Simpul(30)
+        akar.kanan = Simpul(70)
+        akar.kiri.kanan = Simpul(60)
+
+        hasil = []
+        inorder(akar, hasil)
+        print("inorder   :", hasil)
+        print("adalah BST:", adalah_bst(akar))
+        ```
+
+        **Jebakan umum.** Jawaban "60 seharusnya menjadi anak kanan 70" menebak
+        perbaikannya, tetapi tidak menyebut **aturan mana** yang dilanggar — dan
+        perbaikan itu sendiri belum tentu benar, karena banyak pohon BST yang sah tanpa
+        `60` di bawah `70`. Jawaban "simpul di tengah wajib punya dua anak" salah besar:
+        BST tidak menuntut itu, dan pohon miring dari Kuis 2 pun sah sebagai BST. Jawaban
+        "wajib punya daun di kedua sisi" juga salah — BST tidak menuntut keseimbangan
+        apa pun. Yang benar-benar dilanggar hanyalah satu: **seluruh** subpohon kiri
+        `50` harus lebih kecil daripada `50`, dan `60` tidak.
+      en: |
+        **Approach.** Check the BST rule carefully: for **every** node, the **whole**
+        left subtree must be smaller, and the **whole** right subtree must be larger. The
+        word "whole" is what decides here.
+
+        Look at node `50`. Its left subtree holds `30` and `60`. The value `60` is larger
+        than `50` — yet it sits in the **left** subtree. The rule is broken, even though
+        every direct child looks right:
+
+        - `30` is indeed smaller than `50` — correct.
+        - `70` is indeed larger than `50` — correct.
+        - `60` is indeed larger than `30`, so as the right child of `30` it is correct.
+
+        Every one-level check passes, but the **whole-subtree** check fails. This is the
+        shape that most often slips past a quick glance.
+
+        The easiest way to prove it is with an **in-order traversal**. If the tree is a
+        BST, the result must be ascending. The tree above yields `[30, 60, 50, 70]` — not
+        ascending, because `60` appears before `50`. That is an unanswerable proof.
+
+        **Complexity.** Checking only one level takes `O(1)` per node, but that is not
+        enough — as this case shows. A correct check must track the valid value range for
+        each node as it descends the tree, and that is `O(n)`, because every node is
+        checked once. The alternative is an `O(n)` in-order traversal followed by
+        checking the result is ascending, which is also `O(n)` but far simpler to write.
+
+        **Reference code.**
+
+        ```python
+        class Simpul:
+            def __init__(self, nilai):
+                self.nilai = nilai
+                self.kiri = None
+                self.kanan = None
+
+
+        def inorder(simpul, hasil):
+            if simpul is None:
+                return
+            inorder(simpul.kiri, hasil)
+            hasil.append(simpul.nilai)
+            inorder(simpul.kanan, hasil)
+
+
+        def adalah_bst(akar):
+            hasil = []
+            inorder(akar, hasil)
+            for i in range(1, len(hasil)):
+                if hasil[i] <= hasil[i - 1]:
+                    return False
+            return True
+
+
+        akar = Simpul(50)
+        akar.kiri = Simpul(30)
+        akar.kanan = Simpul(70)
+        akar.kiri.kanan = Simpul(60)
+
+        hasil = []
+        inorder(akar, hasil)
+        print("inorder   :", hasil)
+        print("adalah BST:", adalah_bst(akar))
+        ```
+
+        **Common trap.** The answer "60 should be the right child of 70" guesses at the
+        fix but never names **which rule** is broken — and that fix is not necessarily
+        right either, since many valid BSTs have no `60` under `70`. The answer "a
+        middle node is required to have two children" is badly wrong: a BST demands no
+        such thing, and the skewed tree from Kuis 2 is a valid BST too. The answer
+        "required to have leaves on both sides" is wrong as well — a BST demands no
+        balance at all. The only thing actually broken is this: the **whole** left
+        subtree of `50` must be smaller than `50`, and `60` is not.
+
+  # --- Soal Kode: BST dari nol --------------------------------------------------
+  - tipe: soal-kode
+    skenario:
+      id: |
+        Tulis dari nol sebuah pohon pencarian biner — kelas yang menyimpan nilai dalam
+        simpul-simpul bercabang dan menyediakan operasi dasarnya sendiri. Kamu menerima
+        daftar perintah, dan harus mengembalikan daftar hasil untuk setiap perintah yang
+        menghasilkan nilai.
+
+        Setiap perintah adalah daftar. Perintah `["sisip", x]` menaruh `x` di tempat yang
+        benar menurut aturan BST, dan **tidak** menghasilkan nilai. Kalau `x` sudah ada di
+        pohon, perintah ini tidak melakukan apa-apa — BST tidak menyimpan kembar.
+        Perintah `["cari", x]` mengembalikan `True` kalau `x` ada, `False` kalau tidak.
+        Perintah `["hapus", x]` membuang simpul bernilai `x` dan mengembalikan `True`
+        kalau ada yang dibuang, `False` kalau tidak ada. Perintah `["inorder"]`
+        mengembalikan seluruh isi pohon sebagai daftar biasa, **menaik**. Perintah
+        `["tinggi"]` mengembalikan tinggi pohon — banyaknya simpul pada jalur terpanjang
+        dari akar sampai daun, dan `0` untuk pohon kosong. Perintah `["ukuran"]`
+        mengembalikan banyaknya simpul.
+
+        Untuk perintah yang tidak menghasilkan nilai, catat `None`.
+
+        Jangan memakai `list` sebagai pengganti pohonnya untuk menyimpan data —
+        implementasikan sendiri `sisip`, `cari`, `hapus`, `inorder`, `tinggi`, dan
+        `ukuran`, supaya kamu merasakan mekanisme penunjuknya. Kamu boleh memakai `list`
+        biasa hanya untuk mengumpulkan hasil perintah.
+
+        Perhatikan dua hal yang paling mudah salah. Pertama, `hapus` pada simpul yang
+        punya **dua** anak tidak bisa dilakukan dengan menaikkan salah satu anaknya —
+        pakai penerusnya. Kedua, pohon kosong (`akar` bernilai `None`) adalah keadaan yang
+        sah, dan `cari`, `inorder`, `tinggi`, serta `ukuran` harus tetap benar di sana.
+      en: |
+        Write from scratch a binary search tree — a class that stores values in branching
+        nodes and provides its own basic operations. You receive a list of commands, and
+        must return a list of results for each command that produces a value.
+
+        Each command is a list. The command `["sisip", x]` puts `x` in the correct place
+        under the BST rule, and produces **no** value. If `x` is already in the tree, the
+        command does nothing — a BST does not store duplicates. The command `["cari", x]`
+        returns `True` if `x` is present, `False` if not. The command `["hapus", x]`
+        removes the node holding `x` and returns `True` if something was removed, `False`
+        if not. The command `["inorder"]` returns the whole contents of the tree as a
+        plain list, **ascending**. The command `["tinggi"]` returns the height of the
+        tree — the number of nodes on the longest path from the root down to a leaf, and
+        `0` for an empty tree. The command `["ukuran"]` returns how many nodes there are.
+
+        For commands that produce no value, record `None`.
+
+        Do not use `list` in place of the tree to store the data — implement `sisip`,
+        `cari`, `hapus`, `inorder`, `tinggi`, and `ukuran` yourself, so that you feel the
+        pointer mechanism. You may use a plain `list` only to collect the command results.
+
+        Note two things that are easiest to get wrong. First, `hapus` on a node with
+        **two** children cannot be done by promoting one of its children — use its
+        successor. Second, an empty tree (`akar` is `None`) is a valid state, and `cari`,
+        `inorder`, `tinggi`, and `ukuran` must all still be correct there.
+    fungsi: proses
+    test_case:
+      # Kasus 1 — sisip membentuk BST; inorder menaik; ukuran; tinggi.
+      - argumen:
+          - - ["sisip", 50]
+            - ["sisip", 30]
+            - ["sisip", 70]
+            - ["sisip", 20]
+            - ["sisip", 40]
+            - ["sisip", 60]
+            - ["sisip", 80]
+            - ["inorder"]
+            - ["ukuran"]
+            - ["tinggi"]
+        diharapkan: [null, null, null, null, null, null, null, [20, 30, 40, 50, 60, 70, 80], 7, 3]
+      # Kasus 2 — nilai kembar tidak masuk dua kali.
+      - argumen:
+          - - ["sisip", 10]
+            - ["sisip", 5]
+            - ["sisip", 15]
+            - ["sisip", 5]
+            - ["sisip", 10]
+            - ["inorder"]
+            - ["ukuran"]
+        diharapkan: [null, null, null, null, null, [5, 10, 15], 3]
+      # Kasus 3 — pohon kosong dulu; cari yang ada dan yang tidak ada.
+      - argumen:
+          - - ["cari", 5]
+            - ["inorder"]
+            - ["ukuran"]
+            - ["tinggi"]
+            - ["sisip", 8]
+            - ["sisip", 3]
+            - ["sisip", 10]
+            - ["sisip", 1]
+            - ["sisip", 6]
+            - ["cari", 6]
+            - ["cari", 99]
+            - ["cari", 8]
+        diharapkan: [false, [], 0, 0, null, null, null, null, null, true, false, true]
+      # Kasus 4 — hapus: daun, satu anak, dua anak, dan nilai yang tidak ada.
+      - argumen:
+          - - ["sisip", 50]
+            - ["sisip", 30]
+            - ["sisip", 70]
+            - ["sisip", 20]
+            - ["sisip", 40]
+            - ["sisip", 60]
+            - ["sisip", 80]
+            - ["hapus", 20]
+            - ["hapus", 60]
+            - ["hapus", 30]
+            - ["hapus", 99]
+            - ["inorder"]
+            - ["ukuran"]
+        diharapkan: [null, null, null, null, null, null, null, true, true, true, false, [40, 50, 70, 80], 4]
+      # Kasus 5 — hapus akar yang penerusnya lebih dalam dari satu langkah.
+      - argumen:
+          - - ["sisip", 50]
+            - ["sisip", 30]
+            - ["sisip", 70]
+            - ["sisip", 40]
+            - ["sisip", 60]
+            - ["sisip", 80]
+            - ["sisip", 55]
+            - ["hapus", 50]
+            - ["inorder"]
+            - ["ukuran"]
+            - ["tinggi"]
+        diharapkan: [null, null, null, null, null, null, null, true, [30, 40, 55, 60, 70, 80], 6, 3]
+      # Kasus 6 — sisip berurutan menaik menghasilkan pohon miring: tinggi = n.
+      - argumen:
+          - - ["sisip", 1]
+            - ["sisip", 2]
+            - ["sisip", 3]
+            - ["sisip", 4]
+            - ["sisip", 5]
+            - ["tinggi"]
+            - ["inorder"]
+            - ["ukuran"]
+        diharapkan: [null, null, null, null, null, 5, [1, 2, 3, 4, 5], 5]
+    solusi_referensi: |
+      class Simpul:
+          def __init__(self, nilai):
+              self.nilai = nilai
+              self.kiri = None
+              self.kanan = None
+
+
+      class PohonCari:
+          def __init__(self):
+              self.akar = None
+
+          def sisip(self, nilai):
+              # Turun mengikuti aturan BST sampai menemukan tempat kosong.
+              # Nilai yang sama diabaikan: BST tidak menyimpan kembar.
+              if self.akar is None:
+                  self.akar = Simpul(nilai)
+                  return
+              sekarang = self.akar
+              while True:
+                  if nilai == sekarang.nilai:
+                      return
+                  if nilai < sekarang.nilai:
+                      if sekarang.kiri is None:
+                          sekarang.kiri = Simpul(nilai)
+                          return
+                      sekarang = sekarang.kiri
+                  else:
+                      if sekarang.kanan is None:
+                          sekarang.kanan = Simpul(nilai)
+                          return
+                      sekarang = sekarang.kanan
+
+          def cari(self, nilai):
+              sekarang = self.akar
+              while sekarang is not None:
+                  if nilai == sekarang.nilai:
+                      return True
+                  if nilai < sekarang.nilai:
+                      sekarang = sekarang.kiri
+                  else:
+                      sekarang = sekarang.kanan
+              return False
+
+          def hapus(self, nilai):
+              self.akar, dibuang = self._hapus(self.akar, nilai)
+              return dibuang
+
+          def _hapus(self, simpul, nilai):
+              # Mengembalikan (simpul pengganti, apakah ada yang dibuang).
+              if simpul is None:
+                  return None, False
+              if nilai < simpul.nilai:
+                  simpul.kiri, dibuang = self._hapus(simpul.kiri, nilai)
+                  return simpul, dibuang
+              if nilai > simpul.nilai:
+                  simpul.kanan, dibuang = self._hapus(simpul.kanan, nilai)
+                  return simpul, dibuang
+
+              # Ketemu. Tiga keadaan, masing-masing butuh penanganan sendiri.
+              if simpul.kiri is None and simpul.kanan is None:
+                  return None, True
+              if simpul.kiri is None:
+                  return simpul.kanan, True
+              if simpul.kanan is None:
+                  return simpul.kiri, True
+
+              # Dua anak: penerusnya yang naik, yaitu simpul paling kiri di
+              # subpohon kanan.
+              pengganti = simpul.kanan
+              while pengganti.kiri is not None:
+                  pengganti = pengganti.kiri
+              simpul.nilai = pengganti.nilai
+              simpul.kanan, _ = self._hapus(simpul.kanan, pengganti.nilai)
+              return simpul, True
+
+          def inorder(self):
+              hasil = []
+              self._inorder(self.akar, hasil)
+              return hasil
+
+          def _inorder(self, simpul, hasil):
+              if simpul is None:
+                  return
+              self._inorder(simpul.kiri, hasil)
+              hasil.append(simpul.nilai)
+              self._inorder(simpul.kanan, hasil)
+
+          def tinggi(self):
+              return self._tinggi(self.akar)
+
+          def _tinggi(self, simpul):
+              if simpul is None:
+                  return 0
+              kiri = self._tinggi(simpul.kiri)
+              kanan = self._tinggi(simpul.kanan)
+              return 1 + (kiri if kiri > kanan else kanan)
+
+          def ukuran(self):
+              return self._ukuran(self.akar)
+
+          def _ukuran(self, simpul):
+              if simpul is None:
+                  return 0
+              return 1 + self._ukuran(simpul.kiri) + self._ukuran(simpul.kanan)
+
+
+      def proses(perintah):
+          pohon = PohonCari()
+          hasil = []
+          for satu in perintah:
+              operasi = satu[0]
+              if operasi == "sisip":
+                  pohon.sisip(satu[1])
+                  hasil.append(None)
+              elif operasi == "cari":
+                  hasil.append(pohon.cari(satu[1]))
+              elif operasi == "hapus":
+                  hasil.append(pohon.hapus(satu[1]))
+              elif operasi == "inorder":
+                  hasil.append(pohon.inorder())
+              elif operasi == "tinggi":
+                  hasil.append(pohon.tinggi())
+              elif operasi == "ukuran":
+                  hasil.append(pohon.ukuran())
+          return hasil
