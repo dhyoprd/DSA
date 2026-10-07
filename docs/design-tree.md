@@ -348,6 +348,30 @@ satu dek — jadi Topik ini mendaftarkan "Pencarian biner iteratif" dan "Pencari
 rekursif" sebagai gantinya. Alasan yang sama membuat Sorting (#21) melewatkan "Pencarian
 biner" dan "Bagi dan taklukkan".
 
+**Topik Tree & BST (#23) selesai — Topik kesembilan yang punya berkas.** Materi dua
+bahasa, 5 Kuis skenario, 1 Soal Kode, dan 5 Pembahasan, semuanya tulisan asli. Topik ini
+**kembali memenuhi bentuk Soal Kode yang ditetapkan dokumen ini apa adanya** —
+**implementasi struktur data dari nol** — karena tree dan BST memang struktur data;
+sama seperti Array & String (#17), Linked List (#18), dan Hash Table (#19), dan berbeda
+dari Big-O (#16), Rekursi (#20), Sorting (#21), dan Binary Search (#22) yang bukan
+struktur data dan karena itu masing-masing menyimpang lewat ADR-0023/0025/0026/0027.
+**Tidak ada ADR baru dan tidak ada baris kode aplikasi yang berubah**: Topik ini masuk
+sebagai berkas `content/tree-bst.yaml`. Yang khas dari Topik ini: field `kompleksitas`
+berisi **dua** bentuk pohon — seimbang dan miring — dengan operasi yang sama persis
+tetapi biaya yang berbeda (`O(log n)` lawan `O(n)`), sehingga pelajaran "bentuk pohon
+menentukan biaya" ikut terhafal, bukan hanya terbaca sekali di Materi.
+**Satu cacat isi** ditemukan dengan **menjalankan**, bukan membaca — sama seperti #16
+sampai #22: Kuis 2 mula-mula memakai seribu nilai, padahal `sisip` rekursif yang dipakai
+**gagal dengan `RecursionError`** sebelum pohonnya selesai dibangun (batas bawaan Python
+1000 tingkat; terukur gagal mulai 999 nilai). Kuis itu kini memakai 500 nilai, dan
+Materinya menjelaskan kenapa. Satu angka salah juga ditemukan lewat menjalankan: tinggi
+pohon sesudah menghapus akar mula-mula ditulis 4, hasil terukurnya 3.
+**Nama kartu Anki-nya dijaga tidak bentrok**: "Simpul"/"Node" dan "Penelusuran"/
+"Traversal" sudah dipakai Linked List (#18), jadi Topik ini memakai "Subpohon"/"Subtree"
+dan "Telusur inorder"/"In-order traversal"; "Pencarian biner"/"Binary search" sudah
+dipakai Big-O (#16), jadi strukturnya dinamai "Pohon pencarian biner …". Semua diperiksa
+lintas Topik (404 kartu) oleh pemeriksa mandiri.
+
 **Urutan setelah jawaban benar** (diputuskan di #8, ADR-0017): Kotak Penjelasan muncul
 → pemelajar menulis alasannya → Pembahasan baru terbuka setelah tombolnya ditekan. Ini
 memenuhi user story 49 ("Pembahasan tersembunyi di balik tombol") yang sebelumnya
